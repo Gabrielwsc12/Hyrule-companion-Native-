@@ -52,12 +52,24 @@ class JourneyRepository(private val context: Context, val catalog: Catalog) {
         val data = obj(K_PROGRESS)
         val start = if (record.status != "Não iniciado" && record.startDate.isBlank()) LocalDate.now().toString() else record.startDate
         val finish = if (record.status in listOf("Concluído", "100%") && record.finishDate.isBlank()) LocalDate.now().toString() else record.finishDate
-        data.put(id, JSONObject().put("status", record.status.takeIf { it in GAME_STATUSES } ?: "Não iniciado").put("startDate", start).put("finishDate", finish).put("notes", record.notes.take(5000)))
+        val prior = data.optJSONObject(id)
+        val completedAt = if (record.status in listOf("Concluído", "100%")) {
+            prior?.optLong("completedAt")?.takeIf { it > 0 } ?: System.currentTimeMillis()
+        } else 0L
+        data.put(id, JSONObject().put("completedAt", completedAt).put("status", record.status.takeIf { it in GAME_STATUSES } ?: "Não iniciado").put("startDate", start).put("finishDate", finish).put("notes", record.notes.take(5000)))
         store(K_PROGRESS, data)
     }
     fun doneCount() = catalog.games.count { gameProgress(it.id).status in listOf("Concluído", "100%") }
     fun playingCount() = catalog.games.count { gameProgress(it.id).status == "Em andamento" }
     fun completedGames() = catalog.games.filter { gameProgress(it.id).status in listOf("Concluído", "100%") }
+
+    fun latestCompletedGame(): Game? {
+        val records = obj(K_PROGRESS)
+        return completedGames().mapNotNull { game ->
+            val date = runCatching { LocalDate.parse(gameProgress(game.id).finishDate) }.getOrNull()
+            date?.let { Triple(game, it, records.optJSONObject(game.id)?.optLong("completedAt") ?: 0L) }
+        }.maxWithOrNull(compareBy<Triple<Game, LocalDate, Long>> { it.second }.thenBy { it.third })?.first
+    }
 
     fun checked(key: String, id: String): Set<Int> {
         val data = obj(key).optJSONArray(id) ?: JSONArray()
@@ -137,7 +149,7 @@ class JourneyRepository(private val context: Context, val catalog: Catalog) {
             val entry=old.opt(id)
             val prev=if(entry is JSONObject) entry else JSONObject().put("status",entry?.toString() ?: "Não iniciado")
             val status=prev.optString("status", "Não iniciado").takeIf { it in GAME_STATUSES } ?: "Não iniciado"
-            progress.put(id, JSONObject().put("status",status).put("startDate",prev.optString("startDate")).put("finishDate",prev.optString("finishDate")).put("notes",prev.optString("notes").take(5000)))
+            progress.put(id, JSONObject().put("completedAt",prev.optLong("completedAt")).put("status",status).put("startDate",prev.optString("startDate")).put("finishDate",prev.optString("finishDate")).put("notes",prev.optString("notes").take(5000)))
         } }
         val guideIds = catalog.guides.associateBy { it.id }
         fun cleanSteps(source: JSONObject?, sizes: Map<String,Int>): JSONObject {

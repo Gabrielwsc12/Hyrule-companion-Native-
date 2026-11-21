@@ -25,8 +25,16 @@ object MuralRenderer {
         val canvas=Canvas(bitmap)
         val dark=options.theme=="noite"
         val parchment=options.theme=="pergaminho"
-        val bg=when{dark->Color.rgb(19,30,28);parchment->Color.rgb(234,216,169);else->Color.rgb(20,43,30)}
-        val surface=when{dark->Color.rgb(41,58,55);parchment->Color.rgb(249,239,204);else->Color.rgb(33,65,47)}
+        val bg=when{
+            options.theme=="oceano" -> Color.parseColor("#10364F")
+            options.theme=="vulcao" -> Color.parseColor("#3E201D")
+            options.theme=="crepusculo" -> Color.parseColor("#2D203E")
+            dark->Color.rgb(19,30,28);parchment->Color.rgb(234,216,169);else->Color.rgb(20,43,30)}
+        val surface=when{
+            options.theme=="oceano" -> Color.parseColor("#19506B")
+            options.theme=="vulcao" -> Color.parseColor("#65362D")
+            options.theme=="crepusculo" -> Color.parseColor("#4C355B")
+            dark->Color.rgb(41,58,55);parchment->Color.rgb(249,239,204);else->Color.rgb(33,65,47)}
         val ink=if(parchment) Color.rgb(48,43,26) else Color.rgb(252,231,177)
         val muted=if(parchment) Color.rgb(90,76,51) else Color.rgb(204,204,172)
         val gold=Color.rgb(215,169,86)

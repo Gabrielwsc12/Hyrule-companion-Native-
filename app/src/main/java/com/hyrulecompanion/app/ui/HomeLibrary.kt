@@ -39,7 +39,7 @@ import com.hyrulecompanion.app.data.Game
     val games=vm.catalog.games
     val done=vm.repo.doneCount()
     val playing=vm.repo.playingCount()
-    val totk=vm.catalog.game("totk")
+    val latest=vm.repo.latestCompletedGame()
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         ScreenTitle("Bem-vindo de volta, Herói!","Que a Triforce guie sua jornada...","▲")
         ParchmentCard {
@@ -51,16 +51,20 @@ import com.hyrulecompanion.app.data.Game
                 StatsTile("${games.size}","Na biblioteca",Modifier.weight(1f))
             }
         }
-        if(totk!=null) ParchmentCard(Modifier.fillMaxWidth().clickable{onGame("totk")}) {
-            SmallHeading("Sua jornada em destaque")
+        if(latest!=null) ParchmentCard(Modifier.fillMaxWidth().clickable{onGame(latest.id)}) {
+            SmallHeading("Último Zelda concluído")
             Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-                CoverArt(totk,Modifier.size(102.dp,112.dp))
+                CoverArt(latest,Modifier.size(102.dp,112.dp))
                 Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-                    Text(totk.name,fontWeight=FontWeight.Bold)
-                    StatusTag(vm.repo.gameProgress(totk.id).status)
+                    Text(latest.name,fontWeight=FontWeight.Bold)
+                    StatusTag(vm.repo.gameProgress(latest.id).status)
                     Text("Ver jogo →",color=MaterialTheme.colorScheme.primary)
                 }
             }
+        } else ParchmentCard {
+            SmallHeading("Último Zelda concluído")
+            Text(if (done == 0) "Quando você concluir uma aventura, ela aparecerá aqui." else "Adicione a data de conclusão para destacar sua última aventura.")
+            TextButton(onClick={onNavigate("library")}) { Text("Abrir biblioteca") }
         }
         SmallHeading("Descubra Hyrule")
         listOf(

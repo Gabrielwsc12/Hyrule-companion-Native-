@@ -1,0 +1,742 @@
+{
+  "alttp": {
+    "aspect": 1.0,
+    "points": [
+      [
+        0.13,
+        0.4163,
+        "Piece of Heart 1: Blind's hideout in Kakariko"
+      ],
+      [
+        0.0365,
+        0.69,
+        "Piece of Heart 3: 15 second run south of Kakariko"
+      ],
+      [
+        0.1986,
+        0.8258,
+        "Piece of Heart 4: Aginah's Cave in the Desert"
+      ],
+      [
+        0.0251,
+        0.9186,
+        "Piece of Heart 5: Rock path at the desert palace"
+      ],
+      [
+        0.4863,
+        0.1041,
+        "Piece of Heart 6: Cave under Spectacle Rock"
+      ],
+      [
+        0.1941,
+        0.1312,
+        "Piece of Heart 8: Hide in the Lost Woods"
+      ],
+      [
+        0.4498,
+        0.914,
+        "Piece of Heart 9: Water basin near the swamp ruins"
+      ],
+      [
+        0.3836,
+        0.2919,
+        "Piece of Heart 10: Cairn to the west of the cathedral"
+      ],
+      [
+        0.968,
+        0.1793,
+        "Piece of Heart 11: Lead at King Zora's Waterfall"
+      ],
+      [
+        0.8196,
+        0.0226,
+        "Piece of Heart 18: Floating island on Death Mountain"
+      ]
+    ]
+  },
+  "botw": {
+    "aspect": 1.2004801920768307,
+    "points": [
+      [
+        0.82496,
+        0.36972,
+        "Dah Hesho Shrine"
+      ],
+      [
+        0.88792,
+        0.129,
+        "Tu Ka'loh Shrine"
+      ],
+      [
+        0.35873,
+        0.67001,
+        "Dah Kaso Shrine"
+      ],
+      [
+        0.44697,
+        0.46549,
+        "Katah Chuki Shrine"
+      ],
+      [
+        0.52874,
+        0.6007,
+        "Wahgo Katta Shrine"
+      ],
+      [
+        0.67215,
+        0.26716,
+        "Daqa Koh Shrine"
+      ],
+      [
+        0.17888,
+        0.57167,
+        "Keeha Yoog Shrine"
+      ],
+      [
+        0.35042,
+        0.84654,
+        "Dila Maag Shrine"
+      ],
+      [
+        0.18191,
+        0.78199,
+        "Daqo Chisay Shrine"
+      ],
+      [
+        0.26396,
+        0.3422,
+        "Dunba Taag Shrine"
+      ]
+    ]
+  },
+  "echoes": {
+    "aspect": 1.4749262536873156,
+    "points": [
+      [
+        0.78849,
+        0.44767,
+        "Stamp #11 - Seesyde Village"
+      ],
+      [
+        0.97599,
+        0.5695,
+        "Stamp #14 - Eastern Zora Cove"
+      ],
+      [
+        0.16678,
+        0.79574,
+        "Stamp #8 - northwest of Oasis"
+      ],
+      [
+        0.65033,
+        0.09379,
+        "Stamp #25 – “Stamp Stand Swallowed!”"
+      ],
+      [
+        0.4648,
+        0.22432,
+        "Stamp #23 - Entrance to Hebra Mountain"
+      ],
+      [
+        0.67401,
+        0.77254,
+        "Stamp #6 - Lake Hylia"
+      ],
+      [
+        0.20428,
+        0.44767,
+        "Stamp #2 - Kakariko Village"
+      ],
+      [
+        0.02862,
+        0.44477,
+        "Stamp #3 - west of Kakariko Village"
+      ],
+      [
+        0.29507,
+        0.63911,
+        "Stamp #1 - Hyrule Ranch"
+      ],
+      [
+        0.83783,
+        0.80155,
+        "Stamp #15 - Scrubton"
+      ]
+    ]
+  },
+  "minish-cap": {
+    "aspect": 1.5748031496062993,
+    "points": [
+      [
+        0.67771,
+        0.90133,
+        "Piece of Heart 01 – Minish Woods · in front of the Deepwood Shrine"
+      ],
+      [
+        0.48855,
+        0.94877,
+        "Piece of Heart 04 - Southern level · open tree"
+      ],
+      [
+        0.01205,
+        0.33207,
+        "Piece of Heart 05 – Mount Crenel · southwest cave"
+      ],
+      [
+        0.09729,
+        0.09488,
+        "Piece of Heart 07 – Cave of Flames · blastable wall"
+      ],
+      [
+        0.35392,
+        0.30835,
+        "Piece of Heart 08 - Northern plain · underground path"
+      ],
+      [
+        0.48494,
+        0.60484,
+        "Piece of Heart 09 - Hyrule Town · Hotel back entrance"
+      ],
+      [
+        0.5753,
+        0.35579,
+        "Piece of Heart 10 – Sela Spring · lower entrance from the farm"
+      ],
+      [
+        0.48494,
+        0.17078,
+        "Piece of Heart 12 – Castle Garden · Grimblade"
+      ],
+      [
+        0.01506,
+        0.75901,
+        "Piece of Heart 14 – Tabanta · Swiftblade I"
+      ],
+      [
+        0.17831,
+        0.85389,
+        "Piece of Heart 15 – Fortress of Winds · right ground floor room"
+      ]
+    ]
+  },
+  "mm": {
+    "aspect": 1.6891891891891893,
+    "points": [
+      [
+        0.53538,
+        0.64352,
+        "Piece of Heart 17. Tree on the way to the swamp"
+      ],
+      [
+        0.48217,
+        0.90926,
+        "Piece of Heart 20. Inner Gardens of Deku Palace"
+      ],
+      [
+        0.36698,
+        0.61481,
+        "Piece of Heart 24. Dog Race 500 at Mamamu Yan"
+      ],
+      [
+        0.48217,
+        0.4713,
+        "Piece of Heart 26. Dodongo Cave"
+      ],
+      [
+        0.76248,
+        0.14907,
+        "Piece of Heart 30. Deku Trader in Goron Village"
+      ],
+      [
+        0.5107,
+        0.23981,
+        "Piece of Heart 31. Way to Snowhead"
+      ],
+      [
+        0.19857,
+        0.54352,
+        "Piece of Heart 34. Marine Research Lab"
+      ],
+      [
+        0.67965,
+        0.44352,
+        "Piece of Heart 44. Second night at Ikana Cemetery"
+      ],
+      [
+        0.77071,
+        0.58981,
+        "Piece of Heart 45. Deku Merchant in Ikana Canyon"
+      ],
+      [
+        0.2633,
+        0.7713,
+        "Great Fairy: Great Bay"
+      ]
+    ]
+  },
+  "oot": {
+    "aspect": 1.7699115044247788,
+    "points": [
+      [
+        0.68351,
+        0.24471,
+        "Bottom of the Well"
+      ],
+      [
+        0.65625,
+        0.01647,
+        "Death Mountain Crater"
+      ],
+      [
+        0.87965,
+        0.55529,
+        "Great Deku Tree"
+      ],
+      [
+        0.07114,
+        0.22824,
+        "Desert Colossus"
+      ],
+      [
+        0.78191,
+        0.39412,
+        "Forest Temple"
+      ],
+      [
+        0.23271,
+        0.24706,
+        "Gerudo Fortress"
+      ],
+      [
+        0.52261,
+        0.12471,
+        "Hyrule Castle"
+      ],
+      [
+        0.53657,
+        0.37412,
+        "Hyrule Field"
+      ],
+      [
+        0.90359,
+        0.16588,
+        "Ice Cavern"
+      ],
+      [
+        0.38231,
+        0.80471,
+        "Lake Hylia"
+      ]
+    ]
+  },
+  "spirit-tracks": {
+    "aspect": 1.3333333333333333,
+    "points": [
+      [
+        0.36914,
+        0.61458,
+        "Heart Container 01 - Castle Town: Battle Arena"
+      ],
+      [
+        0.0918,
+        0.66406,
+        "Heart Container 02 – Rabbitland Rescue: five rabbits"
+      ],
+      [
+        0.06836,
+        0.28125,
+        "Heart Container 03 – Snow Sanctuary: Anouki General Store"
+      ],
+      [
+        0.54492,
+        0.71094,
+        "Heart Container 06 – Pirate Hideout: Archery"
+      ],
+      [
+        0.91602,
+        0.07552,
+        "Heart Container 08 – Remote Train Station: Dice Puzzle"
+      ],
+      [
+        0.18555,
+        0.53125,
+        "Heart Container 09 – Forest Temple – Boss Reward"
+      ],
+      [
+        0.12109,
+        0.04948,
+        "Heart Container 10 – Snow Temple – Boss Reward"
+      ],
+      [
+        0.90625,
+        0.7526,
+        "Heart Container 11 – Ocean Temple – Boss Reward"
+      ],
+      [
+        0.85352,
+        0.5599,
+        "Heart Container 13 – Sand Temple – Boss Reward"
+      ],
+      [
+        0.21875,
+        0.90365,
+        "Stamp 01 - Aboda Village - The first stamp at Niko's house"
+      ]
+    ]
+  },
+  "ss": {
+    "aspect": 1.0789473684210527,
+    "points": [
+      [
+        0.7,
+        0.81,
+        "Piece of Heart 05 – On the chandelier"
+      ],
+      [
+        0.44,
+        0.71,
+        "Piece of Heart 13 – Archipelago"
+      ],
+      [
+        0.78,
+        0.19,
+        "Piece of Heart 14 - Beedle's Island"
+      ],
+      [
+        0.06,
+        0.39,
+        "Piece of Heart 15 – Island in the south"
+      ]
+    ]
+  },
+  "totk-depths": {
+    "aspect": 1.2004801920768307,
+    "points": [
+      [
+        0.52867,
+        0.6009,
+        "Stakijat Lightroot"
+      ],
+      [
+        0.86225,
+        0.2124,
+        "Ui-ihcoj Lightroot"
+      ],
+      [
+        0.69742,
+        0.2404,
+        "Mustis Lightroot"
+      ],
+      [
+        0.24342,
+        0.3383,
+        "Kawumoro Lightroot"
+      ],
+      [
+        0.534,
+        0.2866,
+        "Rikonasum Lightroot"
+      ],
+      [
+        0.21608,
+        0.6363,
+        "Umamustor Lightroot"
+      ],
+      [
+        0.775,
+        0.4576,
+        "Kawagom Lightroot"
+      ],
+      [
+        0.78917,
+        0.7181,
+        "Kimnaz Lightroot"
+      ],
+      [
+        0.1765,
+        0.7963,
+        "Gonatoyros Lightroot"
+      ],
+      [
+        0.36358,
+        0.2358,
+        "Muihcoro Lightroot"
+      ]
+    ]
+  },
+  "totk-sky": {
+    "aspect": 1.2004801920768307,
+    "points": [
+      [
+        0.35708,
+        0.7119,
+        "Rakashog Shrine"
+      ],
+      [
+        0.41917,
+        0.1465,
+        "Tenbez Shrine"
+      ],
+      [
+        0.17825,
+        0.2318,
+        "Ijo-o Shrine"
+      ],
+      [
+        0.743,
+        0.4466,
+        "Jirutagumac Shrine"
+      ],
+      [
+        0.88792,
+        0.15,
+        "Mogisari Shrine"
+      ],
+      [
+        0.52292,
+        0.5913,
+        "Ukouh Shrine"
+      ],
+      [
+        0.88442,
+        0.5947,
+        "Mayanas Shrine"
+      ],
+      [
+        0.58958,
+        0.8348,
+        "Joku-usin Shrine"
+      ],
+      [
+        0.5135,
+        0.3028,
+        "Simosiwak Shrine"
+      ],
+      [
+        0.69592,
+        0.6783,
+        "Yansamin Shrine"
+      ]
+    ]
+  },
+  "totk-surface": {
+    "aspect": 1.2004801920768307,
+    "points": [
+      [
+        0.47558,
+        0.4863,
+        "Lookout Landing Skyview Tower"
+      ],
+      [
+        0.34083,
+        0.3755,
+        "Lindor's Brow Skyview Tower"
+      ],
+      [
+        0.612,
+        0.617,
+        "Sahasra Slope Skyview Tower"
+      ],
+      [
+        0.73817,
+        0.4418,
+        "Upland Zorana Skyview Tower"
+      ],
+      [
+        0.52858,
+        0.1867,
+        "Thyphlo Ruins Skyview Tower"
+      ],
+      [
+        0.19283,
+        0.2658,
+        "Rospro Pass Skyview Tower"
+      ],
+      [
+        0.8205,
+        0.6307,
+        "Mount Lanayru Skyview Tower"
+      ],
+      [
+        0.70158,
+        0.7762,
+        "Rabella Wetlands Skyview Tower"
+      ],
+      [
+        0.29733,
+        0.7178,
+        "Gerudo Canyon Skyview Tower"
+      ],
+      [
+        0.86225,
+        0.2124,
+        "Jochi-iu Shrine"
+      ]
+    ]
+  },
+  "tp": {
+    "aspect": 0.8711111111111111,
+    "points": [
+      [
+        0.53333,
+        0.73291,
+        "Faron Woods"
+      ],
+      [
+        0.69188,
+        0.52734,
+        "Kakariko Valley"
+      ],
+      [
+        0.56583,
+        0.90723,
+        "Ordon Village"
+      ],
+      [
+        0.93669,
+        0.36523,
+        "Goron Mines"
+      ],
+      [
+        0.87899,
+        0.53955,
+        "Kakariko"
+      ],
+      [
+        0.77087,
+        0.36865,
+        "Eldin Province"
+      ],
+      [
+        0.54062,
+        0.39697,
+        "Castle Town"
+      ],
+      [
+        0.68011,
+        0.08691,
+        "Upper reaches of the Zora River / fishing pond"
+      ],
+      [
+        0.34286,
+        0.48096,
+        "Lake Hylia"
+      ],
+      [
+        0.36863,
+        0.72559,
+        "Sacred Grove"
+      ]
+    ]
+  },
+  "ww": {
+    "aspect": 1.0,
+    "points": [
+      [
+        0.07722,
+        0.07722,
+        "Forsaken Fortress"
+      ],
+      [
+        0.05792,
+        0.36583,
+        "Western Fairy Island"
+      ],
+      [
+        0.04537,
+        0.53764,
+        "Three-Eye Reef"
+      ],
+      [
+        0.08205,
+        0.78861,
+        "Diamond Steppe Island"
+      ],
+      [
+        0.23745,
+        0.22394,
+        "Mother and Child Isles"
+      ],
+      [
+        0.22008,
+        0.50772,
+        "Greatfish Isle"
+      ],
+      [
+        0.2249,
+        0.94884,
+        "Outset Island"
+      ],
+      [
+        0.3832,
+        0.11293,
+        "Northern Fairy Island"
+      ],
+      [
+        0.35425,
+        0.39768,
+        "Tingle Island"
+      ],
+      [
+        0.32336,
+        0.64382,
+        "Stone Watcher Island"
+      ]
+    ]
+  },
+  "zelda1": {
+    "aspect": 2.9069767441860463,
+    "points": [
+      [
+        0.78125,
+        0.3125,
+        "Heart Container 1 – C13"
+      ],
+      [
+        0.71875,
+        0.9375,
+        "Heart Container 2 – H12"
+      ],
+      [
+        0.46875,
+        0.5625,
+        "Heart Container 3 – E8"
+      ],
+      [
+        0.96875,
+        0.3125,
+        "Heart Container 4 – C16"
+      ],
+      [
+        0.96875,
+        0.6875,
+        "Heart Container 5 – F16"
+      ],
+      [
+        0.28125,
+        0.9375,
+        "Dungeon 3 – H5"
+      ],
+      [
+        0.71875,
+        0.0625,
+        "Dungeon 5 – A12"
+      ],
+      [
+        0.15625,
+        0.3125,
+        "Dungeon 6 – C3"
+      ],
+      [
+        0.15625,
+        0.5625,
+        "Dungeon 7 – E3"
+      ],
+      [
+        0.34375,
+        0.0625,
+        "Dungeon 9 – A6"
+      ]
+    ]
+  }
+}

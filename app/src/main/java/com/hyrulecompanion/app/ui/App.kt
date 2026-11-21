@@ -77,6 +77,14 @@ private val tabs=listOf(
     val online=isOnline()
     val lifecycleOwner = LocalLifecycleOwner.current
     val appContext = LocalContext.current
+    val welcomePrefs = remember { appContext.getSharedPreferences("welcome", Context.MODE_PRIVATE) }
+    var invite by remember { mutableStateOf(!welcomePrefs.getBoolean("seen", false) && vm.session == null) }
+    var openAccount by rememberSaveable { mutableStateOf(false) }
+    var atlasGame by rememberSaveable { mutableStateOf("oot") }
+    fun closeInvite() {
+        invite = false
+        welcomePrefs.edit().putBoolean("seen", true).apply()
+    }
     // Check when first opened and whenever brought back from the background.
     DisposableEffect(lifecycleOwner, intro) {
         val observer = LifecycleEventObserver { _, event ->
@@ -93,6 +101,13 @@ private val tabs=listOf(
         if(intro) {
             IntroScreen(prefs.introMusic,onFinish={intro=false})
         } else {
+            if (invite && vm.session == null) AlertDialog(
+                onDismissRequest = { closeInvite() },
+                title = { Text("Quer salvar sua jornada em uma conta?") },
+                text = { Text("Criar uma conta é opcional. Com ela você pode sincronizar seu progresso entre dispositivos. Como visitante, sua jornada fica salva neste aparelho.") },
+                confirmButton = { TextButton(onClick={ closeInvite(); openAccount=true; screen="profile" }) { Text("Criar conta") } },
+                dismissButton = { TextButton(onClick={ closeInvite() }) { Text("Continuar como visitante") } }
+            )
             Scaffold(
                 topBar={
                     Column {
@@ -108,7 +123,7 @@ private val tabs=listOf(
                 },
                 bottomBar={
                     if(screen!="settings" && gameId==null) NavigationBar(containerColor=MaterialTheme.colorScheme.primaryContainer,tonalElevation=7.dp) {
-                        tabs.forEach { tab -> NavigationBarItem(selected=screen==tab.id,onClick={screen=tab.id},icon={Icon(tab.icon,contentDescription=tab.title)},label={Text(tab.title,maxLines=1,style=MaterialTheme.typography.labelSmall)},alwaysShowLabel=false) }
+                        tabs.forEach { tab -> NavigationBarItem(selected=screen==tab.id,onClick={openAccount=false;screen=tab.id},icon={Icon(tab.icon,contentDescription=tab.title)},label={Text(tab.title,maxLines=1,style=MaterialTheme.typography.labelSmall)},alwaysShowLabel=false) }
                     }
                 }
             ){ inner ->
@@ -120,19 +135,19 @@ private val tabs=listOf(
                         }
                     }
                     when {
-                        gameId!=null -> GameDetailScreen(vm,gameId!!,onBack={gameId=null;screen=previous},onAtlas={id->gameId=null;screen="atlas"},onGuides={id->gameId=null;guideGame=id;guideSequence++;screen="guides"})
+                        gameId!=null -> GameDetailScreen(vm,gameId!!,onBack={gameId=null;screen=previous},onAtlas={id->atlasGame=id;gameId=null;screen="atlas"},onGuides={id->gameId=null;guideGame=id;guideSequence++;screen="guides"})
                         screen=="home" -> HomeScreen(vm,onNavigate={screen=it},onGame={previous="home";gameId=it})
                         screen=="timeline" -> TimelineScreen(vm,onGame={previous="timeline";gameId=it})
-                        screen=="atlas" -> AtlasScreen(vm,onGame={previous="atlas";gameId=it})
+                        screen=="atlas" -> AtlasScreen(vm,atlasGame,onGame={previous="atlas";gameId=it})
                         screen=="library" -> LibraryScreen(vm,onGame={previous="library";gameId=it})
                         screen=="guides" -> key(guideSequence){GuidesScreen(vm,guideGame,onGame={previous="guides";gameId=it})}
-                        screen=="profile" -> ProfileScreen(vm,onSettings={screen="settings"})
+                        screen=="profile" -> ProfileScreen(vm,openAccount=openAccount,onSettings={screen="settings"})
                         screen=="settings" -> SettingsScreen(vm,onBack={screen="profile"})
                     }
                 }
             }
         }
-        if (vm.pendingCloud == null && vm.showUpdateDialog) {
+        if (!intro && !invite && vm.pendingCloud == null && vm.showUpdateDialog) {
             vm.availableRelease?.let { release ->
                 AlertDialog(
                     onDismissRequest = vm::postponeUpdate,

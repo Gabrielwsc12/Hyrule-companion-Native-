@@ -1,8 +1,11 @@
 package com.hyrulecompanion.app.ui
 
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,19 +16,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.withTransform
-import androidx.compose.ui.graphics.vector.PathParser
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.hyrulecompanion.app.HyruleViewModel
-import com.hyrulecompanion.app.data.AtlasLocation
-import com.hyrulecompanion.app.data.AtlasMap
 import com.hyrulecompanion.app.data.K_ATLAS_VISITED
 
 @Composable fun TimelineScreen(vm:HyruleViewModel,onGame:(String)->Unit) {
@@ -52,40 +44,64 @@ import com.hyrulecompanion.app.data.K_ATLAS_VISITED
     }
 }
 
-@Composable private fun WorldMap(map:AtlasMap, locations:List<AtlasLocation>,selectedIndex:Int,visited:Set<Int>,onSelect:(Int)->Unit) {
-    var bounds by remember { mutableStateOf(IntSize.Zero) }
-    val land=remember(map.land) { runCatching { PathParser().parsePathString(map.land).toPath() }.getOrNull() }
-    Canvas(Modifier.fillMaxWidth().height(245.dp).onSizeChanged{bounds=it}.pointerInput(map.id,locations,bounds) {
-        detectTapGestures { tap ->
-            val closest=locations.indices.minByOrNull { index ->
-                val location=locations[index]
-                val dx=tap.x-bounds.width*location.x/100f
-                val dy=tap.y-bounds.height*location.y/100f
-                dx*dx+dy*dy
-            }
-            if(closest!=null)onSelect(closest)
-        }
-    }) {
-        drawRect(brush=Brush.linearGradient(listOf(Color(0xFF7CB4B0),Color(0xFF376A79)),start=Offset.Zero,end=Offset(size.width,size.height)))
-        if(land!=null)withTransform({scale(size.width/1000f,size.height/650f, Offset.Zero)}) {
-            drawPath(land,brush=Brush.linearGradient(listOf(Color(0xFF8DB374),Color(0xFF345C37)),start=Offset(60f,10f),end=Offset(920f,650f)))
-            drawPath(land,color=Color(0xFFE8CD80),style=Stroke(width=7f))
-        }
-        locations.forEachIndexed { index,l ->
-            val center=Offset(size.width*l.x/100f,size.height*l.y/100f)
-            val radius=if(index==selectedIndex)12.dp.toPx() else 8.dp.toPx()
-            drawCircle(color=if(visited.contains(index))Gold else Color(0xFFFCF2DA),radius=radius,center=center)
-            drawCircle(color=Color(0xFF183828),radius=radius,center=center,style=Stroke(width=2.dp.toPx()))
-            if(index==selectedIndex)drawCircle(color=Gold,radius=radius+5.dp.toPx(),center=center,style=Stroke(width=2.dp.toPx()))
-        }
-    }
+private val atlasPages = mapOf(
+    "ss" to "skyward-sword",
+    "oot" to "ocarina-of-time",
+    "alttp" to "a-link-to-the-past",
+    "zelda1" to "the-legend-of-zelda",
+    "mm" to "majoras-mask",
+    "tp" to "twilight-princess",
+    "ww" to "the-wind-waker",
+    "botw" to "breath-of-the-wild",
+    "totk" to "tears-of-the-kingdom",
+    "echoes" to "echoes-of-wisdom",
+    "minish-cap" to "the-minish-cap",
+    "spirit-tracks" to "spirit-tracks",
+)
+
+private fun mapUrl(gameId: String): String {
+    val slug = atlasPages.getValue(gameId)
+    val suffix = if (gameId == "zelda1") "-first-and-second-quests" else ""
+    return "https://zeldacollection.de/en/walkthroughs/$slug/$slug-interactive-map$suffix/"
 }
 
-@Composable fun AtlasScreen(vm:HyruleViewModel,onGame:(String)->Unit){
+@Composable private fun MapPreview(mapKey: String, name: String) {
+    val assets = androidx.compose.ui.platform.LocalContext.current.assets
+    val catalog = remember(assets) {
+        assets.open("atlas/maps.json").bufferedReader().use { org.json.JSONObject(it.readText()) }
+    }
+    val map = catalog.getJSONObject(mapKey)
+    val points = map.getJSONArray("points")
+    var selected by remember(mapKey) { mutableIntStateOf(-1) }
+    BoxWithConstraints(Modifier.fillMaxWidth().aspectRatio(map.getDouble("aspect").toFloat()).clip(RoundedCornerShape(8.dp))) {
+        coil.compose.AsyncImage(model = "file:///android_asset/atlas/$mapKey.webp",
+            contentDescription = "Mapa de $name", modifier = Modifier.fillMaxSize(),
+            contentScale = androidx.compose.ui.layout.ContentScale.FillBounds)
+        for (index in 0 until points.length()) {
+            val point = points.getJSONArray(index)
+            val x = maxWidth * point.getDouble(0).toFloat()
+            val y = maxHeight * point.getDouble(1).toFloat()
+            Box(Modifier.offset(x - 16.dp, y - 16.dp).size(32.dp)
+                .semantics { contentDescription = point.getString(2) }
+                .clickable { selected = index }, contentAlignment = Alignment.Center) {
+                Surface(shape = CircleShape, color = if (selected == index) Color(0xFFFFD86E) else Color.White,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.Black)) {
+                    Text((index + 1).toString(), Modifier.padding(horizontal = 4.dp), color = Color.Black,
+                        style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        }
+    }
+    Text(if (selected >= 0) points.getJSONArray(selected).getString(2) else "Toque em um ponto para identificar o local.",
+        style = MaterialTheme.typography.bodySmall)
+}
+
+@Composable fun AtlasScreen(vm:HyruleViewModel,initialGame:String,onGame:(String)->Unit){
     val revision=vm.revision
     var query by remember { mutableStateOf("") }
     var branch by remember { mutableStateOf("all") }
-    var selectedMapId by remember { mutableStateOf("oot") }
+    var selectedMapId by androidx.compose.runtime.saveable.rememberSaveable(initialGame) { mutableStateOf(initialGame) }
+    val context = androidx.compose.ui.platform.LocalContext.current
     var layer by remember { mutableStateOf("surface") }
     var selectedLocation by remember { mutableIntStateOf(0) }
     var locationQuery by remember { mutableStateOf("") }
@@ -99,7 +115,7 @@ import com.hyrulecompanion.app.data.K_ATLAS_VISITED
     val current=locations.getOrNull(selectedLocation)
     val regions=listOf("Todas")+locations.map { it.region }.distinct()
     LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
-        item {ScreenTitle("Atlas de Hyrule","Mapas esquemáticos originais e marcos selecionáveis","🗺")}
+        item {ScreenTitle("Atlas de Hyrule","Escolha um jogo para explorar o mapa e registrar suas visitas","🗺")}
         item {OutlinedTextField(query,{query=it},modifier=Modifier.fillMaxWidth(),label={Text("Buscar mapa")},singleLine=true)}
         item{Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(8.dp)){
             listOf("all" to "Todos","shared" to "Antes da divisão","downfall" to "Herói derrotado","child" to "Criança","adult" to "Adulto","future" to "Era distante").forEach{(id,text)->FilterChip(selected=branch==id,onClick={branch=id},label={Text(text)})}
@@ -120,8 +136,16 @@ import com.hyrulecompanion.app.data.K_ATLAS_VISITED
             listOf("sky" to "☁ Céus","surface" to "🌿 Superfície","depths" to "◆ Profundezas").forEach{(code,name)->FilterChip(selected=layer==code,onClick={layer=code;selectedLocation=0;region="Todas"},label={Text(name)})}
         }}
         item {ParchmentCard {
-            Text("Toque nos marcadores do mapa para explorar.",style=MaterialTheme.typography.labelSmall)
-            WorldMap(map,locations,selectedLocation,visited,{selectedLocation=it})
+            MapPreview(key, map.name)
+            Button(onClick={
+                try {
+                    androidx.browser.customtabs.CustomTabsIntent.Builder().setShowTitle(true).build()
+                        .launchUrl(context, android.net.Uri.parse(mapUrl(map.id)))
+                } catch (_: android.content.ActivityNotFoundException) {
+                    android.widget.Toast.makeText(context, "Instale um navegador para abrir o mapa.", android.widget.Toast.LENGTH_LONG).show()
+                }
+            },modifier=Modifier.fillMaxWidth()) { Text("Explorar mapa de ${map.name}") }
+            Text("Fonte dos mapas e pontos: ZeldaCollection. O mapa completo requer internet.",style=MaterialTheme.typography.labelSmall)
             Text("${visited.size} / ${locations.size} marcos visitados",style=MaterialTheme.typography.labelLarge)
             LinearProgressIndicator(progress={if(locations.isEmpty())0f else visited.size.toFloat()/locations.size},modifier=Modifier.fillMaxWidth())
         }}

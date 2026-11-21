@@ -1,6 +1,5 @@
 package com.hyrulecompanion.app.ui
 
-import android.graphics.BitmapFactory
 import android.Manifest
 import android.os.Build
 import androidx.compose.ui.platform.LocalContext
@@ -11,7 +10,6 @@ import android.net.Uri
 import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -21,7 +19,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudSync
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,7 +26,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -39,15 +35,26 @@ import com.hyrulecompanion.app.data.*
 import java.time.LocalDate
 
 @Composable private fun Avatar(value:String,modifier:Modifier=Modifier){
-    val bitmap=remember(value) { runCatching {
-        val data=value.substringAfter("base64,","")
-        if(data.isBlank())null else Base64.decode(data,Base64.DEFAULT).let{BitmapFactory.decodeByteArray(it,0,it.size)}
-    }.getOrNull() }
-    if(bitmap!=null) Image(bitmap.asImageBitmap(),contentDescription="Foto do aventureiro",modifier=modifier.clip(CircleShape))
+    val context = LocalContext.current
+    val request = remember(value, context) {
+        val bytes = runCatching {
+            Base64.decode(value.substringAfter("base64,", ""), Base64.DEFAULT)
+        }.getOrNull()?.takeIf { it.isNotEmpty() }
+        bytes?.let { image ->
+            coil.request.ImageRequest.Builder(context).data(image).apply {
+                if (image.size >= 6 && String(image, 0, 3, Charsets.US_ASCII) == "GIF") {
+                    if (Build.VERSION.SDK_INT >= 28) decoderFactory(coil.decode.ImageDecoderDecoder.Factory())
+                    else decoderFactory(coil.decode.GifDecoder.Factory())
+                }
+            }.build()
+        }
+    }
+    if (request != null) coil.compose.AsyncImage(model = request, contentDescription = "Foto do aventureiro",
+        contentScale = androidx.compose.ui.layout.ContentScale.Crop, modifier = modifier.clip(CircleShape))
     else Surface(modifier=modifier,shape=CircleShape,color=MaterialTheme.colorScheme.primaryContainer){Box(contentAlignment=Alignment.Center){Text("🗡️",style=MaterialTheme.typography.headlineMedium)}}
 }
 
-@Composable fun ProfileScreen(vm:HyruleViewModel,onSettings:()->Unit){
+@Composable fun ProfileScreen(vm:HyruleViewModel,onSettings:()->Unit, openAccount:Boolean=false){
     val revision=vm.revision
     val prefs=vm.repo.preferences()
     val completed=vm.repo.doneCount()
@@ -57,8 +64,9 @@ import java.time.LocalDate
     var name by rememberSaveable { mutableStateOf("Herói de Hyrule") }
     var muralOptions by remember { mutableStateOf<MuralOptions?>(null) }
     var exportOptions by remember { mutableStateOf<MuralOptions?>(null) }
+    val avatarLauncher=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->if(uri!=null)vm.changeAvatar(uri)}
     val jpegLauncher=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("image/jpeg")){uri -> if(uri!=null)exportOptions?.let{vm.exportMural(uri,it)};exportOptions=null}
-    LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
+    LazyColumn(Modifier.fillMaxSize(),state=androidx.compose.foundation.lazy.rememberLazyListState(initialFirstVisibleItemIndex=if(openAccount) 2 else 0),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
         item {ScreenTitle("Meu Perfil","Seu registro como aventureiro de Hyrule","♜")}
         item {ParchmentCard {
             Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(16.dp)){
@@ -70,6 +78,9 @@ import java.time.LocalDate
                 }
                 IconButton(onClick=onSettings){Icon(Icons.Default.Settings,contentDescription="Configurações")}
             }
+            OutlinedButton(onClick={avatarLauncher.launch(arrayOf("image/png","image/jpeg","image/webp","image/gif"))}){Text("Escolher foto ou GIF")}
+            Text("Formatos: JPG, PNG, WebP e GIF. Limite: 1,8 MB.",style=MaterialTheme.typography.labelSmall)
+            if(prefs.avatar.isNotBlank())TextButton(onClick=vm::removeAvatar){Text("Remover foto")}
             LinearProgressIndicator(progress={completed.toFloat()/vm.catalog.games.size},modifier=Modifier.fillMaxWidth())
             Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                 StatsTile("${started.size}","Iniciados",Modifier.weight(1f))
@@ -109,7 +120,7 @@ import java.time.LocalDate
                 OutlinedTextField(draft.name,{draft=draft.copy(name=it)},label={Text("Nome do herói")},singleLine=true)
                 Text("Tema",style=MaterialTheme.typography.labelLarge)
                 Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
-                    listOf("floresta" to "Floresta","noite" to "Noite","pergaminho" to "Pergaminho").forEach{(k,v)->FilterChip(selected=draft.theme==k,onClick={draft=draft.copy(theme=k)},label={Text(v)})}
+                    listOf("floresta" to "Floresta","noite" to "Noite","pergaminho" to "Pergaminho","oceano" to "Grande Mar","vulcao" to "Montanha da Morte","crepusculo" to "Crepúsculo").forEach{(k,v)->FilterChip(selected=draft.theme==k,onClick={draft=draft.copy(theme=k)},label={Text(v)})}
                 }
                 Text("Formato",style=MaterialTheme.typography.labelLarge)
                 Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
@@ -127,7 +138,7 @@ import java.time.LocalDate
     var password by rememberSaveable { mutableStateOf("") }
     val session=vm.session
     ParchmentCard {
-        SmallHeading("☁ Conta e sincronização Supabase")
+        SmallHeading("Conta e Sincronização")
         if(session==null){
             Text("Entre para sincronizar sua jornada com a mesma conta do aplicativo original. Sem login, o modo visitante funciona neste dispositivo.")
             OutlinedTextField(email,{email=it.trim()},label={Text("E-mail")},singleLine=true,modifier=Modifier.fillMaxWidth())
@@ -161,20 +172,12 @@ import java.time.LocalDate
         updatePrefs.backgroundNotices = granted
         if(granted) AppUpdateScheduler.checkOnce(context)
     }
-    val avatarLauncher=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->if(uri!=null)vm.changeAvatar(uri)}
     val exportLauncher=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")){uri->if(uri!=null)vm.exportBackup(uri)}
     var importUri by remember { mutableStateOf<Uri?>(null) }
     val importLauncher=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->importUri=uri}
     LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
         item {TextButton(onClick=onBack){Text("← Voltar ao perfil")}}
         item {ScreenTitle("Configurações","Personalize sua experiência em Hyrule","⚙")}
-        item {ParchmentCard {
-            SmallHeading("Foto do aventureiro")
-            Avatar(prefs.avatar,Modifier.size(96.dp))
-            OutlinedButton(onClick={avatarLauncher.launch(arrayOf("image/png","image/jpeg","image/webp","image/gif"))}){Text("Escolher foto ou GIF")}
-            Text("Formatos: JPG, PNG, WebP e GIF. Limite: 1,8 MB.",style=MaterialTheme.typography.labelSmall)
-            if(prefs.avatar.isNotBlank())TextButton(onClick=vm::removeAvatar){Text("Remover foto")}
-        }}
         item {ParchmentCard {
             SmallHeading("Aparência")
             Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
@@ -241,7 +244,7 @@ import java.time.LocalDate
         }}
         item {ParchmentCard {
             SmallHeading("Conectividade e armazenamento")
-            Text("Os dados locais funcionam sem internet. Login, Supabase, download de capas e sincronização precisam de conexão.")
+            Text("Os dados locais funcionam sem internet. Login, download de capas e sincronização precisam de conexão.")
             Text("Armazenamento protegido da aplicação Android; o cache web não é compartilhado automaticamente.")
             Text("Banco remoto: public.hc_user_data • JSON schema 13",style=MaterialTheme.typography.labelSmall)
         }}
