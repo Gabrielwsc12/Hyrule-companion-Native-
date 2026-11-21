@@ -938,5 +938,120 @@
         "Pedaço de coração da crista leste"
       ]
     ]
+  },
+  "oracle-seasons-temple": {
+    "aspect": 1.25,
+    "points": [
+      [
+        0.6328125,
+        0.2460938,
+        "Parede nas ruínas"
+      ]
+    ]
+  },
+  "oracle-seasons-subrosia": {
+    "aspect": 1.7182130584192439,
+    "points": [
+      [
+        0.4818388,
+        0.5692008,
+        "Mercado de Subrosia"
+      ]
+    ]
+  },
+  "oracle-seasons-summer": {
+    "aspect": 1.25,
+    "points": [
+      [
+        0.6666667,
+        0.6533333,
+        "Escada na piscina seca"
+      ]
+    ]
+  },
+  "oracle-seasons": {
+    "aspect": 1.25,
+    "points": [
+      [
+        0.547,
+        0.8241667,
+        "Vila Horon"
+      ],
+      [
+        0.7186667,
+        0.3458333,
+        "Fortaleza dos Moblins"
+      ],
+      [
+        0.1096667,
+        0.7225,
+        "Pântano Spool"
+      ]
+    ]
+  },
+  "oracle-seasons-autumn": {
+    "aspect": 1.25,
+    "points": [
+      [
+        0.0716667,
+        0.8241667,
+        "Entrada do cemitério"
+      ]
+    ]
+  },
+  "oracle-seasons-winter": {
+    "aspect": 1.25,
+    "points": [
+      [
+        0.6593333,
+        0.8866667,
+        "Caverna sob o moinho"
+      ],
+      [
+        0.9903333,
+        0.6758333,
+        "Lago congelado"
+      ]
+    ]
+  },
+  "phantom-hourglass": {
+    "aspect": 1.3333333333333333,
+    "points": [
+      [
+        0.412109,
+        0.929688,
+        "Ilha das Brasas"
+      ],
+      [
+        0.285156,
+        0.322917,
+        "Ilha dos Ventos"
+      ],
+      [
+        0.125,
+        0.783854,
+        "Ilha Molida"
+      ],
+      [
+        0.666016,
+        0.859375,
+        "Ilha Goron"
+      ],
+      [
+        0.902344,
+        0.635417,
+        "Ilha do Gelo"
+      ],
+      [
+        0.689453,
+        0.236979,
+        "Ilha das Ruínas"
+      ],
+      [
+        0.369141,
+        0.653646,
+        "Ilha Mercay"
+      ]
+    ]
   }
 }

@@ -12,8 +12,8 @@ android {
         applicationId = "com.hyrulecompanion.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 11611
-        versionName = "1.16.11-native"
+        versionCode = 11700
+        versionName = "1.17.0-native"
 
         // These are the public project URL + publishable key in the supplied web source.
         // NEVER put a Supabase service_role or secret key in an Android client.

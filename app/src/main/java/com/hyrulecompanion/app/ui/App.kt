@@ -13,6 +13,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -43,7 +45,6 @@ private val tabs=listOf(
     Tab("timeline","Cronologia",Icons.Default.Schedule),
     Tab("atlas","Atlas",Icons.Default.Map),
     Tab("library","Biblioteca",Icons.Default.CollectionsBookmark),
-    Tab("guides","Guias",Icons.Default.AutoStories),
     Tab("profile","Perfil",Icons.Default.Person)
 )
 
@@ -76,12 +77,12 @@ private val tabs=listOf(
         if (tabs.any { it.id == screen }) vm.repo.storeRaw("last-section", screen)
     }
     var gameId by rememberSaveable { mutableStateOf<String?>(null) }
-    var guideGame by rememberSaveable { mutableStateOf("") }
-    var guideSequence by rememberSaveable { mutableIntStateOf(0) }
+    var contentEntry by rememberSaveable { mutableStateOf<String?>(null) }
+    var dungeonIndex by rememberSaveable { mutableStateOf(false) }
     var intro by remember { mutableStateOf(!prefs.introSkip && !prefs.reduceMotion) }
-    var previous by remember { mutableStateOf("library") }
+    var previous by rememberSaveable { mutableStateOf("library") }
     val view = androidx.compose.ui.platform.LocalView.current
-    val awake = prefs.keepAwake && !intro && gameId == null && screen in listOf("guides", "atlas")
+    val awake = prefs.keepAwake && !intro && (contentEntry != null || dungeonIndex || (screen == "atlas" && gameId == null))
     DisposableEffect(view, awake) {
         val original = view.keepScreenOn
         if (awake) view.keepScreenOn = true
@@ -90,6 +91,15 @@ private val tabs=listOf(
     val online=isOnline()
     val lifecycleOwner = LocalLifecycleOwner.current
     val appContext = LocalContext.current
+    val version = com.hyrulecompanion.app.BuildConfig.VERSION_CODE
+    var showChanges by rememberSaveable { mutableStateOf(vm.repo.raw("last-seen-release") != version.toString()) }
+    val changeNotes = remember(appContext) {
+        runCatching { appContext.assets.open("release-notes.txt").bufferedReader().use { it.readText().trim() } }.getOrDefault("")
+    }
+    fun closeChanges() {
+        vm.repo.storeRaw("last-seen-release", version.toString())
+        showChanges = false
+    }
     val welcomePrefs = remember { appContext.getSharedPreferences("welcome", Context.MODE_PRIVATE) }
     var invite by remember { mutableStateOf(!welcomePrefs.getBoolean("seen", false) && vm.session == null) }
     var openAccount by rememberSaveable { mutableStateOf(false) }
@@ -107,10 +117,15 @@ private val tabs=listOf(
         if (!intro) vm.checkForUpdates()
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
-    BackHandler(gameId!=null || screen=="settings" || screen=="community") {
-        if(gameId!=null){gameId=null;screen=previous}else screen="profile"
+    BackHandler(contentEntry != null || dungeonIndex || gameId!=null || screen=="settings" || screen=="community") {
+        when {
+            contentEntry != null -> contentEntry = null
+            dungeonIndex -> dungeonIndex = false
+            gameId != null -> { gameId = null; screen = previous }
+            else -> screen = "profile"
+        }
     }
-    HyruleTheme(prefs.theme=="dark" || (prefs.theme=="system" && androidx.compose.foundation.isSystemInDarkTheme())) {
+    HyruleTheme(prefs.theme=="dark" || (prefs.theme=="system" && androidx.compose.foundation.isSystemInDarkTheme()), prefs.palette) {
         if(intro) {
             IntroScreen(prefs.introMusic,onFinish={intro=false})
         } else {
@@ -125,7 +140,7 @@ private val tabs=listOf(
                 topBar={
                     Column {
                         TopAppBar(title={ Text("▲ Hyrule Companion",style=MaterialTheme.typography.titleLarge) },actions={
-                            IconButton(onClick={gameId=null;screen="settings"}) { Icon(Icons.Default.Settings,contentDescription="Configurações") }
+                            IconButton(onClick={contentEntry=null;dungeonIndex=false;gameId=null;screen="settings"}) { Icon(Icons.Default.Settings,contentDescription="Configurações") }
                         },colors=TopAppBarDefaults.topAppBarColors(containerColor=MaterialTheme.colorScheme.primaryContainer))
                         Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant).padding(horizontal=16.dp,vertical=4.dp),verticalAlignment=Alignment.CenterVertically) {
                             Text(if(online)"● Online" else "● Offline",color=if(online)Color(0xFF4E976C) else Color(0xFFBA723B),style=MaterialTheme.typography.labelSmall)
@@ -135,7 +150,7 @@ private val tabs=listOf(
                     }
                 },
                 bottomBar={
-                    if(screen!="settings" && screen!="community" && gameId==null) NavigationBar(containerColor=MaterialTheme.colorScheme.primaryContainer,tonalElevation=7.dp) {
+                    if(screen!="settings" && screen!="community" && gameId==null && !dungeonIndex) NavigationBar(containerColor=MaterialTheme.colorScheme.primaryContainer,tonalElevation=7.dp) {
                         tabs.forEach { tab -> NavigationBarItem(selected=screen==tab.id,onClick={openAccount=false;screen=tab.id},icon={Icon(tab.icon,contentDescription=tab.title)},label={Text(tab.title,maxLines=1,style=MaterialTheme.typography.labelSmall)},alwaysShowLabel=false) }
                     }
                 }
@@ -148,16 +163,20 @@ private val tabs=listOf(
                         }
                     }
                     when {
-                        gameId!=null -> GameDetailScreen(vm,gameId!!,onBack={gameId=null;screen=previous},onAtlas={id->atlasGame=id;gameId=null;screen="atlas"},onGuides={id->gameId=null;guideGame=id;guideSequence++;screen="guides"})
+                        contentEntry != null -> key(contentEntry) {
+                            CompositionLocalProvider(LocalSpoilerProtection provides prefs.hideSpoilers) {
+                                GameReferenceScreen(vm, contentEntry!!, onBack={contentEntry=null})
+                            }
+                        }
+                        dungeonIndex -> CompositionLocalProvider(LocalSpoilerProtection provides prefs.hideSpoilers) {
+                            DungeonIndex(vm,onBack={dungeonIndex=false},onOpen={contentEntry="dungeon:$it"})
+                        }
+                        gameId!=null -> GameDetailScreen(vm,gameId!!,onBack={gameId=null;screen=previous},
+                            onAtlas={id->atlasGame=id;gameId=null;screen="atlas"},onReference={contentEntry=it})
                         screen=="home" -> HomeScreen(vm,onNavigate={screen=it},onGame={previous="home";gameId=it})
                         screen=="timeline" -> TimelineScreen(vm,onGame={previous="timeline";gameId=it})
                         screen=="atlas" -> AtlasScreen(vm,atlasGame,onGame={previous="atlas";gameId=it})
-                        screen=="library" -> LibraryScreen(vm,onGame={previous="library";gameId=it})
-                        screen=="guides" -> key(guideSequence){
-                            CompositionLocalProvider(LocalSpoilerProtection provides prefs.hideSpoilers) {
-                                GuidesScreen(vm,guideGame,onGame={previous="guides";gameId=it})
-                            }
-                        }
+                        screen=="library" -> LibraryScreen(vm,onGame={previous="library";gameId=it},onDungeons={dungeonIndex=true})
                         screen=="profile" -> ProfileScreen(vm,openAccount=openAccount,onSettings={screen="settings"},onCommunity={screen="community"})
                         screen=="community" -> CommunityScreen(vm,onBack={screen="profile"},onAccount={openAccount=true;screen="profile"})
                         screen=="settings" -> SettingsScreen(vm,onBack={screen="profile"})
@@ -165,7 +184,14 @@ private val tabs=listOf(
                 }
             }
         }
-        if (!intro && !invite && vm.pendingCloud == null && vm.showUpdateDialog) {
+        if (!intro && (!invite || vm.session != null) && vm.pendingCloud == null && showChanges && changeNotes.isNotBlank()) {
+            AlertDialog(onDismissRequest = { closeChanges() },
+                title = { Text("Novidades da ${com.hyrulecompanion.app.BuildConfig.VERSION_NAME}") },
+                text = { Text(changeNotes, Modifier.verticalScroll(rememberScrollState())) },
+                confirmButton = { TextButton(onClick = { closeChanges() }) { Text("Continuar") } })
+        }
+        if (!intro && (!invite || vm.session != null) && vm.pendingCloud == null &&
+            (!showChanges || changeNotes.isBlank()) && vm.showUpdateDialog) {
             vm.availableRelease?.let { release ->
                 AlertDialog(
                     onDismissRequest = vm::postponeUpdate,

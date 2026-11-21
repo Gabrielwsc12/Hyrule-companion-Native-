@@ -1,5 +1,15 @@
 package com.hyrulecompanion.app.ui
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.graphics.Path
+import com.hyrulecompanion.app.HyruleViewModel
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -37,8 +47,32 @@ private val night=darkColorScheme(
     surfaceVariant=Color(0xFF2D4036),onSurfaceVariant=Parchment,
     outline=Color(0xFF9B855B)
 )
-@Composable fun HyruleTheme(dark:Boolean, content:@Composable ()->Unit) {
-    MaterialTheme(colorScheme=if(dark)night else day,typography=Typography(
+internal val gamePalettes = listOf("classic" to "Clássico", "ocarina" to "Ocarina of Time",
+    "majora" to "Majora’s Mask", "wind" to "The Wind Waker", "twilight" to "Twilight Princess")
+
+@Composable fun HyruleTheme(dark:Boolean, palette:String, content:@Composable ()->Unit) {
+    val base = if (dark) night else day
+    val colors = when (palette) {
+        "ocarina" -> listOf(0xFF284D70, 0xFFF3C870, 0xFFD7E5F7, 0xFF283749)
+        "majora" -> listOf(0xFF62366D, 0xFFE7AFEF, 0xFFF0DDF3, 0xFF41294C)
+        "wind" -> listOf(0xFF155F66, 0xFF84DCD3, 0xFFCBEDE8, 0xFF18454B)
+        "twilight" -> listOf(0xFF694437, 0xFFFFB89A, 0xFFFFE0CA, 0xFF503127)
+        else -> emptyList()
+    }
+    val scheme = if (colors.isEmpty()) base else {
+        val (primary, highlight, light, shadow) = colors.map { Color(it) }
+        base.copy(
+            primary = if (dark) highlight else primary,
+            onPrimary = if (dark) Color(0xFF161614) else Color.White,
+            primaryContainer = if (dark) shadow else light,
+            onPrimaryContainer = if (dark) Color.White else shadow,
+            secondary = if (dark) highlight else shadow,
+            onSecondary = if (dark) Color(0xFF161614) else Color.White,
+            surfaceVariant = if (dark) shadow else light,
+            onSurfaceVariant = if (dark) Color.White else shadow
+        )
+    }
+    MaterialTheme(colorScheme=scheme,typography=Typography(
         headlineMedium=Typography().headlineMedium.copy(fontFamily=FontFamily.Serif,fontWeight=FontWeight.Bold),
         headlineSmall=Typography().headlineSmall.copy(fontFamily=FontFamily.Serif,fontWeight=FontWeight.Bold),
         titleLarge=Typography().titleLarge.copy(fontFamily=FontFamily.Serif,fontWeight=FontWeight.Bold)
@@ -71,3 +105,40 @@ private val night=darkColorScheme(
 @Composable fun SmallHeading(value:String){
     Text(value,style=MaterialTheme.typography.titleLarge,color=MaterialTheme.colorScheme.primary)
 }
+
+@Composable
+internal fun TriforceBadge(vm: HyruleViewModel, gameId: String, animateNew: Boolean = false) {
+    if (!vm.repo.earnedTriforce(gameId)) return
+    val brightness = remember(gameId) { Animatable(1f) }
+    val newlyEarned = animateNew && vm.hasNewTriforce(gameId)
+    LaunchedEffect(gameId, newlyEarned) {
+        if (newlyEarned) {
+            if (!vm.repo.preferences().reduceMotion) {
+                brightness.snapTo(.4f)
+                repeat(2) {
+                    brightness.animateTo(1f, tween(240))
+                    brightness.animateTo(.55f, tween(220))
+                }
+                brightness.animateTo(1f, tween(220))
+            }
+            vm.consumeTriforce(gameId)
+        }
+    }
+    Canvas(Modifier.size(22.dp).alpha(brightness.value).then(
+        Modifier.triforceDescription()
+    )) {
+        val unit = size.width / 2
+        val height = unit * .866f
+        val y = (size.height - height * 2) / 2
+        listOf(unit to y, unit / 2 to y + height, unit * 1.5f to y + height).forEach { (x, top) ->
+            drawPath(Path().apply {
+                moveTo(x, top)
+                lineTo(x + unit / 2, top + height)
+                lineTo(x - unit / 2, top + height)
+                close()
+            }, Gold)
+        }
+    }
+}
+
+private fun Modifier.triforceDescription() = semantics { contentDescription = "Triforce conquistada" }

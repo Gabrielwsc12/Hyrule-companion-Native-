@@ -70,8 +70,7 @@ import com.hyrulecompanion.app.data.Game
         listOf(
             Triple("⌛ Cronologia","Explore as linhas do tempo","timeline"),
             Triple("🗺 Atlas","Visite os mapas e seus marcos","atlas"),
-            Triple("▤ Biblioteca","Todos os 62 jogos catalogados","library"),
-            Triple("✧ Guias","Passo a passo e dungeons","guides"),
+            Triple("▤ Biblioteca","Jogos, guias e dungeons","library"),
             Triple("♜ Meu mural","Acompanhe suas conquistas","profile")
         ).forEach { (title,sub,target) ->
             ParchmentCard(Modifier.fillMaxWidth().clickable{onNavigate(target)}) {
@@ -88,7 +87,7 @@ import com.hyrulecompanion.app.data.Game
     }
 }
 
-@Composable fun LibraryScreen(vm:HyruleViewModel,onGame:(String)->Unit) {
+@Composable fun LibraryScreen(vm:HyruleViewModel,onGame:(String)->Unit,onDungeons:()->Unit) {
     val revision=vm.revision
     var query by remember { mutableStateOf("") }
     var type by remember { mutableStateOf("Todos") }
@@ -96,6 +95,7 @@ import com.hyrulecompanion.app.data.Game
     val filtered=vm.catalog.games.filter { (type=="Todos" || it.type==type) && "${it.name} ${it.platform} ${it.year} ${it.type}".contains(query,ignoreCase=true) }
     LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
         item {ScreenTitle("Biblioteca","Catálogo de aventuras, remakes e spin-offs","▤")}
+        item { OutlinedButton(onClick=onDungeons) { Text("Enciclopédia de Dungeons") } }
         item { OutlinedTextField(query,{query=it},modifier=Modifier.fillMaxWidth(),label={Text("Buscar jogo, plataforma ou ano")},leadingIcon={Icon(Icons.Default.Search,null)},singleLine=true) }
         item {Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
             types.forEach {t->FilterChip(selected=type==t,onClick={type=t},label={Text(t)})}
@@ -120,7 +120,7 @@ import com.hyrulecompanion.app.data.Game
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable fun GameDetailScreen(vm:HyruleViewModel,gameId:String,onBack:()->Unit,onAtlas:(String)->Unit,onGuides:(String)->Unit) {
+@Composable fun GameDetailScreen(vm:HyruleViewModel,gameId:String,onBack:()->Unit,onAtlas:(String)->Unit,onReference:(String)->Unit) {
     val revision=vm.revision
     val game=vm.catalog.game(gameId) ?: return
     val initial=vm.repo.gameProgress(gameId)
@@ -148,7 +148,20 @@ import com.hyrulecompanion.app.data.Game
             Button(onClick={vm.saveGame(gameId,com.hyrulecompanion.app.data.GameProgress(status,start,finish,notes))},modifier=Modifier.fillMaxWidth()){Text("Salvar jornada")}
         }
         if(vm.catalog.mapForGame(gameId)!=null) OutlinedButton(onClick={onAtlas(gameId)},modifier=Modifier.fillMaxWidth()){Text("🗺 Abrir mapa no Atlas")}
-        Button(onClick={onGuides(gameId)},modifier=Modifier.fillMaxWidth()){Text("✧ Ver guias deste jogo")}
+        val guides = vm.catalog.guides.filter { it.gameId == gameId }
+        val dungeons = vm.catalog.dungeons.filter { it.gameId == gameId }
+        SmallHeading("Guias e dungeons")
+        if (guides.isEmpty() && dungeons.isEmpty()) Text("Ainda não há guias para este jogo.")
+        guides.sortedByDescending { vm.repo.isFavorite(it.id) }.forEach { guide ->
+            OutlinedButton(onClick={onReference("guide:${guide.id}")}, modifier=Modifier.fillMaxWidth()) {
+                Text(if (vm.repo.isFavorite(guide.id)) "★ ${guide.title}" else guide.title)
+            }
+        }
+        dungeons.forEach { dungeon ->
+            OutlinedButton(onClick={onReference("dungeon:${dungeon.id}")}, modifier=Modifier.fillMaxWidth()) {
+                Text(dungeon.name)
+            }
+        }
         if(!game.cover.isNullOrBlank())Text("Arte de capa carregada da fonte externa original; requer internet.",style=MaterialTheme.typography.labelSmall)
     }
 }

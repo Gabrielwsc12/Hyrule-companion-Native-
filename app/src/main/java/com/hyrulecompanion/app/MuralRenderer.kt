@@ -75,7 +75,11 @@ object MuralRenderer {
         rect(94f,464f,w-190f,15f,muted,10f)
         rect(94f,464f,(w-190f)*completed/catalog.games.size,15f,gold,10f)
         txt("$progress% da biblioteca",w-385f,391f,29f,ink,true)
-        val chosen=repo.completedGames().ifEmpty { catalog.games.filter { repo.gameProgress(it.id).status=="Em andamento" } }.take(if(portrait)8 else 6)
+        val completedGames = repo.completedGames()
+        val previousAchievements = catalog.games.filter { it !in completedGames && repo.earnedTriforce(it.id) }
+        val chosen = (completedGames + previousAchievements)
+            .ifEmpty { catalog.games.filter { repo.gameProgress(it.id).status == "Em andamento" } }
+            .take(if (portrait) 8 else 6)
         txt("✦ MEMÓRIAS DO HERÓI",66f,565f,40f,gold,true)
         val cols=if(portrait)2 else 3
         val rows=(chosen.size+cols-1)/cols
@@ -98,7 +102,22 @@ object MuralRenderer {
                     } else multiline(g.name,x+22f,y+64f,26f,ink,itemWidth-44f,2)
                 }.onFailure { multiline(g.name,x+22f,y+64f,26f,ink,itemWidth-44f,2) }
             } else multiline(g.name,x+22f,y+64f,26f,ink,itemWidth-44f,2)
-            txt(if(repo.gameProgress(g.id).status=="100%") "✦ 100%" else "✓ Concluído",x+20f,y+boxHeight-21f,23f,gold,true)
+            val status = repo.gameProgress(g.id).status
+            txt(status, x + 20f, y + boxHeight - 21f, 23f, gold, true)
+            if (repo.earnedTriforce(g.id)) {
+                val left = x + itemWidth - 48f
+                val top = y + boxHeight - 43f
+                paint.color = gold
+                paint.style = Paint.Style.FILL
+                listOf(14f to 0f, 7f to 12f, 21f to 12f).forEach { (dx, dy) ->
+                    canvas.drawPath(android.graphics.Path().apply {
+                        moveTo(left + dx, top + dy)
+                        lineTo(left + dx - 7f, top + dy + 12f)
+                        lineTo(left + dx + 7f, top + dy + 12f)
+                        close()
+                    }, paint)
+                }
+            }
         }
         if(chosen.isEmpty()) multiline("Sua aventura está apenas começando. Marque jogos como concluídos para registrar suas conquistas aqui.",80f,670f,32f,ink,w-160f,5)
         txt("EXPLORE • COMPLETE • CONQUISTE",66f,h-95f,28f,gold,true)

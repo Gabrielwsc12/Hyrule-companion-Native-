@@ -35,7 +35,7 @@ import com.hyrulecompanion.app.MuralOptions
 import com.hyrulecompanion.app.data.*
 import java.time.LocalDate
 
-@Composable private fun Avatar(value:String,reduceMotion:Boolean,modifier:Modifier=Modifier){
+@Composable internal fun Avatar(value:String,reduceMotion:Boolean,modifier:Modifier=Modifier){
     val context = LocalContext.current
     val request = remember(value, context, reduceMotion) {
         val bytes = runCatching {
@@ -59,9 +59,12 @@ import java.time.LocalDate
 @Composable fun ProfileScreen(vm:HyruleViewModel,onSettings:()->Unit, openAccount:Boolean=false,onCommunity:()->Unit){
     val revision=vm.revision
     val prefs=vm.repo.preferences()
+    val userId = vm.session?.userId
+    var communityHandle by remember(userId) { mutableStateOf<String?>(null) }
+    var banner by remember(userId) { mutableStateOf<String?>(null) }
     val completed=vm.repo.doneCount()
     val playing=vm.repo.playingCount()
-    val started=vm.catalog.games.filter { vm.repo.gameProgress(it.id).status!="Não iniciado" }
+    val started=vm.catalog.games.filter { vm.repo.gameProgress(it.id).status!="Não iniciado" || vm.repo.earnedTriforce(it.id) }
     val perfect=vm.catalog.games.count { vm.repo.gameProgress(it.id).status=="100%" }
     var name by rememberSaveable { mutableStateOf("Herói de Hyrule") }
     var muralOptions by remember { mutableStateOf<MuralOptions?>(null) }
@@ -71,10 +74,11 @@ import java.time.LocalDate
     LazyColumn(Modifier.fillMaxSize(),state=androidx.compose.foundation.lazy.rememberLazyListState(initialFirstVisibleItemIndex=if(openAccount) 2 else 0),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
         item {ScreenTitle("Meu Perfil","Seu registro como aventureiro de Hyrule","♜")}
         item {ParchmentCard {
+            ProfileBanner(banner)
             Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(16.dp)){
                 Avatar(prefs.avatar,prefs.reduceMotion,Modifier.size(86.dp))
                 Column(Modifier.weight(1f)){
-                    Text("Herói de Hyrule",style=MaterialTheme.typography.titleLarge)
+                    Text(communityHandle?.let { "@$it" } ?: "Herói de Hyrule",style=MaterialTheme.typography.titleLarge)
                     Text("Explorador em treinamento")
                     Text("${completed*100/vm.catalog.games.size}% da biblioteca concluída",style=MaterialTheme.typography.labelLarge)
                 }
@@ -83,6 +87,12 @@ import java.time.LocalDate
             OutlinedButton(onClick={avatarLauncher.launch(arrayOf("image/png","image/jpeg","image/webp","image/gif"))}){Text("Escolher foto ou GIF")}
             Text("Formatos: JPG, PNG, WebP e GIF. Limite: 1,8 MB.",style=MaterialTheme.typography.labelSmall)
             if(prefs.avatar.isNotBlank())TextButton(onClick=vm::removeAvatar){Text("Remover foto")}
+            if (userId != null) key(userId) {
+                ProfileCommunitySettings(vm, userId, prefs.avatar) { handle, image ->
+                    communityHandle = handle
+                    banner = image
+                }
+            }
             LinearProgressIndicator(progress={completed.toFloat()/vm.catalog.games.size},modifier=Modifier.fillMaxWidth())
             Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                 StatsTile("${started.size}","Iniciados",Modifier.weight(1f))
@@ -110,7 +120,10 @@ import java.time.LocalDate
                 Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                     CoverArt(g,Modifier.size(70.dp,82.dp))
                     Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(5.dp)) {
-                        Text(g.name,fontWeight=FontWeight.Bold)
+                        Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                            Text(g.name,fontWeight=FontWeight.Bold,modifier=Modifier.weight(1f))
+                            TriforceBadge(vm,g.id,animateNew=true)
+                        }
                         StatusTag(p.status)
                         if(p.startDate.isNotBlank())Text("Início: ${p.startDate}",style=MaterialTheme.typography.labelSmall)
                         if(p.finishDate.isNotBlank())Text("Conclusão: ${p.finishDate}",style=MaterialTheme.typography.labelSmall)
@@ -189,6 +202,9 @@ import java.time.LocalDate
             SmallHeading("Aparência")
             ChoiceSetting("Tema do aplicativo", prefs.theme, listOf("system" to "Usar tema do aparelho", "light" to "Claro", "dark" to "Escuro")) {
                 vm.savePreferences(prefs.copy(theme=it))
+            }
+            ChoiceSetting("Estilo inspirado em Zelda", prefs.palette, gamePalettes) {
+                vm.savePreferences(prefs.copy(palette=it))
             }
             Text("O texto acompanha o tamanho escolhido nas configurações do Android.")
             TextButton(onClick={

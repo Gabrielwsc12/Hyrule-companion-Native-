@@ -12,6 +12,8 @@ import org.json.JSONObject
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
+private const val COMMUNITY_FIELDS = "user_id,handle,favorite_game,discoverable,share_journey,journey"
+
 private val JSON_TYPE="application/json; charset=utf-8".toMediaType()
 
 data class AuthSession(val accessToken: String, val refreshToken: String, val expiresAt: Long, val userId: String, val email: String) {
@@ -94,18 +96,35 @@ class SupabaseClient {
     }
 
     private suspend fun communityProfiles(session: AuthSession, filters: String): List<CommunityProfile> {
-        val rows = JSONArray(request("GET", "/rest/v1/hc_community_profiles?$filters", bearer=session.accessToken))
+        val rows = JSONArray(request("GET", "/rest/v1/hc_community_profiles?select=$COMMUNITY_FIELDS&$filters", bearer=session.accessToken))
         return List(rows.length()) { CommunityProfile.fromJson(rows.getJSONObject(it)) }
     }
 
-    suspend fun saveCommunityProfile(session: AuthSession, profile: CommunityProfile) {
+    suspend fun communityMedia(session: AuthSession, userId: String): CommunityMedia {
+        val id = java.util.UUID.fromString(userId)
+        val rows = JSONArray(request("GET",
+            "/rest/v1/hc_community_profiles?select=avatar_image,banner_image&user_id=eq.$id",
+            bearer = session.accessToken))
+        val row = rows.optJSONObject(0)
+        return CommunityMedia(
+            row?.takeUnless { it.isNull("avatar_image") }?.optString("avatar_image"),
+            row?.takeUnless { it.isNull("banner_image") }?.optString("banner_image")
+        )
+    }
+
+    suspend fun saveCommunityProfile(session: AuthSession, profile: CommunityProfile, media: CommunityMedia? = null) {
+        val body = profile.toJson(session.userId)
+        media?.let {
+            body.put("avatar_image", it.avatar ?: JSONObject.NULL)
+            body.put("banner_image", it.banner ?: JSONObject.NULL)
+        }
         request("POST", "/rest/v1/hc_community_profiles?on_conflict=user_id",
-            profile.toJson(session.userId), session.accessToken, "resolution=merge-duplicates,return=minimal")
+            body, session.accessToken, "resolution=merge-duplicates,return=minimal")
     }
 
     suspend fun followedProfiles(session: AuthSession): List<CommunityProfile> {
         val rows = JSONArray(request("GET",
-            "/rest/v1/hc_community_follows?select=profile:hc_community_profiles!hc_community_follows_followed_id_fkey!inner(*)&order=followed_id",
+            "/rest/v1/hc_community_follows?select=profile:hc_community_profiles!hc_community_follows_followed_id_fkey!inner($COMMUNITY_FIELDS)&order=followed_id",
             bearer=session.accessToken))
         return List(rows.length()) { CommunityProfile.fromJson(rows.getJSONObject(it).getJSONObject("profile")) }
     }
@@ -174,3 +193,5 @@ data class CommunityProfile(
 }
 
 data class CommunityReaction(val count: Int, val applauded: Boolean)
+
+data class CommunityMedia(val avatar: String? = null, val banner: String? = null)

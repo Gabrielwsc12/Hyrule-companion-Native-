@@ -135,7 +135,16 @@ class HyruleViewModel(application: Application) : AndroidViewModel(application) 
             message = "Não foi possível abrir o link de atualização."
         }
     }
-    fun saveGame(id: String, progress: GameProgress) { repo.saveGame(id,progress);notifyChange();message="Jornada salva." }
+    fun hasNewTriforce(id: String) = repo.raw("triforce-pending-$id") == "true"
+    fun consumeTriforce(id: String) { repo.erase("triforce-pending-$id") }
+
+    fun saveGame(id: String, progress: GameProgress) {
+        val previouslyEarned = repo.earnedTriforce(id)
+        repo.saveGame(id, progress)
+        if (!previouslyEarned && repo.earnedTriforce(id)) repo.storeRaw("triforce-pending-$id", "true")
+        notifyChange()
+        message = "Jornada salva."
+    }
     fun toggleChecked(key: String,id: String,index: Int) { repo.toggleChecked(key,id,index);notifyChange() }
     fun clearChecked(key: String,id: String) { repo.clearChecked(key,id);notifyChange() }
     fun favorite(id: String) { repo.toggleFavorite(id);notifyChange() }

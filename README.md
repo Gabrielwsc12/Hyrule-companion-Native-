@@ -12,9 +12,9 @@ O **Hyrule Companion** é um guia de bolso para Android e um diário de jogo par
 
 ### Consulte o app durante a partida
 
-- **Atlas.** Explore 20 mapas offline de 15 jogos e toque nos 168 marcadores para identificar locais. Em *Tears of the Kingdom*, alterne entre céu, superfície e profundezas. O índice permite buscar marcos, filtrar por região e registrar visitas. Para uma exploração mais detalhada, abra o mapa interativo do ZeldaCollection com conexão à internet.
-- **Guias.** Encontre entre 58 guias a ajuda de que precisa para uma missão, um puzzle, um chefe ou uma área de exploração. Pesquise por região ou tema, filtre por jogo, dificuldade e andamento, salve favoritos e marque as etapas conforme avança. Guias com objetivos de 100% têm uma lista própria. As anotações pessoais ajudam a retomar a partida.
-- **Enciclopédia de Dungeons.** Consulte nove dungeons com rotas por salas, soluções de puzzles, inimigos, itens e tesouros. Acompanhe as etapas, marque o que já recolheu e consulte a estratégia do chefe e a lista final de objetivos.
+- **Atlas.** Explore 27 mapas offline de 17 jogos e toque nos 184 marcadores para identificar locais. Em *Tears of the Kingdom*, alterne entre céu, superfície e profundezas. O índice permite buscar marcos, filtrar por região e registrar visitas. Para uma exploração mais detalhada, abra o mapa interativo do ZeldaCollection com conexão à internet.
+- **Guias.** Encontre entre 58 guias a ajuda de que precisa para uma missão, um puzzle, um chefe ou uma área de exploração. Abra a ficha do jogo pela Biblioteca e toque em um guia para consultar etapas, favoritos e anotações. Guias com objetivos de 100% têm uma lista própria. As anotações pessoais ajudam a retomar a partida.
+- **Enciclopédia de Dungeons.** Consulte onze dungeons com rotas por salas, soluções de puzzles, inimigos, itens e tesouros. Acompanhe as etapas, marque o que já recolheu e consulte a estratégia do chefe e a lista final de objetivos.
 
 ### Registre, compartilhe e proteja seu progresso
 
@@ -26,6 +26,15 @@ O **Hyrule Companion** é um guia de bolso para Android e um diário de jogo par
 Migração nativa do arquivo original `hyrule-companion-apk.zip`, **Web Edition 1.16.6**, sem WebView, Capacitor, HTML ou JavaScript em tempo de execução. Mantém o mesmo identificador de aplicativo (`com.hyrulecompanion.app`), o projeto Supabase e a estrutura **schema 13** de dados. A migração preserva o texto editorial original dos 62 jogos, 58 guias, 12 mapas, 5 dungeons e 5 ramificações da cronologia.
 
 ## Novidades
+
+### 1.17.0-native
+
+- **Perfil e Comunidade.** Edite seu nome de usuário e visibilidade em Meu Perfil. Escolha um banner JPG ou PNG de até 1 MB, exibido em proporção 3:1. Na mesma edição, escolha se deseja mostrar seu avatar aos visitantes. GIFs animam também na Comunidade, conforme a preferência de movimento de quem visita.
+- **Aparência.** Ocarina of Time, Majora’s Mask, The Wind Waker e Twilight Princess ganharam paletas próprias, combináveis com os modos claro, escuro e do sistema.
+- **Guias na Biblioteca.** Cada ficha reúne os guias e dungeons daquele jogo. A Biblioteca também tem acesso à Enciclopédia. A Cronologia exibe capas, plataformas e anos.
+- **Conquistas.** A Triforce brilha na primeira vez que você vê a conclusão no mural do Perfil e fica como emblema no cartão do jogo. A exportação JPEG inclui a versão estática do emblema.
+- **Notas da versão.** O resumo aparece uma vez por versão instalada. Atualize `app/src/main/assets/release-notes.txt` a cada release para usar o mesmo texto no app, no GitHub e no catálogo de atualizações.
+- **Atlas e Enciclopédia.** Sete mapas e 16 marcadores novos para Oracle of Seasons e Phantom Hourglass. As novas dungeons são a Raiz Retorcida e o Templo do Fogo. [Mapas do ZeldaCollection](https://zeldacollection.de/en/maps/)
 
 ### 1.16.11-native
 
@@ -80,6 +89,8 @@ Suba os arquivos do projeto para um repositório GitHub, abra **Actions > Build 
 **Aviso sobre instalação:** como o `applicationId` é igual ao original Capacitor, APKs assinados com certificados diferentes NÃO podem ser instalados por cima uns dos outros. Faça **backup JSON** do app antigo antes de desinstalá-lo, ou utilize sua conta Supabase para restaurar a jornada. Os arquivos de `localStorage` da versão Web não migram automaticamente para o armazenamento nativo Android.
 
 ## Ativar a Comunidade no Supabase
+
+Para habilitar avatar e banner da versão 1.17, execute [COMMUNITY_PROFILE_MEDIA.sql](supabase/COMMUNITY_PROFILE_MEDIA.sql) uma vez após as duas migrações da Comunidade. Em um ambiente já atualizado para 1.16.11, basta a migração nova se as anteriores já estiverem aplicadas.
 
 Para habilitar a Comunidade na 1.16.11-native, abra o **SQL Editor** do projeto Supabase do Hyrule Companion e execute [COMMUNITY.sql](supabase/COMMUNITY.sql), seguido de [COMMUNITY_REACTIONS.sql](supabase/COMMUNITY_REACTIONS.sql). Execute cada arquivo uma vez. Se já tiver aplicado o primeiro, execute somente o segundo. Essas migrações criam as tabelas e funções da Comunidade.
 

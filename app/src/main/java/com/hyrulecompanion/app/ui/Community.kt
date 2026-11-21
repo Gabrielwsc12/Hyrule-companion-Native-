@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hyrulecompanion.app.HyruleViewModel
 import com.hyrulecompanion.app.network.CommunityProfile
+import com.hyrulecompanion.app.network.CommunityMedia
 import com.hyrulecompanion.app.network.CommunityReaction
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -44,7 +45,7 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
     var enabled by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
-    var editing by remember { mutableStateOf(false) }
+    var media by remember { mutableStateOf(CommunityMedia()) }
     var search by remember { mutableStateOf("") }
 
     fun runAction(action: suspend () -> Unit) {
@@ -84,6 +85,10 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
         selected = data.first
         isFollowing = data.second
         reactions = data.third
+        media = CommunityMedia()
+        if (data.first != null) {
+            media = vm.communityRequest(userId) { account -> communityMedia(account, profile.userId) }
+        }
         if (data.first == null) {
             results = results?.filterNot { it.userId == profile.userId }
             following = following.filterNot { it.userId == profile.userId }
@@ -101,12 +106,14 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
             }
             ScreenTitle(selected?.let { "@${it.handle}" } ?: "Comunidade", "Hyrule Companion", "♜")
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-            if (!editing) error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }
         val profile = selected
         if (profile != null) {
             item {
                 ParchmentCard {
+                    ProfileBanner(media.banner)
+                    Avatar(media.avatar.orEmpty(), vm.repo.preferences().reduceMotion, Modifier.size(72.dp))
                     Text("Zelda favorito: ${vm.catalog.game(profile.favoriteGame.orEmpty())?.name ?: "A escolher"}")
                     if (profile.userId != userId) {
                         val canFollow = own != null
@@ -161,9 +168,7 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
                     SmallHeading("Meu perfil na comunidade")
                     Text(own?.let { "@${it.handle} · ${if (it.discoverable) "Visível" else "Privado"}" }
                         ?: "Escolha um nome de usuário e o que deseja compartilhar.")
-                    OutlinedButton(enabled = !busy, onClick = { error = null; editing = true }) {
-                        Text(if (own == null) "Configurar perfil" else "Editar perfil e visibilidade")
-                    }
+                    TextButton(onClick = onBack) { Text("Editar em Meu Perfil") }
                     own?.takeIf { it.discoverable }?.let { published ->
                         TextButton(enabled = !busy, onClick = { open(published) }) { Text("Ver meu perfil público") }
                         if (published.shareJourney) {
@@ -204,21 +209,12 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
         }
     }
 
-    if (editing) {
-        CommunityProfileEditor(vm, userId, own, busy, error, onClose = { editing = false; error = null }) { updated ->
-            runAction {
-                vm.communityRequest(userId) { account -> saveCommunityProfile(account, updated) }
-                own = updated
-                editing = false
-            }
-        }
-    }
 }
 
 @Composable
-private fun CommunityProfileEditor(
+internal fun CommunityProfileEditor(
     vm: HyruleViewModel, userId: String, current: CommunityProfile?, busy: Boolean,
-    error: String?, onClose: () -> Unit, onSave: (CommunityProfile) -> Unit
+    error: String?, mediaEditor: @Composable (Boolean) -> Unit, onClose: () -> Unit, onSave: (CommunityProfile) -> Unit
 ) {
     var handle by remember { mutableStateOf(current?.handle.orEmpty()) }
     var favorite by remember { mutableStateOf(current?.favoriteGame) }
@@ -250,6 +246,7 @@ private fun CommunityProfileEditor(
                 Switch(shareJourney && discoverable, { shareJourney = it }, enabled = !busy && discoverable)
                 Text("Compartilhar status dos jogos", Modifier.padding(start = 8.dp))
             }
+            mediaEditor(discoverable)
             Text("Salve o perfil de novo para atualizar a jornada compartilhada.", style = MaterialTheme.typography.bodySmall)
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }

@@ -28,7 +28,7 @@ val GAME_STATUSES = listOf("Não iniciado", "Em andamento", "Concluído", "100%"
 data class GameProgress(val status: String = "Não iniciado", val startDate: String = "", val finishDate: String = "", val notes: String = "")
 data class Preferences(val theme: String = "system", val avatar: String = "", val introSkip: Boolean = false, val introMusic: Boolean = true,
     val hideSpoilers: Boolean = true, val reduceMotion: Boolean = false,
-    val startScreen: String = "home", val keepAwake: Boolean = false)
+    val startScreen: String = "home", val keepAwake: Boolean = false, val palette: String = "classic")
 
 class JourneyRepository(private val context: Context, val catalog: Catalog) {
     // Only app-private storage; legacy localStorage uses the same literal keys, but is a separate origin.
@@ -49,15 +49,18 @@ class JourneyRepository(private val context: Context, val catalog: Catalog) {
             else -> GameProgress()
         }
     }
+    fun earnedTriforce(id: String): Boolean =
+        (obj(K_PROGRESS).optJSONObject(id)?.optLong("completedAt") ?: 0) > 0 ||
+            gameProgress(id).status in listOf("Concluído", "100%")
+
     fun saveGame(id: String, record: GameProgress) {
         require(catalog.game(id) != null)
         val data = obj(K_PROGRESS)
         val start = if (record.status != "Não iniciado" && record.startDate.isBlank()) LocalDate.now().toString() else record.startDate
         val finish = if (record.status in listOf("Concluído", "100%") && record.finishDate.isBlank()) LocalDate.now().toString() else record.finishDate
         val prior = data.optJSONObject(id)
-        val completedAt = if (record.status in listOf("Concluído", "100%")) {
-            prior?.optLong("completedAt")?.takeIf { it > 0 } ?: System.currentTimeMillis()
-        } else 0L
+        val completedAt = prior?.optLong("completedAt")?.takeIf { it > 0 }
+            ?: if (earnedTriforce(id) || record.status in listOf("Concluído", "100%")) System.currentTimeMillis() else 0L
         data.put(id, JSONObject().put("completedAt", completedAt).put("status", record.status.takeIf { it in GAME_STATUSES } ?: "Não iniciado").put("startDate", start).put("finishDate", finish).put("notes", record.notes.take(5000)))
         store(K_PROGRESS, data)
     }
@@ -99,12 +102,13 @@ class JourneyRepository(private val context: Context, val catalog: Catalog) {
         val o=obj(K_PREFS)
         return Preferences(o.optString("theme","system"),o.optString("avatar",""),o.optBoolean("introSkip",false),o.optBoolean("introMusic",true),
             o.optBoolean("hideSpoilers",true), o.optBoolean("reduceMotion",false),
-            o.optString("startScreen","home"), o.optBoolean("keepAwake",false))
+            o.optString("startScreen","home"), o.optBoolean("keepAwake",false), o.optString("palette","classic"))
     }
     fun savePreferences(value: Preferences) { val o = obj(K_PREFS); o.put("theme",value.theme);o.put("avatar",value.avatar);o.put("introSkip",value.introSkip);o.put("introMusic",value.introMusic);o.put("hideSpoilers",value.hideSpoilers)
         o.put("reduceMotion",value.reduceMotion)
         o.put("startScreen",value.startScreen)
         o.put("keepAwake",value.keepAwake)
+        o.put("palette",value.palette)
         store(K_PREFS,o)
     }
     fun avatarImage(uri: Uri): String {

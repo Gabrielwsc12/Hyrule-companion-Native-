@@ -22,7 +22,7 @@ import com.hyrulecompanion.app.data.K_ATLAS_VISITED
 
 @Composable fun TimelineScreen(vm:HyruleViewModel,onGame:(String)->Unit) {
     val routes=vm.catalog.routes
-    var selected by remember { mutableStateOf("before") }
+    var selected by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("before") }
     val route=routes.find { it.id==selected } ?: routes.first()
     LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
         item {ScreenTitle("Atlas da Cronologia","Explore as ramificações da história de Hyrule","⌛")}
@@ -34,11 +34,18 @@ import com.hyrulecompanion.app.data.K_ATLAS_VISITED
             routes.forEach { r -> FilterChip(selected=selected==r.id,onClick={selected=r.id},label={Text(when(r.id){"before"->"Antes da divisão";"downfall"->"Herói derrotado";"child"->"Criança";"adult"->"Adulto";else->"Era distante"})}) }
         }}
         item {ParchmentCard {SmallHeading(route.title);Text(route.subtitle,style=MaterialTheme.typography.labelLarge);Text(route.description)}}
-        itemsIndexed(route.entries) { index,entry ->
+        itemsIndexed(route.entries) { _,entry ->
             ParchmentCard(Modifier.fillMaxWidth().clickable {onGame(entry.gameId)}) {
-                Text("${index+1}. ${entry.name}",style=MaterialTheme.typography.titleLarge)
-                Text(entry.era,style=MaterialTheme.typography.bodySmall)
-                Text("Ver jogo →",color=MaterialTheme.colorScheme.primary,style=MaterialTheme.typography.labelLarge)
+                val game = vm.catalog.game(entry.gameId)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    game?.let { CoverArt(it, Modifier.size(64.dp, 84.dp)) }
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(entry.era, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                        Text(entry.name, style = MaterialTheme.typography.titleLarge)
+                        if (game != null) Text("${game.year} · ${game.platform}", style = MaterialTheme.typography.bodySmall)
+                    }
+                    Text("›", color = MaterialTheme.colorScheme.primary)
+                }
             }
         }
     }
@@ -60,6 +67,8 @@ private val atlasPages = mapOf(
     "links-awakening-remake" to "links-awakening-switch",
     "alb-w" to "a-link-between-worlds",
     "oracle-ages" to "oracle-of-ages",
+    "oracle-seasons" to "oracle-of-seasons",
+    "phantom-hourglass" to "phantom-hourglass",
 )
 
 private fun mapUrl(gameId: String): String {

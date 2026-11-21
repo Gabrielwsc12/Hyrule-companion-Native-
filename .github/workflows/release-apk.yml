@@ -67,12 +67,13 @@ jobs:
           else
             gh release create "$GITHUB_REF_NAME" "$ASSET" \
               --title "Hyrule Companion ${HC_VERSION_NAME}" \
-              --notes "Nova versão do Hyrule Companion: melhorias e correções."
+              --notes-file app/src/main/assets/release-notes.txt
           fi
           echo "HC_APK_URL=https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/${ASSET}" >> "$GITHUB_ENV"
       - name: Notify devices through Supabase version catalogue
         env:
           HC_SUPABASE_URL: https://kramrknuxdkwxusskmrv.supabase.co
           HC_SUPABASE_SECRET_KEY: ${{ secrets.HC_SUPABASE_SECRET_KEY }}
-          HC_RELEASE_NOTES: "Nova versão do Hyrule Companion: melhorias e correções."
-        run: python3 .github/scripts/announce_release.py
+        run: |
+          export HC_RELEASE_NOTES="$(cat app/src/main/assets/release-notes.txt)"
+          python3 .github/scripts/announce_release.py
