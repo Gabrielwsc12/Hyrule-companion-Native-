@@ -1,5 +1,6 @@
 package com.hyrulecompanion.app.ui
 
+import androidx.compose.foundation.selection.toggleable
 import android.Manifest
 import android.os.Build
 import androidx.compose.ui.platform.LocalContext
@@ -34,16 +35,17 @@ import com.hyrulecompanion.app.MuralOptions
 import com.hyrulecompanion.app.data.*
 import java.time.LocalDate
 
-@Composable private fun Avatar(value:String,modifier:Modifier=Modifier){
+@Composable private fun Avatar(value:String,reduceMotion:Boolean,modifier:Modifier=Modifier){
     val context = LocalContext.current
-    val request = remember(value, context) {
+    val request = remember(value, context, reduceMotion) {
         val bytes = runCatching {
             Base64.decode(value.substringAfter("base64,", ""), Base64.DEFAULT)
         }.getOrNull()?.takeIf { it.isNotEmpty() }
         bytes?.let { image ->
             coil.request.ImageRequest.Builder(context).data(image).apply {
                 if (image.size >= 6 && String(image, 0, 3, Charsets.US_ASCII) == "GIF") {
-                    if (Build.VERSION.SDK_INT >= 28) decoderFactory(coil.decode.ImageDecoderDecoder.Factory())
+                    if (reduceMotion) decoderFactory(coil.decode.BitmapFactoryDecoder.Factory())
+                    else if (Build.VERSION.SDK_INT >= 28) decoderFactory(coil.decode.ImageDecoderDecoder.Factory())
                     else decoderFactory(coil.decode.GifDecoder.Factory())
                 }
             }.build()
@@ -70,7 +72,7 @@ import java.time.LocalDate
         item {ScreenTitle("Meu Perfil","Seu registro como aventureiro de Hyrule","♜")}
         item {ParchmentCard {
             Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(16.dp)){
-                Avatar(prefs.avatar,Modifier.size(86.dp))
+                Avatar(prefs.avatar,prefs.reduceMotion,Modifier.size(86.dp))
                 Column(Modifier.weight(1f)){
                     Text("Herói de Hyrule",style=MaterialTheme.typography.titleLarge)
                     Text("Explorador em treinamento")
@@ -149,7 +151,7 @@ import java.time.LocalDate
             }
         } else {
             Text("Conectado como ${session.email}",fontWeight=FontWeight.SemiBold)
-            Text("Última sincronização: ${vm.repo.lastCloudSync().ifBlank { "Ainda não sincronizado" }}",style=MaterialTheme.typography.bodySmall)
+            Text(syncStatus(vm.lastSync),style=MaterialTheme.typography.bodySmall)
             Button(onClick={vm.sync()},enabled=!vm.busy,modifier=Modifier.fillMaxWidth()){
                 Icon(Icons.Default.CloudSync,contentDescription=null)
                 Spacer(Modifier.width(8.dp))
@@ -180,13 +182,36 @@ import java.time.LocalDate
         item {ScreenTitle("Configurações","Personalize sua experiência em Hyrule","⚙")}
         item {ParchmentCard {
             SmallHeading("Aparência")
-            Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
-                FilterChip(selected=prefs.theme=="light",onClick={vm.savePreferences(prefs.copy(theme="light"))},label={Text("☀ Modo claro")})
-                FilterChip(selected=prefs.theme=="dark",onClick={vm.savePreferences(prefs.copy(theme="dark"))},label={Text("☾ Modo escuro")})
+            ChoiceSetting("Tema do aplicativo", prefs.theme, listOf("system" to "Usar tema do aparelho", "light" to "Claro", "dark" to "Escuro")) {
+                vm.savePreferences(prefs.copy(theme=it))
+            }
+            Text("O texto acompanha o tamanho escolhido nas configurações do Android.")
+            TextButton(onClick={
+                val intent = android.content.Intent(android.provider.Settings.ACTION_DISPLAY_SETTINGS)
+                try {
+                    context.startActivity(intent)
+                } catch (_: android.content.ActivityNotFoundException) {
+                    vm.notifyMessage("Abra as configurações de tela do Android para ajustar o tamanho da fonte.")
+                }
+            }) { Text("Ajustar tamanho do texto no Android") }
+            SettingSwitch("Reduzir animações", "Pula a introdução e mostra o primeiro quadro do GIF de perfil.", prefs.reduceMotion) {
+                vm.savePreferences(prefs.copy(reduceMotion=it))
+            }
+        }}
+        item {ParchmentCard {
+            SmallHeading("Durante o jogo")
+            SettingSwitch("Proteção contra spoilers", "Revele cada dica, solução e recompensa quando quiser.", prefs.hideSpoilers) {
+                vm.savePreferences(prefs.copy(hideSpoilers=it))
+            }
+            SettingSwitch("Manter tela ligada", "Enquanto você consulta os guias, as dungeons ou o Atlas no aplicativo.", prefs.keepAwake) {
+                vm.savePreferences(prefs.copy(keepAwake=it))
             }
         }}
         item {ParchmentCard {
             SmallHeading("Abertura do aplicativo")
+            ChoiceSetting("Tela ao abrir", prefs.startScreen, listOf("home" to "Início", "library" to "Biblioteca", "atlas" to "Atlas", "last" to "Última seção usada")) {
+                vm.savePreferences(prefs.copy(startScreen=it))
+            }
             Row(verticalAlignment=Alignment.CenterVertically){
                 Column(Modifier.weight(1f)){Text("Pular a introdução ao abrir o app");Text("Iniciar diretamente na tela principal",style=MaterialTheme.typography.bodySmall)}
                 Switch(checked=prefs.introSkip,onCheckedChange={vm.savePreferences(prefs.copy(introSkip=it))})
@@ -199,7 +224,14 @@ import java.time.LocalDate
             Text("As preferências serão aplicadas na próxima abertura.",style=MaterialTheme.typography.labelSmall)
         }}
         item {ParchmentCard {
-            SmallHeading("Backup e restauração")
+            SmallHeading("Backup e sincronização")
+            Text(if (vm.session == null) "Modo visitante · sua jornada é salva neste aparelho." else "Conta conectada: ${vm.session?.email}")
+            if (vm.session != null) {
+                Text(syncStatus(vm.lastSync))
+                Button(onClick={vm.sync()},enabled=!vm.busy && vm.pendingCloud == null) { Text("Sincronizar agora") }
+            }
+            val lastBackup = vm.lastBackup
+            Text(if (lastBackup.isNullOrBlank()) "Nenhuma exportação registrada neste aparelho." else "Último backup exportado: ${localTimestamp(lastBackup)}")
             Text("Os arquivos JSON são compatíveis com o formato de backup da Web Edition 1.16.6 (schema 13).")
             Button(onClick={exportLauncher.launch("backup-jornada-hyrule-${LocalDate.now()}.json")},modifier=Modifier.fillMaxWidth()) {Text("⬇ Exportar backup JSON")}
             OutlinedButton(onClick={importLauncher.launch(arrayOf("application/json","text/plain","application/octet-stream"))},modifier=Modifier.fillMaxWidth()){Text("⬆ Restaurar backup JSON")}
@@ -250,4 +282,32 @@ import java.time.LocalDate
         }}
     }
     if(importUri!=null)AlertDialog(onDismissRequest={importUri=null},title={Text("Restaurar backup?")},text={Text("Os dados atuais deste dispositivo serão substituídos pelos do arquivo. Se necessário, faça um backup antes de prosseguir.")},confirmButton={TextButton(onClick={importUri?.let(vm::importBackup);importUri=null}){Text("Restaurar")}},dismissButton={TextButton(onClick={importUri=null}){Text("Cancelar")}})
+}
+
+private fun localTimestamp(value: String): String = runCatching {
+    val local = java.time.OffsetDateTime.parse(value).atZoneSameInstant(java.time.ZoneId.systemDefault())
+    val format = if (local.toLocalDate() == LocalDate.now()) "'hoje às' HH:mm" else "dd/MM/yyyy 'às' HH:mm"
+    local.format(java.time.format.DateTimeFormatter.ofPattern(format))
+}.getOrDefault(value)
+
+private fun syncStatus(timestamp: String) = if (timestamp.isBlank()) "Aguardando a primeira sincronização."
+    else "Última sincronização: ${localTimestamp(timestamp)}"
+
+@Composable private fun ChoiceSetting(title: String, value: String, choices: List<Pair<String,String>>, onChange: (String)->Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Text(title, style=MaterialTheme.typography.labelLarge)
+    Box {
+        OutlinedButton(onClick={expanded=true}) { Text(choices.find { it.first==value }?.second ?: choices.first().second) }
+        DropdownMenu(expanded=expanded,onDismissRequest={expanded=false}) {
+            choices.forEach { (id,label) -> DropdownMenuItem(text={Text(label)},onClick={expanded=false; onChange(id)}) }
+        }
+    }
+}
+
+@Composable private fun SettingSwitch(title:String, description:String, checked:Boolean, onChange:(Boolean)->Unit) {
+    Row(Modifier.fillMaxWidth().toggleable(value=checked,role=androidx.compose.ui.semantics.Role.Switch,onValueChange=onChange),
+        verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.weight(1f)) { Text(title); Text(description,style=MaterialTheme.typography.bodySmall) }
+        Switch(checked=checked,onCheckedChange=null)
+    }
 }

@@ -20,12 +20,21 @@ O **Hyrule Companion** é um guia de bolso para Android e um diário de jogo par
 
 - **Meu Perfil.** Reúna os jogos iniciados e concluídos, consulte datas e notas e personalize seu avatar com uma foto ou um GIF animado de até 1,8 MB. O mural transforma sua jornada em um JPEG para guardar ou compartilhar. Escolha o nome do herói, um dos seis temas, o formato retrato ou paisagem e se deseja incluir as capas.
 - **Conta e Sincronização.** Você pode começar como visitante e jogar com o progresso salvo no aparelho. O catálogo, os guias e os mapas locais ficam disponíveis offline. Com uma conta opcional, é possível sincronizar a jornada entre dispositivos. Se já houver dados na nuvem, o app permite recuperá-los, enviar a jornada local ou decidir depois.
-- **Configurações e backup.** Escolha o tema claro ou escuro e ajuste a introdução e sua música. Exporte um backup JSON para guardar o progresso ou restaure um backup compatível, inclusive da edição web.
+- **Configurações e backup.** Escolha o tema do aparelho, claro ou escuro e a tela de abertura. Ajuste a introdução, sua música e o movimento do avatar. Durante a partida, você pode ocultar spoilers e manter a tela ligada nos guias e mapas. Confira quando ocorreu a última sincronização ou exportação. Exporte um backup JSON para guardar o progresso ou restaure um backup compatível, inclusive da edição web.
 - **Atualizações.** O aplicativo verifica se há uma versão mais recente ao abrir. Você também pode conferir manualmente nas Configurações e ativar avisos em segundo plano. Quando houver atualização, o app apresenta as novidades e o acesso ao APK.
 
 Migração nativa do arquivo original `hyrule-companion-apk.zip`, **Web Edition 1.16.6**, sem WebView, Capacitor, HTML ou JavaScript em tempo de execução. Mantém o mesmo identificador de aplicativo (`com.hyrulecompanion.app`), o projeto Supabase e a estrutura **schema 13** de dados. A migração preserva o texto editorial original dos 62 jogos, 58 guias, 12 mapas, 5 dungeons e 5 ramificações da cronologia.
 
 ## Novidades
+
+### 1.16.10-native
+
+- **Tema do aplicativo.** Em Configurações → Aparência, escolha **Usar tema do aparelho**, **Claro** ou **Escuro**. Novas instalações acompanham o Android por padrão.
+- **Proteção contra spoilers.** A proteção começa ativada. Nos guias e nas dungeons, toque em **Revelar dica** ou no botão da recompensa, da sala ou do chefe para abrir só aquele trecho. A opção fica em **Durante o jogo**.
+- **Backup e sincronização.** Confira a data da última exportação JSON registrada neste aparelho e a última sincronização da conta em horário local. Use **Sincronizar agora** ou **Exportar backup JSON** na mesma tela.
+- **Acessibilidade.** Os textos acompanham a escala de fonte do Android. **Reduzir animações** pula a introdução e exibe o primeiro quadro do GIF de perfil.
+- **Tela ao abrir.** Escolha Início, Biblioteca, Atlas ou Última seção usada. A última seção é lembrada neste aparelho.
+- **Tela ligada durante a consulta.** Ative essa opção para ler guias e explorar mapas com o celular ao lado do controle. Ela vem desligada e vale para as áreas de Guias e Atlas enquanto abertas no app.
 
 ### 1.16.9-native
 
@@ -119,4 +128,4 @@ UPDATES-README.md              — instalação, assinatura e publicação de no
 
 ## Testes e limitações da entrega
 
-Na preparação da 1.16.9-native, o APK de depuração compilou com `gradle :app:assembleDebug`. Passaram as verificações do catálogo, da configuração de atualização e do anúncio de versão. A animação dos GIFs e a navegação por toque ainda aguardam validação em aparelho Android.
+Na 1.16.10-native foram verificadas as preferências de instalação nova e a leitura das opções gravadas pela 1.16.9. O teste de persistência também conferiu a exportação das novas opções no backup JSON e sua recuperação a partir de um snapshot. Os testes de catálogo e das rotinas de atualização e anúncio passaram. O comportamento visual, a suspensão da tela e o fluxo de instalação sobre o APK oficial aguardam validação em aparelho físico.

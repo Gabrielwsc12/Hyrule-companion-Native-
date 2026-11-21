@@ -68,12 +68,25 @@ private val tabs=listOf(
 @Composable fun HyruleApp(vm:HyruleViewModel) {
     val revision=vm.revision
     val prefs=vm.repo.preferences()
-    var screen by rememberSaveable { mutableStateOf("home") }
+    var screen by rememberSaveable {
+        val target = if (prefs.startScreen == "last") vm.repo.raw("last-section") else prefs.startScreen
+        mutableStateOf(tabs.find { it.id == target }?.id ?: "home")
+    }
+    LaunchedEffect(screen) {
+        if (tabs.any { it.id == screen }) vm.repo.storeRaw("last-section", screen)
+    }
     var gameId by rememberSaveable { mutableStateOf<String?>(null) }
     var guideGame by rememberSaveable { mutableStateOf("") }
     var guideSequence by rememberSaveable { mutableIntStateOf(0) }
-    var intro by remember { mutableStateOf(!prefs.introSkip) }
+    var intro by remember { mutableStateOf(!prefs.introSkip && !prefs.reduceMotion) }
     var previous by remember { mutableStateOf("library") }
+    val view = androidx.compose.ui.platform.LocalView.current
+    val awake = prefs.keepAwake && !intro && gameId == null && screen in listOf("guides", "atlas")
+    DisposableEffect(view, awake) {
+        val original = view.keepScreenOn
+        if (awake) view.keepScreenOn = true
+        onDispose { if (awake) view.keepScreenOn = original }
+    }
     val online=isOnline()
     val lifecycleOwner = LocalLifecycleOwner.current
     val appContext = LocalContext.current
@@ -97,7 +110,7 @@ private val tabs=listOf(
     BackHandler(gameId!=null || screen=="settings") {
         if(gameId!=null){gameId=null;screen=previous}else screen="profile"
     }
-    HyruleTheme(prefs.theme=="dark") {
+    HyruleTheme(prefs.theme=="dark" || (prefs.theme=="system" && androidx.compose.foundation.isSystemInDarkTheme())) {
         if(intro) {
             IntroScreen(prefs.introMusic,onFinish={intro=false})
         } else {
@@ -140,7 +153,11 @@ private val tabs=listOf(
                         screen=="timeline" -> TimelineScreen(vm,onGame={previous="timeline";gameId=it})
                         screen=="atlas" -> AtlasScreen(vm,atlasGame,onGame={previous="atlas";gameId=it})
                         screen=="library" -> LibraryScreen(vm,onGame={previous="library";gameId=it})
-                        screen=="guides" -> key(guideSequence){GuidesScreen(vm,guideGame,onGame={previous="guides";gameId=it})}
+                        screen=="guides" -> key(guideSequence){
+                            CompositionLocalProvider(LocalSpoilerProtection provides prefs.hideSpoilers) {
+                                GuidesScreen(vm,guideGame,onGame={previous="guides";gameId=it})
+                            }
+                        }
                         screen=="profile" -> ProfileScreen(vm,openAccount=openAccount,onSettings={screen="settings"})
                         screen=="settings" -> SettingsScreen(vm,onBack={screen="profile"})
                     }

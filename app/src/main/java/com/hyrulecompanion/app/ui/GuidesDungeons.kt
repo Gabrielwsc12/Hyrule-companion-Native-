@@ -21,6 +21,20 @@ import androidx.compose.ui.unit.dp
 import com.hyrulecompanion.app.HyruleViewModel
 import com.hyrulecompanion.app.data.*
 
+internal val LocalSpoilerProtection = compositionLocalOf { true }
+
+@Composable private fun Spoiler(label: String = "Revelar dica", content: @Composable () -> Unit) {
+    if (!LocalSpoilerProtection.current) {
+        Column { content() }
+        return
+    }
+    var visible by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    Column {
+        TextButton(onClick={visible = !visible}) { Text(if (visible) "Ocultar detalhe" else label) }
+        if (visible) content()
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun GuidesScreen(vm:HyruleViewModel,initialGameFilter:String,onGame:(String)->Unit) {
     val revision=vm.revision
@@ -38,12 +52,12 @@ import com.hyrulecompanion.app.data.*
     }
     if(openedGuide!=null) {
         val guide=vm.catalog.guides.find{it.id==openedGuide}
-        if(guide!=null) GuideReader(vm,guide,onBack={openedGuide=null},onGame=onGame)
+        if(guide!=null) key(guide.id) { GuideReader(vm,guide,onBack={openedGuide=null},onGame=onGame) }
         return
     }
     if(openedDungeon!=null) {
         val dungeon=vm.catalog.dungeons.find{it.id==openedDungeon}
-        if(dungeon!=null) DungeonReader(vm,dungeon,onBack={openedDungeon=null})
+        if(dungeon!=null) key(dungeon.id) { DungeonReader(vm,dungeon,onBack={openedDungeon=null}) }
         return
     }
     if(dungeonList) {
@@ -98,7 +112,7 @@ import com.hyrulecompanion.app.data.*
                     }
                     IconButton(onClick={vm.favorite(guide.id)}) {Icon(if(vm.repo.isFavorite(guide.id))Icons.Default.Favorite else Icons.Default.FavoriteBorder,contentDescription="Favorito",tint=MaterialTheme.colorScheme.secondary)}
                 }
-                Text(guide.summary,style=MaterialTheme.typography.bodyMedium)
+                if (!LocalSpoilerProtection.current) Text(guide.summary,style=MaterialTheme.typography.bodyMedium)
                 LinearProgressIndicator(progress={if(guide.steps.isEmpty())0f else checked.size.toFloat()/guide.steps.size},modifier=Modifier.fillMaxWidth())
                 Text("${checked.size} / ${guide.steps.size} etapas concluídas",style=MaterialTheme.typography.labelSmall)
             }
@@ -116,12 +130,12 @@ import com.hyrulecompanion.app.data.*
         item { TextButton(onClick=onBack){Icon(Icons.Default.ArrowBack,null);Text("Voltar aos guias")} }
         item { ScreenTitle(guide.title,"${guide.category} • ${guide.difficulty} • ${guide.area}","✧") }
         item {ParchmentCard {
-            Text(guide.summary)
+            Spoiler("Revelar resumo") { Text(guide.summary) }
             Text("Jogo: ${vm.catalog.game(guide.gameId)?.name ?: guide.gameId}",style=MaterialTheme.typography.labelLarge)
             if(guide.time.isNotEmpty())Text("Tempo estimado: ${guide.time}")
-            if(guide.needs.isNotEmpty())Text("Preparação: ${guide.needs}")
-            if(guide.reward.isNotEmpty())Text("Recompensa: ${guide.reward}")
-            if(guide.scope.isNotEmpty())Text("Escopo: ${guide.scope}")
+            if(guide.needs.isNotEmpty())Spoiler("Revelar preparação") { Text(guide.needs) }
+            if(guide.reward.isNotEmpty())Spoiler("Revelar recompensa") { Text(guide.reward) }
+            if(guide.scope.isNotEmpty())Spoiler("Revelar escopo") { Text(guide.scope) }
             LinearProgressIndicator(progress={if(guide.steps.isEmpty())0f else checked.size.toFloat()/guide.steps.size},modifier=Modifier.fillMaxWidth())
             Text("${checked.size} / ${guide.steps.size} etapas")
             OutlinedButton(onClick={vm.favorite(guide.id)}){Text(if(vm.repo.isFavorite(guide.id))"★ Remover favorito" else "☆ Adicionar favorito")}
@@ -131,7 +145,7 @@ import com.hyrulecompanion.app.data.*
             ParchmentCard(Modifier.fillMaxWidth().clickable{vm.toggleChecked(K_GUIDE_PROGRESS,guide.id,index)}) {
                 Row(verticalAlignment=Alignment.Top,horizontalArrangement=Arrangement.spacedBy(8.dp)){
                     Checkbox(checked=index in checked,onCheckedChange={vm.toggleChecked(K_GUIDE_PROGRESS,guide.id,index)})
-                    Column(Modifier.weight(1f)){Text("Etapa ${index+1}",style=MaterialTheme.typography.labelLarge);Text(step)}
+                    Column(Modifier.weight(1f)){Text("Etapa ${index+1}",style=MaterialTheme.typography.labelLarge);Spoiler { Text(step) }}
                 }
             }
         }
@@ -140,13 +154,13 @@ import com.hyrulecompanion.app.data.*
             ParchmentCard(Modifier.clickable { vm.toggleChecked(K_GUIDE_COMPLETION,guide.id,index) }) {
                 Row(verticalAlignment=Alignment.CenterVertically){
                     Checkbox(index in completed,onCheckedChange={vm.toggleChecked(K_GUIDE_COMPLETION,guide.id,index)})
-                    Text(task,Modifier.weight(1f))
+                    Spoiler("Revelar objetivo") { Text(task) }
                 }
             }
         }
         if(guide.sections.isNotEmpty())item { SmallHeading("Informações adicionais") }
-        items(guide.sections){s->ParchmentCard {SmallHeading(s.title);s.items.forEach {Text("• $it")} }}
-        if(guide.tip.isNotEmpty())item{ParchmentCard {SmallHeading("Dica do guia");Text(guide.tip)}}
+        items(guide.sections){s->ParchmentCard {Spoiler("Revelar detalhes") { SmallHeading(s.title);s.items.forEach {Text("• $it")} } }}
+        if(guide.tip.isNotEmpty())item{ParchmentCard {SmallHeading("Dica do guia");Spoiler { Text(guide.tip) }}}
         item {ParchmentCard {
             SmallHeading("Minhas anotações")
             OutlinedTextField(notes,{notes=it.take(10000)},modifier=Modifier.fillMaxWidth(),minLines=4,maxLines=8,label={Text("Escreva lembretes desta aventura")})
@@ -168,8 +182,8 @@ import com.hyrulecompanion.app.data.*
             ParchmentCard(Modifier.clickable{onOpen(d.id)}){
                 SmallHeading(d.name)
                 Text("${vm.catalog.game(d.gameId)?.name ?: d.gameId} • ${d.region}")
-                Text(d.summary)
-                Text("Chefe: ${d.boss}  ·  Item: ${d.item}",style=MaterialTheme.typography.labelLarge)
+                Spoiler("Revelar resumo") { Text(d.summary) }
+                Spoiler("Revelar chefe e item") { Text("${d.boss} · ${d.item}") }
                 val total=d.rooms.size+d.checklist.size
                 LinearProgressIndicator(progress={if(total==0)0f else checked.size.toFloat()/total},modifier=Modifier.fillMaxWidth())
                 Text("${checked.size} / $total concluídos",style=MaterialTheme.typography.labelSmall)
@@ -187,9 +201,9 @@ import com.hyrulecompanion.app.data.*
         item{TextButton(onClick=onBack){Text("← Enciclopédia")}}
         item{ScreenTitle(d.name,"${d.region} • ${d.difficulty}","▣")}
         item {ParchmentCard {
-            Text(d.summary)
-            Text("Era: ${d.era}  •  Item principal: ${d.item}",style=MaterialTheme.typography.bodyMedium)
-            Text("Chefe final: ${d.boss}",fontWeight=FontWeight.SemiBold)
+            Spoiler("Revelar resumo") { Text(d.summary) }
+            Text("Era: ${d.era}"); Spoiler("Revelar item principal") { Text(d.item) }
+            Spoiler("Revelar chefe") { Text(d.boss) }
         }}
         item{SmallHeading("Rota pela dungeon")}
         itemsIndexed(d.rooms){index,room->
@@ -197,33 +211,37 @@ import com.hyrulecompanion.app.data.*
             ParchmentCard(Modifier.clickable { vm.toggleChecked(K_DUNGEON_PROGRESS,d.id,index) }) {
                 Row(verticalAlignment=Alignment.CenterVertically){
                     Checkbox(index in progress,onCheckedChange={vm.toggleChecked(K_DUNGEON_PROGRESS,d.id,index)})
-                    Text("${index+1}. ${room.title}",style=MaterialTheme.typography.titleMedium,modifier=Modifier.weight(1f))
+                    Text(if (LocalSpoilerProtection.current) "Sala ${index+1}" else "${index+1}. ${room.title}",style=MaterialTheme.typography.titleMedium,modifier=Modifier.weight(1f))
                 }
-                Text(room.introduction)
-                if(room.tip.isNotBlank())Text("Orientação: ${room.tip}")
-                if(room.reward.isNotBlank())Text("Objetivo: ${room.reward}")
-                if(detail!=null){
-                    Text("Andar: ${detail.floor}",style=MaterialTheme.typography.labelLarge)
-                    Text("Objetivo: ${detail.objective}")
-                    Text("Puzzle: ${detail.puzzle}")
-                    Text("Recompensas: ${detail.loot}")
-                    Text("Atenção: ${detail.hazard}")
+                Spoiler("Revelar orientação da sala") {
+                    if (LocalSpoilerProtection.current) SmallHeading(room.title)
+                    Text(room.introduction)
+                    if (room.tip.isNotBlank()) Text(room.tip)
+                    if (room.reward.isNotBlank()) Text("Objetivo: ${room.reward}")
+                    if (detail != null) {
+                        Text("Andar: ${detail.floor}")
+                        Text("Objetivo: ${detail.objective}")
+                        Text("Atenção: ${detail.hazard}")
+                    }
+                    d.enemies.getOrNull(index)?.let { Text("Inimigos: $it") }
                 }
-                d.enemies.getOrNull(index)?.let{Text("Inimigos: $it",style=MaterialTheme.typography.bodySmall)}
+                if (detail != null) {
+                    Spoiler("Revelar solução do puzzle") { Text(detail.puzzle) }
+                    Spoiler("Revelar recompensas") { Text(detail.loot) }
+                }
             }
         }
         item{SmallHeading("Itens e tesouros")}
         itemsIndexed(d.items){index,item->ParchmentCard(Modifier.clickable{vm.toggleChecked(K_DUNGEON_ITEMS,d.id,index)}){
-            Row(verticalAlignment=Alignment.CenterVertically){Checkbox(index in items,onCheckedChange={vm.toggleChecked(K_DUNGEON_ITEMS,d.id,index)});Text(item.name,style=MaterialTheme.typography.titleMedium)}
-            Text(item.description)
+            Row(verticalAlignment=Alignment.CenterVertically){Checkbox(index in items,onCheckedChange={vm.toggleChecked(K_DUNGEON_ITEMS,d.id,index)});Spoiler("Revelar tesouro") { Text(item.name,style=MaterialTheme.typography.titleMedium); Text(item.description) }}
         }}
         item{SmallHeading("Checklist final")}
         itemsIndexed(d.checklist){index,task->
             ParchmentCard(Modifier.clickable{vm.toggleChecked(K_DUNGEON_PROGRESS,d.id,d.rooms.size+index)}) {
-                Row(verticalAlignment=Alignment.CenterVertically){Checkbox(d.rooms.size+index in progress,onCheckedChange={vm.toggleChecked(K_DUNGEON_PROGRESS,d.id,d.rooms.size+index)});Text(task,Modifier.weight(1f))}
+                Row(verticalAlignment=Alignment.CenterVertically){Checkbox(d.rooms.size+index in progress,onCheckedChange={vm.toggleChecked(K_DUNGEON_PROGRESS,d.id,d.rooms.size+index)});Spoiler("Revelar objetivo") { Text(task) }}
             }
         }
-        item{ParchmentCard {SmallHeading("Chefe: ${d.boss}");Text(d.bossGuide)}}
+        item{ParchmentCard {Spoiler("Revelar estratégia do chefe") { SmallHeading(d.boss);Text(d.bossGuide) }}}
         item{OutlinedButton(onClick={showReset=true},modifier=Modifier.fillMaxWidth()){Text("Reiniciar progresso da dungeon")}}
     }
     if(showReset)AlertDialog(onDismissRequest={showReset=false},title={Text("Reiniciar dungeon?")},text={Text("Todas as salas e todos os itens serão desmarcados.")},confirmButton={TextButton(onClick={vm.clearChecked(K_DUNGEON_PROGRESS,d.id);vm.clearChecked(K_DUNGEON_ITEMS,d.id);showReset=false}){Text("Reiniciar")}},dismissButton={TextButton(onClick={showReset=false}){Text("Cancelar")}})

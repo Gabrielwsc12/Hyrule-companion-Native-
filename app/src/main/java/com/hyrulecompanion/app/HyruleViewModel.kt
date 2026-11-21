@@ -46,6 +46,16 @@ class HyruleViewModel(application: Application) : AndroidViewModel(application) 
     var showUpdateDialog by mutableStateOf(false)
         private set
 
+    var lastSync by mutableStateOf(repo.lastCloudSync())
+        private set
+    var lastBackup by mutableStateOf(repo.raw("last-backup-export"))
+        private set
+
+    private fun recordSync(stamp: String) {
+        repo.saveLastCloudSync(stamp)
+        lastSync = stamp
+    }
+
     var revision by mutableIntStateOf(0)
         private set
     var session by mutableStateOf(loadSession())
@@ -141,6 +151,9 @@ class HyruleViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO) { getApplication<Application>().contentResolver.openOutputStream(uri)?.use { it.write(repo.exportBackup().toByteArray(Charsets.UTF_8)) } ?: error("Arquivo indisponível") }
+                val stamp = OffsetDateTime.now().toString()
+                repo.storeRaw("last-backup-export", stamp)
+                lastBackup = stamp
                 message="Backup JSON exportado com sucesso."
             } catch (e:Exception) { message=e.message ?: "Falha ao salvar backup." }
         }
@@ -192,7 +205,7 @@ class HyruleViewModel(application: Application) : AndroidViewModel(application) 
                 pendingCloud=CloudDecision(remote,true)
                 message="Sua conta já possui uma jornada na nuvem. Escolha qual versão manter."
             } else {
-                val stamp=supabase.push(s,repo.snapshot());repo.saveLastCloudSync(stamp)
+                val stamp=supabase.push(s,repo.snapshot());recordSync(stamp)
                 message="Sua jornada local foi salva na nuvem."
             }
         } catch(e: Exception) { message=e.message ?: "Falha ao sincronizar." }
@@ -218,7 +231,7 @@ class HyruleViewModel(application: Application) : AndroidViewModel(application) 
                     if(!automatic) message="A nuvem tem uma versão diferente. Escolha qual manter."
                 } else {
                     val stamp=supabase.push(s,repo.snapshot())
-                    repo.saveLastCloudSync(stamp)
+                    recordSync(stamp)
                     if(!automatic) message="Jornada sincronizada com sucesso."
                 }
             } catch(e: Exception) { message=e.message ?: "Não foi possível sincronizar." }
@@ -233,13 +246,13 @@ class HyruleViewModel(application: Application) : AndroidViewModel(application) 
             try {
                 if(useRemote){
                     repo.applySnapshot(decision.remote.payload)
-                    repo.saveLastCloudSync(decision.remote.updatedAt)
+                    recordSync(decision.remote.updatedAt)
                     notifyChange(sync=false)
                     message="Jornada da nuvem recuperada."
                 } else {
                     val s=freshSession()
                     val stamp=supabase.push(s,repo.snapshot())
-                    repo.saveLastCloudSync(stamp)
+                    recordSync(stamp)
                     message="Jornada local enviada para a nuvem."
                 }
             } catch(e:Exception){ message=e.message ?: "Falha ao sincronizar." }
@@ -249,7 +262,9 @@ class HyruleViewModel(application: Application) : AndroidViewModel(application) 
     fun cancelCloudDecision() { pendingCloud=null;message="Sincronização adiada. Seus dados locais foram preservados." }
     fun signOut() {
         val prev=session
+        syncJob?.cancel()
         session=null;repo.erase(K_SESSION)
+        recordSync("")
         message="Conta desconectada. Modo visitante disponível."
         if(prev != null) viewModelScope.launch { runCatching { supabase.signOut(prev) } }
     }

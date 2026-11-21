@@ -26,7 +26,9 @@ val SYNC_KEYS = listOf(K_PROGRESS, K_GUIDE_PROGRESS, K_GUIDE_COMPLETION, K_GUIDE
 val GAME_STATUSES = listOf("Não iniciado", "Em andamento", "Concluído", "100%")
 
 data class GameProgress(val status: String = "Não iniciado", val startDate: String = "", val finishDate: String = "", val notes: String = "")
-data class Preferences(val theme: String = "light", val avatar: String = "", val introSkip: Boolean = false, val introMusic: Boolean = true)
+data class Preferences(val theme: String = "system", val avatar: String = "", val introSkip: Boolean = false, val introMusic: Boolean = true,
+    val hideSpoilers: Boolean = true, val reduceMotion: Boolean = false,
+    val startScreen: String = "home", val keepAwake: Boolean = false)
 
 class JourneyRepository(private val context: Context, val catalog: Catalog) {
     // Only app-private storage; legacy localStorage uses the same literal keys, but is a separate origin.
@@ -95,9 +97,16 @@ class JourneyRepository(private val context: Context, val catalog: Catalog) {
     fun saveGuideNote(id: String, note: String) { val data=obj(K_GUIDE_NOTES);data.put(id,note.take(10000));store(K_GUIDE_NOTES,data) }
     fun preferences(): Preferences {
         val o=obj(K_PREFS)
-        return Preferences(o.optString("theme","light"),o.optString("avatar",""),o.optBoolean("introSkip",false),o.optBoolean("introMusic",true))
+        return Preferences(o.optString("theme","system"),o.optString("avatar",""),o.optBoolean("introSkip",false),o.optBoolean("introMusic",true),
+            o.optBoolean("hideSpoilers",true), o.optBoolean("reduceMotion",false),
+            o.optString("startScreen","home"), o.optBoolean("keepAwake",false))
     }
-    fun savePreferences(value: Preferences) { val o = obj(K_PREFS); o.put("theme",value.theme);o.put("avatar",value.avatar);o.put("introSkip",value.introSkip);o.put("introMusic",value.introMusic);store(K_PREFS,o) }
+    fun savePreferences(value: Preferences) { val o = obj(K_PREFS); o.put("theme",value.theme);o.put("avatar",value.avatar);o.put("introSkip",value.introSkip);o.put("introMusic",value.introMusic);o.put("hideSpoilers",value.hideSpoilers)
+        o.put("reduceMotion",value.reduceMotion)
+        o.put("startScreen",value.startScreen)
+        o.put("keepAwake",value.keepAwake)
+        store(K_PREFS,o)
+    }
     fun avatarImage(uri: Uri): String {
         val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
         require(mime in listOf("image/png", "image/jpeg", "image/webp", "image/gif")) { "Use uma imagem PNG, JPG, WebP ou GIF." }
