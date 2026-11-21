@@ -2,20 +2,31 @@
 
 Migração nativa do arquivo original `hyrule-companion-apk.zip`, **Web Edition 1.16.6**, sem WebView, Capacitor, HTML ou JavaScript em tempo de execução. Mantém o mesmo identificador de aplicativo (`com.hyrulecompanion.app`), o projeto Supabase e a estrutura **schema 13** de dados. A migração preserva o texto editorial original dos 62 jogos, 58 guias, 12 mapas, 5 dungeons e 5 ramificações da cronologia.
 
-## Novidade — 1.16.7-native: avisos de atualização
+## Novidades
+
+### 1.16.9-native
+
+- **Início.** O cartão **Último Zelda concluído** mostra a capa do jogo com a data de conclusão mais recente. Jogos com status **Concluído** ou **100%** entram na seleção. Toque no cartão para abrir o jogo. Quem ainda não tem uma conclusão datada encontra um atalho para a Biblioteca.
+- **Perfil.** Os controles para escolher, trocar e remover a foto ficam junto ao avatar, em **Meu Perfil**. GIFs animados são reproduzidos onde a foto de perfil aparece. O limite por arquivo é de 1,8 MB.
+- **Exportação da jornada.** O mural JPEG ganhou os temas **Grande Mar**, **Montanha da Morte** e **Crepúsculo**. Com Floresta, Noite e Pergaminho, são seis opções para exportar em retrato ou paisagem.
+- **Primeiro acesso.** Um aviso explica que criar conta é opcional. **Criar conta** abre o formulário no Perfil. **Continuar como visitante** permite começar na hora e salvar o progresso no aparelho. A escolha fica registrada para as próximas aberturas.
+- **Conta e Sincronização.** A seção de conta passa a ter esse nome na interface. É onde o jogador entra com sua conta e sincroniza a jornada.
+- **Atlas.** São 14 mapas offline para 12 jogos, com 134 pontos selecionáveis baseados nos mapas do ZeldaCollection. Em *Tears of the Kingdom*, é possível alternar entre céu, superfície e profundezas. Alguns pontos identificam a região ou a entrada do local. O botão **Explorar mapa** abre o mapa interativo completo online. Ao entrar no Atlas pela ficha de um jogo, o mapa correspondente já aparece selecionado.
+
+### Novidade — 1.16.7-native: avisos de atualização
 
 O Hyrule Companion agora inclui verificação automática na abertura, botão de atualização nas Configurações e notificações opcionais em segundo plano. A integração usa a **nova tabela de releases no Supabase existente**, sem alterar a jornada. **Antes de funcionar em produção**, execute `supabase/APP_UPDATES.sql` no SQL Editor e configure o processo de publicação de APK assinado. Veja o guia passo a passo em **[UPDATES-README.md](UPDATES-README.md)**. Atualizações não são instaladas silenciosamente; o usuário confirma.
 
 ## O que foi implementado
 
-- Início: progresso da franquia, TotK em destaque e atalhos.
+- Início: progresso da franquia, último Zelda concluído em destaque e atalhos.
 - Cronologia: cinco ramificações com entradas selecionáveis.
-- Atlas: 12 mapas esquemáticos renderizados com Canvas/Path no Compose, marcos geográficos, localização selecionável, filtros, busca, registro de visitas e três camadas do TotK.
+- Atlas: 14 mapas offline de 12 jogos, marcos geográficos, localização selecionável, filtros, busca, registro de visitas e três camadas do TotK.
 - Biblioteca: 62 registros originais, busca, filtros, capa externa opcional e detalhes do jogo com status, datas e notas.
 - Guias: 58 guias originais, pesquisa, filtros por tipo, jogo, dificuldade e andamento; etapas marcáveis, checklists de 100%, favoritos e notas.
 - Enciclopédia de Dungeons: cinco dungeons, salas, walkthrough, puzzles, inimigos, itens, chefe e checklists persistentes.
 - Perfil: progresso, jornadas iniciadas/concluídas, conta, avatar e mural JPEG desenhado com Android Canvas.
-- Configurações: tema claro/escuro, abertura com Triforce, música original incluída, foto do perfil, backup JSON e restauração.
+- Configurações: tema claro/escuro, abertura com Triforce, música original incluída, backup JSON e restauração.
 - Supabase: criação de conta, entrada, sessão renovável, saída, leitura e upsert em `public.hc_user_data`, resolução explícita de conflito de sincronização.
 - Offline: catálogo e progresso são locais; login/Supabase/capas requerem conexão.
 - Atualizações: consulta de versões no Supabase ao abrir, aviso Compose, botão de download seguro e notificações opcionais via WorkManager.
@@ -69,7 +80,7 @@ Ao entrar numa conta que já possui jornada remota, aparece a opção **Recupera
 
 - **Configurações > Exportar backup JSON:** gera formato com `project`, `version`, `appVersion`, `schemaVersion`, `exportedAt`, `progress`, `guideProgress`, `guideCompletion`, `guideFavorites`, `guideNotes`, `dungeonProgress`, `dungeonItemProgress`, `atlasVisited`, `preferences`.
 - **Configurações > Restaurar backup JSON:** aceita backup da Web Edition e snapshots do Supabase (`schemaVersion=13`). Valida ids e limites dos checklists para backups em formato web.
-- **Perfil > Personalizar e exportar mural:** JPEG gerado por código nativo; suporte a três temas, retrato/paisagem, nome e tentativa de inserir capas existentes. Capas externas podem falhar sem internet; o mural continua sendo gerado com nomes dos jogos.
+- **Perfil > Personalizar e exportar mural:** JPEG gerado por código nativo; suporte a seis temas, retrato/paisagem, nome e tentativa de inserir capas existentes. Capas externas podem falhar sem internet; o mural continua sendo gerado com nomes dos jogos.
 
 ## Estrutura
 
@@ -85,7 +96,7 @@ app/src/main/java/com/hyrulecompanion/app/
   ui/Design.kt                  — tema medieval, cores, cards
   ui/App.kt                     — navegação, estado da conexão, introdução
   ui/HomeLibrary.kt             — início, biblioteca, detalhes
-  ui/TimelineAtlas.kt           — cronologia, mapas Canvas e visitas
+  ui/TimelineAtlas.kt           — cronologia, mapas offline e visitas
   ui/GuidesDungeons.kt          — guias e dungeons
   ui/ProfileSettings.kt         — conta, mural, perfil e configurações
 app/src/main/assets/hyrule_content.json — conteúdo editorial original extraído sem reescrita
@@ -99,6 +110,4 @@ UPDATES-README.md              — instalação, assinatura e publicação de no
 
 ## Testes e limitações da entrega
 
-Foi executado `python3 tools/check_catalog.py`, verificando contagens, referências cruzadas e disponibilidade dos recursos. O código Kotlin foi analisado estaticamente quanto à estrutura; **não foi possível compilar nem testar o APK neste ambiente**, pois não havia Android SDK nem Gradle/Internet disponíveis. Portanto, esta entrega é **código-fonte Android Studio**, ainda sujeito a correções que possam aparecer na primeira compilação. Não há um APK validado.
-
-A tela de mapas é nativa e esquemática, não substitui imagens vetoriais com precisão geográfica oficial. A versão visual segue a temática dourada/floresta/pergaminho do projeto; não é uma reprodução pixel a pixel do HTML. O mural é renderizado com Android Canvas e não é um espelho exato do canvas Web. A introdução reproduz o MP3 fornecido e pode ser desativada nas preferências. As capas continuam sendo links externos fornecidos no HTML.
+Na preparação da 1.16.9-native, o APK de depuração compilou com `gradle :app:assembleDebug`. Passaram as verificações do catálogo, da configuração de atualização e do anúncio de versão. A animação dos GIFs e a navegação por toque ainda aguardam validação em aparelho Android.
