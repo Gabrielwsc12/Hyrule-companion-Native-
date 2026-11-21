@@ -174,10 +174,19 @@ internal val LocalSpoilerProtection = compositionLocalOf { true }
 
 @Composable private fun DungeonIndex(vm:HyruleViewModel,onBack:()->Unit,onOpen:(String)->Unit){
     val revision=vm.revision
+    var query by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
+    val filtered = vm.catalog.dungeons.filter { dungeon ->
+        "${dungeon.name} ${dungeon.region} ${vm.catalog.game(dungeon.gameId)?.name.orEmpty()}".contains(query.trim(), ignoreCase = true)
+    }
     LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
         item{TextButton(onClick=onBack){Text("← Voltar aos guias")}}
         item{ScreenTitle("Enciclopédia de Dungeons","Salas, puzzles, recompensas, itens e chefes","▣")}
-        items(vm.catalog.dungeons,key={it.id}){d->
+        item {
+            OutlinedTextField(query, { query = it }, modifier = Modifier.fillMaxWidth(),
+                label = { Text("Buscar dungeon, jogo ou região") }, singleLine = true)
+        }
+        if (filtered.isEmpty()) item { Text("Nenhuma dungeon encontrada.") }
+        items(filtered,key={it.id}){d->
             val checked=vm.repo.checked(K_DUNGEON_PROGRESS,d.id)
             ParchmentCard(Modifier.clickable{onOpen(d.id)}){
                 SmallHeading(d.name)
@@ -220,7 +229,7 @@ internal val LocalSpoilerProtection = compositionLocalOf { true }
                     if (room.reward.isNotBlank()) Text("Objetivo: ${room.reward}")
                     if (detail != null) {
                         Text("Andar: ${detail.floor}")
-                        Text("Objetivo: ${detail.objective}")
+                        if (detail.objective != room.introduction) Text("Objetivo: ${detail.objective}")
                         Text("Atenção: ${detail.hazard}")
                     }
                     d.enemies.getOrNull(index)?.let { Text("Inimigos: $it") }

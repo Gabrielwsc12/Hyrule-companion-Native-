@@ -12,9 +12,9 @@ O **Hyrule Companion** é um guia de bolso para Android e um diário de jogo par
 
 ### Consulte o app durante a partida
 
-- **Atlas.** Explore 14 mapas offline de 12 jogos e toque nos 134 marcadores para identificar locais. Em *Tears of the Kingdom*, alterne entre céu, superfície e profundezas. O índice permite buscar marcos, filtrar por região e registrar visitas. Para uma exploração mais detalhada, abra o mapa interativo do ZeldaCollection com conexão à internet.
+- **Atlas.** Explore 20 mapas offline de 15 jogos e toque nos 168 marcadores para identificar locais. Em *Tears of the Kingdom*, alterne entre céu, superfície e profundezas. O índice permite buscar marcos, filtrar por região e registrar visitas. Para uma exploração mais detalhada, abra o mapa interativo do ZeldaCollection com conexão à internet.
 - **Guias.** Encontre entre 58 guias a ajuda de que precisa para uma missão, um puzzle, um chefe ou uma área de exploração. Pesquise por região ou tema, filtre por jogo, dificuldade e andamento, salve favoritos e marque as etapas conforme avança. Guias com objetivos de 100% têm uma lista própria. As anotações pessoais ajudam a retomar a partida.
-- **Enciclopédia de Dungeons.** Consulte cinco dungeons com rotas por salas, soluções de puzzles, inimigos, itens e tesouros. Acompanhe as etapas, marque o que já recolheu e consulte a estratégia do chefe e a lista final de objetivos.
+- **Enciclopédia de Dungeons.** Consulte nove dungeons com rotas por salas, soluções de puzzles, inimigos, itens e tesouros. Acompanhe as etapas, marque o que já recolheu e consulte a estratégia do chefe e a lista final de objetivos.
 
 ### Registre, compartilhe e proteja seu progresso
 
@@ -26,6 +26,13 @@ O **Hyrule Companion** é um guia de bolso para Android e um diário de jogo par
 Migração nativa do arquivo original `hyrule-companion-apk.zip`, **Web Edition 1.16.6**, sem WebView, Capacitor, HTML ou JavaScript em tempo de execução. Mantém o mesmo identificador de aplicativo (`com.hyrulecompanion.app`), o projeto Supabase e a estrutura **schema 13** de dados. A migração preserva o texto editorial original dos 62 jogos, 58 guias, 12 mapas, 5 dungeons e 5 ramificações da cronologia.
 
 ## Novidades
+
+### 1.16.11-native
+
+- **Comunidade em Perfil.** Configure um nome de usuário, escolha seu Zelda favorito, busque outros aventureiros, siga perfis e consulte jornadas compartilhadas. O perfil começa privado. Você pode disponibilizar o perfil e escolher se também quer exibir os status da sua jornada. Datas, anotações e e-mail ficam fora do perfil público. Use **Atualizar jornada compartilhada** para publicar os status atuais.
+- **Aplausos nas conquistas.** Reaja quando outra pessoa concluir um jogo ou chegar a 100%. Cada conta pode deixar um aplauso por jogo e removê-lo depois. Veja quantos aplausos suas próprias conquistas receberam em **Ver meu perfil público**.
+- **Atlas ampliado.** Koholint de *Link’s Awakening* (Switch), Hyrule e Lorule de *A Link Between Worlds*, e Labrynna no presente e no passado, além da Passagem Maku, de *Oracle of Ages*. São seis mapas offline e 34 novos pontos. Cada camada tem seu próprio registro de visitas. [Mapas do ZeldaCollection](https://zeldacollection.de/en/maps/)
+- **Enciclopédia de Dungeons.** Novas entradas para Caverna da Cauda, Gruta da Garrafa, Casa dos Ventos e Caverna da Sereia. Cada entrada inclui rota, puzzles, ameaças, itens, estratégia do chefe e checklist. Agora também é possível buscar por dungeon, jogo ou região. [Caverna da Cauda](https://www.zeldadungeon.net/links-awakening-walkthrough/tail-cave/), [Gruta da Garrafa](https://www.zeldadungeon.net/links-awakening-walkthrough/bottle-grotto/), [Casa dos Ventos](https://www.zeldadungeon.net/a-link-between-worlds-walkthrough/house-of-gales/) e [Caverna da Sereia](https://www.zeldadungeon.net/oracle-of-ages-walkthrough/mermaids-cave/)
 
 ### 1.16.10-native
 
@@ -72,7 +79,13 @@ Suba os arquivos do projeto para um repositório GitHub, abra **Actions > Build 
 
 **Aviso sobre instalação:** como o `applicationId` é igual ao original Capacitor, APKs assinados com certificados diferentes NÃO podem ser instalados por cima uns dos outros. Faça **backup JSON** do app antigo antes de desinstalá-lo, ou utilize sua conta Supabase para restaurar a jornada. Os arquivos de `localStorage` da versão Web não migram automaticamente para o armazenamento nativo Android.
 
-## Supabase: preservado sem migração de banco
+## Ativar a Comunidade no Supabase
+
+Para habilitar a Comunidade na 1.16.11-native, abra o **SQL Editor** do projeto Supabase do Hyrule Companion e execute [COMMUNITY.sql](supabase/COMMUNITY.sql), seguido de [COMMUNITY_REACTIONS.sql](supabase/COMMUNITY_REACTIONS.sql). Execute cada arquivo uma vez. Se já tiver aplicado o primeiro, execute somente o segundo. Essas migrações criam as tabelas e funções da Comunidade.
+
+Para verificar a integração em um ambiente de teste, configure a URL e a chave publishable desse ambiente em `app/build.gradle.kts`. Use duas contas para conferir a busca, a visibilidade da jornada, a opção de seguir e os aplausos.
+
+## Supabase: contas e sincronização da jornada
 
 O app usa, como o HTML original, a mesma URL Supabase e a mesma **chave pública/publishable**. Elas estão em `app/build.gradle.kts` como `BuildConfig` e não exigem outro projeto Supabase.
 

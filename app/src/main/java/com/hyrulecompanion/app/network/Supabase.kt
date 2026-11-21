@@ -47,6 +47,7 @@ class SupabaseClient {
         when(method){
             "POST" -> builder.post(payload)
             "GET" -> builder.get()
+            "DELETE" -> builder.delete()
             else -> error("HTTP method unsupported")
         }
         client.newCall(builder.build()).execute().use { response ->
@@ -80,4 +81,96 @@ class SupabaseClient {
         request("POST","/rest/v1/hc_user_data?on_conflict=user_id",JSONObject().put("user_id",session.userId).put("payload",payload).put("updated_at",now),bearer=session.accessToken,prefer="resolution=merge-duplicates,return=minimal")
         return now
     }
+    suspend fun communityProfile(session: AuthSession): CommunityProfile? =
+        communityProfiles(session, "user_id=eq.${session.userId}").firstOrNull()
+
+    suspend fun communityProfileById(session: AuthSession, userId: String): CommunityProfile? =
+        communityProfiles(session, "user_id=eq.${java.util.UUID.fromString(userId)}").firstOrNull()
+
+    suspend fun searchCommunity(session: AuthSession, handle: String): List<CommunityProfile> {
+        require(handle.matches(Regex("[a-z0-9_]{1,24}")))
+        val prefix = android.net.Uri.encode(handle.replace("_", "\\_") + "*")
+        return communityProfiles(session, "discoverable=eq.true&user_id=neq.${session.userId}&handle=like.$prefix&order=handle&limit=30")
+    }
+
+    private suspend fun communityProfiles(session: AuthSession, filters: String): List<CommunityProfile> {
+        val rows = JSONArray(request("GET", "/rest/v1/hc_community_profiles?$filters", bearer=session.accessToken))
+        return List(rows.length()) { CommunityProfile.fromJson(rows.getJSONObject(it)) }
+    }
+
+    suspend fun saveCommunityProfile(session: AuthSession, profile: CommunityProfile) {
+        request("POST", "/rest/v1/hc_community_profiles?on_conflict=user_id",
+            profile.toJson(session.userId), session.accessToken, "resolution=merge-duplicates,return=minimal")
+    }
+
+    suspend fun followedProfiles(session: AuthSession): List<CommunityProfile> {
+        val rows = JSONArray(request("GET",
+            "/rest/v1/hc_community_follows?select=profile:hc_community_profiles!hc_community_follows_followed_id_fkey!inner(*)&order=followed_id",
+            bearer=session.accessToken))
+        return List(rows.length()) { CommunityProfile.fromJson(rows.getJSONObject(it).getJSONObject("profile")) }
+    }
+
+    suspend fun follows(session: AuthSession, userId: String): Boolean {
+        val target = java.util.UUID.fromString(userId)
+        val rows = JSONArray(request("GET",
+            "/rest/v1/hc_community_follows?select=followed_id&followed_id=eq.$target",
+            bearer=session.accessToken))
+        return rows.length() > 0
+    }
+
+    suspend fun communityReactions(session: AuthSession, userId: String): Map<String, CommunityReaction> {
+        val rows = JSONArray(request("POST", "/rest/v1/rpc/hc_community_reaction_counts",
+            JSONObject().put("target_profile", userId), session.accessToken))
+        return (0 until rows.length()).associate { index ->
+            val row = rows.getJSONObject(index)
+            row.getString("game_id") to CommunityReaction(row.getInt("applause_count"), row.getBoolean("applauded"))
+        }
+    }
+
+    suspend fun setCommunityApplause(session: AuthSession, profileId: String, gameId: String, applaud: Boolean) {
+        request("POST", "/rest/v1/rpc/hc_community_set_applause",
+            JSONObject().put("target_profile", profileId).put("target_game", gameId)
+                .put("is_applauded", applaud), session.accessToken)
+    }
+
+    suspend fun setFollowing(session: AuthSession, userId: String, follow: Boolean) {
+        val target = java.util.UUID.fromString(userId).toString()
+        if (follow) {
+            request("POST", "/rest/v1/hc_community_follows?on_conflict=follower_id,followed_id",
+                JSONObject().put("follower_id", session.userId).put("followed_id", target),
+                session.accessToken, "resolution=ignore-duplicates,return=minimal")
+        } else {
+            request("DELETE", "/rest/v1/hc_community_follows?followed_id=eq.$target", bearer=session.accessToken)
+        }
+    }
+
 }
+
+data class CommunityProfile(
+    val userId: String,
+    val handle: String,
+    val favoriteGame: String?,
+    val discoverable: Boolean,
+    val shareJourney: Boolean,
+    val journey: Map<String, String> = emptyMap()
+) {
+    fun toJson(owner: String) = JSONObject()
+        .put("user_id", owner)
+        .put("handle", handle)
+        .put("favorite_game", favoriteGame ?: JSONObject.NULL)
+        .put("discoverable", discoverable)
+        .put("share_journey", shareJourney)
+        .put("journey", JSONObject(if (discoverable && shareJourney) journey else emptyMap<String, String>()))
+
+    companion object {
+        fun fromJson(row: JSONObject): CommunityProfile {
+            val journey = row.optJSONObject("journey") ?: JSONObject()
+            return CommunityProfile(row.getString("user_id"), row.getString("handle"),
+                row.optString("favorite_game").takeUnless { row.isNull("favorite_game") || it.isBlank() },
+                row.optBoolean("discoverable"), row.optBoolean("share_journey"),
+                journey.keys().asSequence().associateWith { journey.optString(it) })
+        }
+    }
+}
+
+data class CommunityReaction(val count: Int, val applauded: Boolean)

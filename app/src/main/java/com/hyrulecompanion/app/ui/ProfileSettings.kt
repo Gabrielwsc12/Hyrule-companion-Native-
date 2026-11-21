@@ -56,7 +56,7 @@ import java.time.LocalDate
     else Surface(modifier=modifier,shape=CircleShape,color=MaterialTheme.colorScheme.primaryContainer){Box(contentAlignment=Alignment.Center){Text("🗡️",style=MaterialTheme.typography.headlineMedium)}}
 }
 
-@Composable fun ProfileScreen(vm:HyruleViewModel,onSettings:()->Unit, openAccount:Boolean=false){
+@Composable fun ProfileScreen(vm:HyruleViewModel,onSettings:()->Unit, openAccount:Boolean=false,onCommunity:()->Unit){
     val revision=vm.revision
     val prefs=vm.repo.preferences()
     val completed=vm.repo.doneCount()
@@ -91,6 +91,11 @@ import java.time.LocalDate
             }
         }}
         item {AccountPanel(vm)}
+        item {ParchmentCard {
+            SmallHeading("Comunidade")
+            Text("Encontre outros aventureiros e compartilhe a sua jornada.")
+            OutlinedButton(onClick=onCommunity,modifier=Modifier.fillMaxWidth()){Text("Abrir comunidade")}
+        }}
         item {ParchmentCard {
             SmallHeading("✦ Meu mural de Hyrule")
             Text("Crie uma imagem JPEG com seu progresso e suas aventuras concluídas.")

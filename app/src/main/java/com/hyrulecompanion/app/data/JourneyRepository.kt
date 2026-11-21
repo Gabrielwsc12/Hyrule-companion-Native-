@@ -184,8 +184,7 @@ class JourneyRepository(private val context: Context, val catalog: Catalog) {
         val dungeons=catalog.dungeons.associateBy { it.id }
         editor.putString(K_DUNGEON_PROGRESS,cleanSteps(j.optJSONObject("dungeonProgress"),dungeons.mapValues { it.value.rooms.size+it.value.checklist.size }).toString())
         editor.putString(K_DUNGEON_ITEMS,cleanSteps(j.optJSONObject("dungeonItemProgress"),dungeons.mapValues { it.value.items.size }).toString())
-        val atlasSizes=mutableMapOf<String,Int>()
-        catalog.atlasMaps.forEach { m -> if(m.id == "totk") catalog.totkLocations.forEach { (layer, list) -> atlasSizes["totk-$layer"]=list.size } else atlasSizes[m.id]=m.locations.size }
+        val atlasSizes = catalog.atlasMaps.flatMap(catalog::atlasLayers).associate { it.key to it.locations.size }
         editor.putString(K_ATLAS_VISITED,cleanSteps(j.optJSONObject("atlasVisited"),atlasSizes).toString())
         if (j.optJSONObject("preferences") != null) editor.putString(K_PREFS,j.getJSONObject("preferences").toString())
         editor.apply()

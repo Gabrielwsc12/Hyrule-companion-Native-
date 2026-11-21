@@ -738,5 +738,205 @@
         "Dungeon 9 – A6"
       ]
     ]
+  },
+  "links-awakening-remake": {
+    "aspect": 1.7889087656529516,
+    "points": [
+      [
+        0.1100586,
+        0.5518079,
+        "Lago de pesca"
+      ],
+      [
+        0.0701221,
+        0.3947511,
+        "Caverna dos cogumelos"
+      ],
+      [
+        0.3603662,
+        0.6226987,
+        "Teletransporte da pradaria"
+      ],
+      [
+        0.6871973,
+        0.5736157,
+        "Teletransporte da mansão"
+      ],
+      [
+        0.7835352,
+        0.8866288,
+        "Teletransporte da vila"
+      ],
+      [
+        0.4597559,
+        0.8969956,
+        "Teletransporte da baía"
+      ],
+      [
+        0.7835352,
+        0.2589694,
+        "Teletransporte da montanha"
+      ],
+      [
+        0.956709,
+        0.7590306,
+        "Caverna sob a areia movediça"
+      ],
+      [
+        0.0472559,
+        0.0719214,
+        "Cume do Monte Tamaranch"
+      ]
+    ]
+  },
+  "alb-w-lorule": {
+    "aspect": 1.0,
+    "points": [
+      [
+        0.4697266,
+        0.8828125,
+        "Palácio do Pântano"
+      ],
+      [
+        0.1582031,
+        0.4697266,
+        "Esconderijo dos Ladrões"
+      ],
+      [
+        0.1772461,
+        0.1552734,
+        "Bosque das Caveiras"
+      ],
+      [
+        0.9379883,
+        0.4160156,
+        "Palácio Sombrio"
+      ],
+      [
+        0.9179688,
+        0.0761719,
+        "Ruínas de Gelo"
+      ],
+      [
+        0.7675781,
+        0.8349609,
+        "Turtle Rock"
+      ],
+      [
+        0.5,
+        0.4560547,
+        "Castelo de Lorule"
+      ]
+    ]
+  },
+  "alb-w": {
+    "aspect": 1.0,
+    "points": [
+      [
+        0.9379883,
+        0.4003906,
+        "Palácio do Leste"
+      ],
+      [
+        0.7910156,
+        0.8344727,
+        "Casa dos Ventos"
+      ],
+      [
+        0.5913086,
+        0.019043,
+        "Torre de Hera"
+      ],
+      [
+        0.5,
+        0.4560547,
+        "Castelo de Hyrule"
+      ],
+      [
+        0.090332,
+        0.7836914,
+        "Palácio do Deserto"
+      ],
+      [
+        0.5395508,
+        0.6723633,
+        "Loja de Ravio"
+      ],
+      [
+        0.1723633,
+        0.5712891,
+        "Milk Bar"
+      ]
+    ]
+  },
+  "oracle-ages-maku": {
+    "aspect": 1.0227272727272727,
+    "points": [
+      [
+        0.1,
+        0.0802557,
+        "Pedaço de coração da Passagem Maku"
+      ]
+    ]
+  },
+  "oracle-ages": {
+    "aspect": 1.25,
+    "points": [
+      [
+        0.8035714,
+        0.6029576,
+        "Pedaço de coração do cemitério"
+      ],
+      [
+        0.1035714,
+        0.1208147,
+        "Pedaço de coração de Symmetry"
+      ],
+      [
+        0.59375,
+        0.4430804,
+        "Loja secreta de Lynna"
+      ],
+      [
+        0.617411,
+        0.164621,
+        "Acesso à caverna Goron"
+      ],
+      [
+        0.885714,
+        0.705915,
+        "Mergulho em Crescent Island"
+      ],
+      [
+        0.6790179,
+        0.5301339,
+        "Tingle"
+      ]
+    ]
+  },
+  "oracle-ages-past": {
+    "aspect": 1.25,
+    "points": [
+      [
+        0.4821429,
+        0.594029,
+        "Pedaço de coração da Torre Negra"
+      ],
+      [
+        0.082143,
+        0.65625,
+        "Pedaço de coração da floresta"
+      ],
+      [
+        0.274554,
+        0.324777,
+        "Pedaço de coração do paredão"
+      ],
+      [
+        0.9821429,
+        0.03125,
+        "Pedaço de coração da crista leste"
+      ]
+    ]
   }
 }

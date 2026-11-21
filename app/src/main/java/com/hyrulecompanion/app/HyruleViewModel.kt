@@ -21,6 +21,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.time.OffsetDateTime
@@ -68,6 +70,7 @@ class HyruleViewModel(application: Application) : AndroidViewModel(application) 
         private set
     private var syncJob: Job? = null
     private var syncing = false
+    private val sessionRefresh = Mutex()
 
     init {
         if (session != null) message = "Conta conectada. Sincronize para comparar sua jornada com a nuvem."
@@ -176,12 +179,19 @@ class HyruleViewModel(application: Application) : AndroidViewModel(application) 
             finally { busy=false }
         }
     }
-    private suspend fun freshSession(): AuthSession {
-        val current=session ?: error("Entre na sua conta para sincronizar.")
-        if(current.expiresAt > System.currentTimeMillis()+60_000) return current
-        val fresh=supabase.refresh(current.refreshToken)
+    suspend fun <T> communityRequest(userId: String, request: suspend SupabaseClient.(AuthSession) -> T): T {
+        val account = freshSession()
+        check(account.userId == userId) { "A sessão mudou. Tente novamente." }
+        return supabase.request(account)
+    }
+
+    private suspend fun freshSession(): AuthSession = sessionRefresh.withLock {
+        val current = session ?: error("Entre na sua conta para sincronizar.")
+        if (current.expiresAt > System.currentTimeMillis() + 60_000) return@withLock current
+        val fresh = supabase.refresh(current.refreshToken)
+        check(session === current) { "A sessão mudou. Tente novamente." }
         persistSession(fresh)
-        return fresh
+        fresh
     }
     private fun persistSession(value: AuthSession) { session=value;repo.store(K_SESSION,value.toJson()) }
     fun signIn(email: String,password: String,register: Boolean=false) {

@@ -57,6 +57,9 @@ private val atlasPages = mapOf(
     "echoes" to "echoes-of-wisdom",
     "minish-cap" to "the-minish-cap",
     "spirit-tracks" to "spirit-tracks",
+    "links-awakening-remake" to "links-awakening-switch",
+    "alb-w" to "a-link-between-worlds",
+    "oracle-ages" to "oracle-of-ages",
 )
 
 private fun mapUrl(gameId: String): String {
@@ -102,15 +105,17 @@ private fun mapUrl(gameId: String): String {
     var branch by remember { mutableStateOf("all") }
     var selectedMapId by androidx.compose.runtime.saveable.rememberSaveable(initialGame) { mutableStateOf(initialGame) }
     val context = androidx.compose.ui.platform.LocalContext.current
-    var layer by remember { mutableStateOf("surface") }
+    var layerKey by remember { mutableStateOf("") }
     var selectedLocation by remember { mutableIntStateOf(0) }
     var locationQuery by remember { mutableStateOf("") }
     var region by remember { mutableStateOf("Todas") }
     val maps=vm.catalog.atlasMaps
     val shown=maps.filter { (branch=="all" || branch==it.branch) && "${it.name} ${it.subtitle} ${it.branchLabel}".contains(query,true) }
     val map=maps.find { it.id==selectedMapId } ?: maps.first()
-    val locations=vm.catalog.locations(map,layer)
-    val key=if(map.id=="totk")"totk-$layer" else map.id
+    val layers = vm.catalog.atlasLayers(map)
+    val layer = layers.find { it.key == layerKey } ?: layers.first()
+    val locations = layer.locations
+    val key = layer.key
     val visited=vm.repo.checked(K_ATLAS_VISITED,key)
     val current=locations.getOrNull(selectedLocation)
     val regions=listOf("Todas")+locations.map { it.region }.distinct()
@@ -122,7 +127,7 @@ private fun mapUrl(gameId: String): String {
         }}
         item {Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
             shown.chunked(2).forEach { row -> Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                row.forEach{a->FilterChip(modifier=Modifier.weight(1f),selected=selectedMapId==a.id,onClick={selectedMapId=a.id;selectedLocation=0;layer="surface";locationQuery="";region="Todas"},label={Text("${a.symbol} ${a.name}",maxLines=2)})}
+                row.forEach{a->FilterChip(modifier=Modifier.weight(1f),selected=selectedMapId==a.id,onClick={selectedMapId=a.id;selectedLocation=0;layerKey="";locationQuery="";region="Todas"},label={Text("${a.symbol} ${a.name}",maxLines=2)})}
                 if(row.size==1) Spacer(Modifier.weight(1f))
             }}
         }}
@@ -132,9 +137,18 @@ private fun mapUrl(gameId: String): String {
             Text(map.description,style=MaterialTheme.typography.bodyMedium)
             StatusTag(map.branchLabel)
         }}
-        if(map.id=="totk") item {Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-            listOf("sky" to "☁ Céus","surface" to "🌿 Superfície","depths" to "◆ Profundezas").forEach{(code,name)->FilterChip(selected=layer==code,onClick={layer=code;selectedLocation=0;region="Todas"},label={Text(name)})}
-        }}
+        if (layers.size > 1) item {
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                layers.forEach { entry ->
+                    FilterChip(selected = layer.key == entry.key, onClick = {
+                        layerKey = entry.key
+                        selectedLocation = 0
+                        locationQuery = ""
+                        region = "Todas"
+                    }, label = { Text(entry.label) })
+                }
+            }
+        }
         item {ParchmentCard {
             MapPreview(key, map.name)
             Button(onClick={

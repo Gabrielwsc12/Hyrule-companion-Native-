@@ -107,7 +107,7 @@ private val tabs=listOf(
         if (!intro) vm.checkForUpdates()
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
-    BackHandler(gameId!=null || screen=="settings") {
+    BackHandler(gameId!=null || screen=="settings" || screen=="community") {
         if(gameId!=null){gameId=null;screen=previous}else screen="profile"
     }
     HyruleTheme(prefs.theme=="dark" || (prefs.theme=="system" && androidx.compose.foundation.isSystemInDarkTheme())) {
@@ -135,7 +135,7 @@ private val tabs=listOf(
                     }
                 },
                 bottomBar={
-                    if(screen!="settings" && gameId==null) NavigationBar(containerColor=MaterialTheme.colorScheme.primaryContainer,tonalElevation=7.dp) {
+                    if(screen!="settings" && screen!="community" && gameId==null) NavigationBar(containerColor=MaterialTheme.colorScheme.primaryContainer,tonalElevation=7.dp) {
                         tabs.forEach { tab -> NavigationBarItem(selected=screen==tab.id,onClick={openAccount=false;screen=tab.id},icon={Icon(tab.icon,contentDescription=tab.title)},label={Text(tab.title,maxLines=1,style=MaterialTheme.typography.labelSmall)},alwaysShowLabel=false) }
                     }
                 }
@@ -158,7 +158,8 @@ private val tabs=listOf(
                                 GuidesScreen(vm,guideGame,onGame={previous="guides";gameId=it})
                             }
                         }
-                        screen=="profile" -> ProfileScreen(vm,openAccount=openAccount,onSettings={screen="settings"})
+                        screen=="profile" -> ProfileScreen(vm,openAccount=openAccount,onSettings={screen="settings"},onCommunity={screen="community"})
+                        screen=="community" -> CommunityScreen(vm,onBack={screen="profile"},onAccount={openAccount=true;screen="profile"})
                         screen=="settings" -> SettingsScreen(vm,onBack={screen="profile"})
                     }
                 }

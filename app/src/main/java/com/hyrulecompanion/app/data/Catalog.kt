@@ -8,7 +8,8 @@ data class Game(val id: String, val name: String, val year: Int, val type: Strin
 data class TimelineRoute(val id: String, val title: String, val subtitle: String, val description: String, val entries: List<TimelineEntry>)
 data class TimelineEntry(val name: String, val gameId: String, val era: String)
 data class AtlasLocation(val name: String, val region: String, val description: String, val x: Float, val y: Float)
-data class AtlasMap(val id: String, val gameId: String, val name: String, val year: Int, val branch: String, val branchLabel: String, val kind: String, val symbol: String, val subtitle: String, val description: String, val land: String, val locations: List<AtlasLocation>)
+data class AtlasLayer(val key: String, val label: String, val locations: List<AtlasLocation>)
+data class AtlasMap(val id: String, val gameId: String, val name: String, val year: Int, val branch: String, val branchLabel: String, val kind: String, val symbol: String, val subtitle: String, val description: String, val land: String, val locations: List<AtlasLocation>, val layers: List<AtlasLayer>)
 data class GuideSection(val title: String, val items: List<String>)
 data class Guide(
     val id: String, val gameId: String, val title: String, val category: String,
@@ -51,7 +52,12 @@ class Catalog(context: Context) {
         arr.getJSONArray(i).let { l -> AtlasLocation(l.optString(0),l.optString(1),l.optString(2),l.optDouble(3,50.0).toFloat(),l.optDouble(4,50.0).toFloat()) }
     }
     val atlasMaps: List<AtlasMap> = raw.getJSONArray("atlasMaps").let { a -> (0 until a.length()).map { i -> a.getJSONObject(i).let { j ->
-        AtlasMap(j.string("id"), j.string("gameId"),j.string("name"),j.optInt("year"),j.string("branch"),j.string("branchLabel"),j.string("kind"),j.string("symbol"),j.string("subtitle"),j.string("description"),j.string("land"),readLocations(j.getJSONArray("locations")))
+        AtlasMap(j.string("id"), j.string("gameId"),j.string("name"),j.optInt("year"),j.string("branch"),j.string("branchLabel"),j.string("kind"),j.string("symbol"),j.string("subtitle"),j.string("description"),j.string("land"),readLocations(j.getJSONArray("locations")), j.optJSONArray("layers")?.let { layers ->
+            (0 until layers.length()).map { index ->
+                val layer = layers.getJSONObject(index)
+                AtlasLayer(layer.getString("key"), layer.getString("label"), readLocations(layer.getJSONArray("locations")))
+            }
+        }.orEmpty())
     } } }
     val totkLocations: Map<String, List<AtlasLocation>> = raw.getJSONObject("totkLayerLocations").let { j -> j.keys().asSequence().associateWith { readLocations(j.getJSONArray(it)) } }
     private fun asText(value: Any?): String = when (value) {
@@ -73,5 +79,11 @@ class Catalog(context: Context) {
     }
     fun game(id: String) = games.find { it.id == id }
     fun mapForGame(id: String) = atlasMaps.find { it.gameId == id }
-    fun locations(map: AtlasMap, layer: String) = if (map.id == "totk") totkLocations[layer].orEmpty() else map.locations
+    fun atlasLayers(map: AtlasMap): List<AtlasLayer> = when {
+        map.id == "totk" -> listOf("surface" to "Superfície", "sky" to "Céus", "depths" to "Profundezas").map { (key, label) ->
+            AtlasLayer("totk-$key", label, totkLocations.getValue(key))
+        }
+        map.layers.isNotEmpty() -> map.layers
+        else -> listOf(AtlasLayer(map.id, map.name, map.locations))
+    }
 }
