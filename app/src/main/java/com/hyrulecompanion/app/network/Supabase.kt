@@ -119,6 +119,18 @@ class SupabaseClient {
         return List(rows.length()) { CommunityProfile.fromJson(rows.getJSONObject(it)) }
     }
 
+    suspend fun presenceHeartbeat(session: AuthSession, device: String, active: Boolean): Boolean =
+        request("POST", "/rest/v1/rpc/hc_presence_heartbeat",
+            JSONObject().put("device", device).put("active", active), session.accessToken).trim().toBooleanStrict()
+
+    suspend fun setPresenceHidden(session: AuthSession, hidden: Boolean) {
+        request("POST", "/rest/v1/rpc/hc_presence_set_hidden", JSONObject().put("value", hidden), session.accessToken)
+    }
+
+    suspend fun communityOnline(session: AuthSession, userId: String): Boolean =
+        request("POST", "/rest/v1/rpc/hc_presence_online",
+            JSONObject().put("target", userId), session.accessToken).trim().toBooleanStrict()
+
     suspend fun communityMedia(session: AuthSession, userId: String): CommunityMedia {
         val id = java.util.UUID.fromString(userId)
         val rows = JSONArray(request("GET",

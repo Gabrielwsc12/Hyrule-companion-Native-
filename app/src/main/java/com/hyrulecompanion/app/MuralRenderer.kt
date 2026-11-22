@@ -92,8 +92,12 @@ object MuralRenderer {
             rect(x,y,itemWidth,boxHeight,surface,16f)
             if(options.showCovers && !g.cover.isNullOrBlank()) {
                 runCatching {
-                    val connection=URL(g.cover).openConnection().apply { connectTimeout=3000;readTimeout=3000 }
-                    val cover=connection.getInputStream().use { BitmapFactory.decodeStream(it) }
+                    val cover = if (g.cover.startsWith("file:///android_asset/")) {
+                        context.assets.open(g.cover.removePrefix("file:///android_asset/")).use { BitmapFactory.decodeStream(it) }
+                    } else {
+                        URL(g.cover).openConnection().apply { connectTimeout=3000;readTimeout=3000 }
+                            .getInputStream().use { BitmapFactory.decodeStream(it) }
+                    }
                     if(cover!=null){
                         val iconH=125f;val iconW=108f
                         val destination=RectF(x+14f,y+16f,x+14f+iconW,y+16f+iconH)

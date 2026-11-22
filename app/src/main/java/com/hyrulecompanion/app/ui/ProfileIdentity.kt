@@ -15,6 +15,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.border
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -33,16 +35,14 @@ import kotlinx.coroutines.withContext
 
 @Composable
 internal fun ProfileHeader(
-    name: String, avatar: String, banner: String?, reduceMotion: Boolean,
+    name: String, avatar: String, banner: String?, reduceMotion: Boolean, online: Boolean = false,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
-    val bytes = remember(banner) {
-        banner?.let { runCatching { Base64.decode(it.substringAfter("base64,"), Base64.DEFAULT) }.getOrNull() }
-    }
+    val image = rememberProfileImage(banner.orEmpty(), reduceMotion)
     Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
         .background(MaterialTheme.colorScheme.primaryContainer)) {
-        if (bytes != null) {
-            AsyncImage(bytes, null, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
+        if (image != null) {
+            AsyncImage(image, null, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
             Box(Modifier.matchParentSize().background(Brush.verticalGradient(
                 listOf(Color.Black.copy(alpha = .12f), Color.Black.copy(alpha = .81f))
             )))
@@ -51,9 +51,15 @@ internal fun ProfileHeader(
             verticalArrangement = Arrangement.SpaceBetween) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, content = actions)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Avatar(avatar, reduceMotion, Modifier.size(72.dp))
+                Box {
+                    Avatar(avatar, reduceMotion, Modifier.size(72.dp))
+                    if (online) Box(Modifier.align(Alignment.BottomEnd).size(16.dp)
+                        .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape)
+                        .background(Color(0xFF38BC6E), CircleShape)
+                        .semantics { contentDescription = "Online" })
+                }
                 Text(name, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge,
-                    color = if (bytes == null) MaterialTheme.colorScheme.onPrimaryContainer else Color.White)
+                    color = if (image == null) MaterialTheme.colorScheme.onPrimaryContainer else Color.White)
             }
         }
     }
@@ -126,14 +132,14 @@ internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String?, loca
         if (uri != null) action {
             banner = withContext(Dispatchers.IO) {
                 val mime = resolver.getType(uri)
-                require(mime == "image/png" || mime == "image/jpeg") { "Banner: selecione um JPG ou PNG." }
+                require(mime in listOf("image/png", "image/jpeg", "image/gif")) { "Banner: selecione um JPG, PNG ou GIF." }
                 val bytes = resolver.openInputStream(uri)?.use { input ->
                     val result = java.io.ByteArrayOutputStream()
                     val buffer = ByteArray(8192)
                     while (true) {
                         val count = input.read(buffer)
                         if (count < 0) break
-                        require(result.size() + count <= 1_000_000) { "Banner: o limite é 1 MB." }
+                        require(result.size() + count <= 1_800_000) { "Banner: o limite é 1,8 MB." }
                         result.write(buffer, 0, count)
                     }
                     result.toByteArray()
@@ -141,7 +147,7 @@ internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String?, loca
                 val info = BitmapFactory.Options().apply { inJustDecodeBounds = true }
                 BitmapFactory.decodeByteArray(bytes, 0, bytes.size, info)
                 require(info.outMimeType == mime && info.outWidth in 1..4096 && info.outHeight in 1..4096) {
-                    "Banner: use um JPG ou PNG válido com até 4096 px por lado."
+                    "Banner: use um JPG, PNG ou GIF válido com até 4096 px por lado."
                 }
                 "data:$mime;base64," + Base64.encodeToString(bytes, Base64.NO_WRAP)
             }
@@ -149,7 +155,7 @@ internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String?, loca
     }
 
     LaunchedEffect(userId) { if (userId != null) load(false) }
-    ProfileHeader(profile?.let { "@${it.handle}" } ?: "Herói de Hyrule", localAvatar, publishedBanner, reduceMotion) {
+    ProfileHeader(profile?.let { "@${it.handle}" } ?: "Herói de Hyrule", localAvatar, publishedBanner, reduceMotion, online = userId != null && vm.presenceHidden == false) {
         FilledTonalIconButton(onClick = { load(true) }, enabled = !busy,
             modifier = Modifier.semantics { contentDescription = "Editar perfil" }) {
             Text("🪶")
@@ -186,11 +192,11 @@ internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String?, loca
             visibleAvatar, banner, reduceMotion)
         if (!publishPhoto && avatar.isNotBlank()) Avatar(avatar, reduceMotion, Modifier.size(48.dp))
         photoControls()
-        OutlinedButton(enabled = !busy, onClick = { bannerPicker.launch(arrayOf("image/jpeg", "image/png")) }) {
+        OutlinedButton(enabled = !busy, onClick = { bannerPicker.launch(arrayOf("image/jpeg", "image/png", "image/gif")) }) {
             Text("Trocar banner")
         }
         if (banner != null) TextButton(enabled = !busy, onClick = { banner = null }) { Text("Remover banner") }
-        Text("Banner JPG ou PNG · até 1 MB", style = MaterialTheme.typography.bodySmall)
+        Text("Banner JPG, PNG ou GIF · até 1,8 MB", style = MaterialTheme.typography.bodySmall)
         Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(publishPhoto, onCheckedChange = { publishPhoto = it }, enabled = !busy)
             Text("Exibir foto no perfil público")

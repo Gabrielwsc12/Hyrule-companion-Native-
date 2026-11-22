@@ -1074,5 +1074,190 @@
         "Conclua o labirinto no nível especialista para obter um recipiente de coração."
       ]
     ]
+  },
+  "zelda2": {
+    "aspect": 1.4705882352941178,
+    "points": [
+      [
+        0.36069,
+        0.086207,
+        "Palácio de Parapa"
+      ],
+      [
+        0.084138,
+        0.3286,
+        "Palácio de Midoro"
+      ],
+      [
+        0.347586,
+        0.589249,
+        "Palácio da Ilha"
+      ],
+      [
+        0.933793,
+        0.267748,
+        "Palácio da Ilha do Labirinto"
+      ],
+      [
+        0.78,
+        0.484787,
+        "Palácio do Mar"
+      ],
+      [
+        0.692414,
+        0.800203,
+        "Palácio da Rocha de Três Olhos"
+      ],
+      [
+        0.482069,
+        0.583164,
+        "Grande Palácio"
+      ],
+      [
+        0.161379,
+        0.237323,
+        "Castelo do Norte"
+      ],
+      [
+        0.278621,
+        0.248479,
+        "Rauru"
+      ],
+      [
+        0.106207,
+        0.861055,
+        "Caverna do Martelo"
+      ],
+      [
+        0.36,
+        0.324544,
+        "Recipiente de coração de Parapa"
+      ],
+      [
+        0.887586,
+        0.199797,
+        "Recipiente mágico do labirinto"
+      ]
+    ]
+  },
+  "minish-cap-tomb": {
+    "aspect": 1.3125,
+    "points": [
+      [
+        0.7610544,
+        0.0837054,
+        "Túmulo de Gustaf"
+      ]
+    ]
+  },
+  "minish-cap-droplets": {
+    "aspect": 0.6528571428571428,
+    "points": [
+      [
+        0.7086614,
+        0.9675346,
+        "Lanterna de Fogo"
+      ],
+      [
+        0.511811,
+        0.9241401,
+        "Arena do Octorok Gigante"
+      ]
+    ]
+  },
+  "minish-cap-fortress": {
+    "aspect": 0.5414285714285715,
+    "points": [
+      [
+        0.2688953,
+        0.4566929,
+        "Luvas de Toupeira"
+      ],
+      [
+        0.806686,
+        0.8484252,
+        "Pedaço de coração do térreo"
+      ],
+      [
+        0.4723837,
+        0.0216535,
+        "Arena de Mazaal"
+      ]
+    ]
+  },
+  "minish-cap-flames": {
+    "aspect": 1.6129032258064515,
+    "points": [
+      [
+        0.2980808,
+        0.2699144,
+        "Bastão de Pacci"
+      ],
+      [
+        0.3429971,
+        0.5595787,
+        "Pedaço de coração da parede rachada"
+      ],
+      [
+        0.5634953,
+        0.7899934,
+        "Arena de Gleerok"
+      ]
+    ]
+  },
+  "minish-cap-castle": {
+    "aspect": 1.6877637130801688,
+    "points": [
+      [
+        0.4527778,
+        0.1407129,
+        "Vaati"
+      ]
+    ]
+  },
+  "minish-cap-deepwood": {
+    "aspect": 1.183431952662722,
+    "points": [
+      [
+        0.2406877,
+        0.078019,
+        "Jarro de Vento"
+      ],
+      [
+        0.2750716,
+        0.2170963,
+        "Pedaço de coração da sala sul"
+      ],
+      [
+        0.4498567,
+        0.0407056,
+        "Pedaço de coração do portal azul"
+      ],
+      [
+        0.1404011,
+        0.5563094,
+        "Arena do ChuChu Verde"
+      ]
+    ]
+  },
+  "minish-cap-palace": {
+    "aspect": 1.6,
+    "points": [
+      [
+        0.03,
+        0.086,
+        "Capa de Roc"
+      ],
+      [
+        0.10625,
+        0.664,
+        "Pedaço de coração do quarto andar"
+      ],
+      [
+        0.7525,
+        0.632,
+        "Arena do casal Gyorg"
+      ]
+    ]
   }
 }

@@ -179,6 +179,59 @@ class HyruleViewModel(application: Application) : AndroidViewModel(application) 
             finally { busy=false }
         }
     }
+    var presenceHidden by mutableStateOf<Boolean?>(null)
+        private set
+    var changingPresence by mutableStateOf(false)
+        private set
+    private val presenceMutex = Mutex()
+    private val presenceDevice = java.util.UUID.randomUUID().toString()
+
+    suspend fun trackPresence(account: AuthSession) {
+        try {
+            while (session?.userId == account.userId) {
+                try {
+                    presenceMutex.withLock {
+                        val hidden = communityRequest(account.userId) { presenceHeartbeat(it, presenceDevice, true) }
+                        if (session?.userId == account.userId) presenceHidden = hidden
+                    }
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    throw cancelled
+                } catch (_: Exception) {
+                    presenceHidden = null
+                }
+                delay(25_000)
+            }
+        } finally {
+            val latest = session?.takeIf { it.userId == account.userId } ?: account
+            withContext(kotlinx.coroutines.NonCancellable) {
+                presenceMutex.withLock {
+                    runCatching { supabase.presenceHeartbeat(latest, presenceDevice, false) }
+                    presenceHidden = null
+                }
+            }
+        }
+    }
+
+    fun setPresenceHidden(hidden: Boolean) {
+        val user = session?.userId ?: return
+        if (changingPresence) return
+        changingPresence = true
+        viewModelScope.launch {
+            try {
+                presenceMutex.withLock {
+                    communityRequest(user) { setPresenceHidden(it, hidden) }
+                    if (session?.userId == user) presenceHidden = hidden
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                message = "Não foi possível alterar a privacidade da presença."
+            } finally {
+                changingPresence = false
+            }
+        }
+    }
+
     suspend fun <T> communityRequest(userId: String, request: suspend SupabaseClient.(AuthSession) -> T): T {
         val account = freshSession()
         check(account.userId == userId) { "A sessão mudou. Tente novamente." }

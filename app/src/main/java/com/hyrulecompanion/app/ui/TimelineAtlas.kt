@@ -1,6 +1,7 @@
 package com.hyrulecompanion.app.ui
 
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
@@ -69,43 +70,40 @@ private val atlasPages = mapOf(
     "oracle-ages" to "oracle-of-ages",
     "oracle-seasons" to "oracle-of-seasons",
     "phantom-hourglass" to "phantom-hourglass",
+    "zelda2" to "zelda-ii-the-adventure-of-link",
 )
 
 private fun mapUrl(gameId: String): String {
     val slug = atlasPages.getValue(gameId)
     val suffix = if (gameId == "zelda1") "-first-and-second-quests" else ""
-    return "https://zeldacollection.de/en/walkthroughs/$slug/$slug-interactive-map$suffix/"
+    val page = if (gameId == "zelda2") "zelda-ii" else slug
+    return "https://zeldacollection.de/en/walkthroughs/$slug/$page-interactive-map$suffix/"
 }
 
-@Composable private fun MapPreview(mapKey: String, name: String) {
+@Composable private fun MapPreview(mapKey: String, name: String, onOpen: () -> Unit) {
     val assets = androidx.compose.ui.platform.LocalContext.current.assets
-    val catalog = remember(assets) {
-        assets.open("atlas/maps.json").bufferedReader().use { org.json.JSONObject(it.readText()) }
+    val map = remember(assets, mapKey) {
+        assets.open("atlas/maps.json").bufferedReader().use { org.json.JSONObject(it.readText()).getJSONObject(mapKey) }
     }
-    val map = catalog.getJSONObject(mapKey)
-    val points = map.getJSONArray("points")
-    var selected by remember(mapKey) { mutableIntStateOf(-1) }
-    BoxWithConstraints(Modifier.fillMaxWidth().aspectRatio(map.getDouble("aspect").toFloat()).clip(RoundedCornerShape(8.dp))) {
-        coil.compose.AsyncImage(model = "file:///android_asset/atlas/$mapKey.webp",
-            contentDescription = "Mapa de $name", modifier = Modifier.fillMaxSize(),
-            contentScale = androidx.compose.ui.layout.ContentScale.FillBounds)
+    BoxWithConstraints(Modifier.fillMaxWidth().aspectRatio(map.getDouble("aspect").toFloat())
+        .clip(RoundedCornerShape(8.dp))
+        .clickable(onClickLabel = "Ampliar mapa", role = androidx.compose.ui.semantics.Role.Button, onClick = onOpen)) {
+        coil.compose.AsyncImage("file:///android_asset/atlas/$mapKey.webp", "Mapa de $name",
+            Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.FillBounds)
+        val points = map.getJSONArray("points")
         for (index in 0 until points.length()) {
             val point = points.getJSONArray(index)
-            val x = maxWidth * point.getDouble(0).toFloat()
-            val y = maxHeight * point.getDouble(1).toFloat()
-            Box(Modifier.offset(x - 16.dp, y - 16.dp).size(32.dp)
-                .semantics { contentDescription = point.getString(2) }
-                .clickable { selected = index }, contentAlignment = Alignment.Center) {
-                Surface(shape = CircleShape, color = if (selected == index) Color(0xFFFFD86E) else Color.White,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.Black)) {
-                    Text((index + 1).toString(), Modifier.padding(horizontal = 4.dp), color = Color.Black,
-                        style = MaterialTheme.typography.labelSmall)
-                }
+            val x = (maxWidth * point.getDouble(0).toFloat() - 9.dp).coerceIn(0.dp, (maxWidth - 18.dp).coerceAtLeast(0.dp))
+            val y = (maxHeight * point.getDouble(1).toFloat() - 9.dp).coerceIn(0.dp, (maxHeight - 18.dp).coerceAtLeast(0.dp))
+            Surface(Modifier.offset(x, y).size(18.dp), shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer) {
+                Box(contentAlignment = Alignment.Center) { Text("${index + 1}", style = MaterialTheme.typography.labelSmall) }
             }
         }
+        Surface(Modifier.align(Alignment.TopEnd).padding(8.dp), shape = CircleShape) {
+            Icon(androidx.compose.material.icons.Icons.Default.Fullscreen, null, Modifier.padding(6.dp))
+        }
     }
-    Text(if (selected >= 0) points.getJSONArray(selected).getString(2) else "Toque em um ponto para identificar o local.",
-        style = MaterialTheme.typography.bodySmall)
 }
 
 @Composable fun AtlasScreen(vm:HyruleViewModel,initialGame:String,onGame:(String)->Unit){
@@ -160,8 +158,7 @@ private fun mapUrl(gameId: String): String {
             }
         }
         item {ParchmentCard {
-            MapPreview(key, map.name)
-            Button(onClick={fullscreen=true},modifier=Modifier.fillMaxWidth()) { Text("Abrir mapa em tela cheia") }
+            MapPreview(key, map.name) { fullscreen = true }
             Button(onClick={
                 try {
                     androidx.browser.customtabs.CustomTabsIntent.Builder().setShowTitle(true).build()

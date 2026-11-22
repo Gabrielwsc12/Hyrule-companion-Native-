@@ -34,10 +34,14 @@ private fun JSONObject.string(k: String) = optString(k, "")
 class Catalog(context: Context) {
     private val raw = JSONObject(context.assets.open("hyrule_content.json").bufferedReader().use { it.readText() })
     private val covers = raw.getJSONObject("gameCovers")
+    private val localCovers = context.assets.list("covers").orEmpty().toSet()
 
     val games: List<Game> = raw.getJSONArray("games").let { array ->
         (0 until array.length()).map { i -> array.getJSONObject(i).let { j ->
-            Game(j.string("id"), j.string("name"), j.optInt("year"), j.string("type"), j.string("icon"), j.string("platform"), j.string("desc"), covers.optString(j.string("id"), "").ifBlank { null })
+            Game(j.string("id"), j.string("name"), j.optInt("year"), j.string("type"), j.string("icon"), j.string("platform"), j.string("desc"), "${j.string("id")}.webp".let { file ->
+                if (file in localCovers) "file:///android_asset/covers/$file"
+                else covers.optString(j.string("id"), "").ifBlank { null }
+            })
         } }
     }
     val routes: List<TimelineRoute> = raw.getJSONObject("timelineRoutes").let { j ->
@@ -83,7 +87,7 @@ class Catalog(context: Context) {
         map.id == "totk" -> listOf("surface" to "Superfície", "sky" to "Céus", "depths" to "Profundezas").map { (key, label) ->
             AtlasLayer("totk-$key", label, totkLocations.getValue(key))
         }
-        map.layers.isNotEmpty() -> map.layers
-        else -> listOf(AtlasLayer(map.id, map.name, map.locations))
+        map.layers.any { it.key == map.id } -> map.layers
+        else -> listOf(AtlasLayer(map.id, if (map.layers.isEmpty()) map.name else "Mapa geral", map.locations)) + map.layers
     }
 }

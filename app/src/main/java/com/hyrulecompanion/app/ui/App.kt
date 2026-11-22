@@ -10,6 +10,7 @@ import androidx.activity.compose.BackHandler
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -90,6 +91,12 @@ private val tabs=listOf(
     }
     val online=isOnline()
     val lifecycleOwner = LocalLifecycleOwner.current
+    val account = vm.session
+    LaunchedEffect(lifecycleOwner, account?.userId, online) {
+        if (account != null && online) lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            vm.trackPresence(account)
+        }
+    }
     val appContext = LocalContext.current
     val version = com.hyrulecompanion.app.BuildConfig.VERSION_CODE
     var showChanges by rememberSaveable { mutableStateOf(vm.repo.raw("last-seen-release") != version.toString()) }
@@ -102,6 +109,7 @@ private val tabs=listOf(
     }
     val welcomePrefs = remember { appContext.getSharedPreferences("welcome", Context.MODE_PRIVATE) }
     var invite by remember { mutableStateOf(!welcomePrefs.getBoolean("seen", false) && vm.session == null) }
+    var openMural by rememberSaveable { mutableStateOf(false) }
     var openAccount by rememberSaveable { mutableStateOf(false) }
     var atlasGame by rememberSaveable { mutableStateOf("oot") }
     fun closeInvite() {
@@ -154,7 +162,7 @@ private val tabs=listOf(
                 },
                 bottomBar={
                     if(screen!="settings" && screen!="community" && gameId==null && !dungeonIndex) NavigationBar(containerColor=MaterialTheme.colorScheme.primaryContainer,tonalElevation=7.dp) {
-                        tabs.forEach { tab -> NavigationBarItem(selected=screen==tab.id,onClick={openAccount=false;screen=tab.id},icon={Icon(tab.icon,contentDescription=tab.title)},label={Text(tab.title,maxLines=1,style=MaterialTheme.typography.labelSmall)},alwaysShowLabel=false) }
+                        tabs.forEach { tab -> NavigationBarItem(selected=screen==tab.id,onClick={openAccount=false;openMural=false;screen=tab.id},icon={Icon(tab.icon,contentDescription=tab.title)},label={Text(tab.title,maxLines=1,style=MaterialTheme.typography.labelSmall)},alwaysShowLabel=false) }
                     }
                 }
             ){ inner ->
@@ -176,11 +184,11 @@ private val tabs=listOf(
                         }
                         gameId!=null -> GameDetailScreen(vm,gameId!!,onBack={gameId=null;screen=previous},
                             onAtlas={id->atlasGame=id;gameId=null;screen="atlas"},onReference={contentEntry=it})
-                        screen=="home" -> HomeScreen(vm,onNavigate={screen=it},onGame={previous="home";gameId=it})
+                        screen=="home" -> HomeScreen(vm,onNavigate={target -> openAccount=false; openMural=target=="mural"; screen=if(openMural) "profile" else target},onGame={previous="home";gameId=it})
                         screen=="timeline" -> TimelineScreen(vm,onGame={previous="timeline";gameId=it})
                         screen=="atlas" -> AtlasScreen(vm,atlasGame,onGame={previous="atlas";gameId=it})
                         screen=="library" -> LibraryScreen(vm,onGame={previous="library";gameId=it},onDungeons={dungeonIndex=true})
-                        screen=="profile" -> ProfileScreen(vm,openAccount=openAccount)
+                        screen=="profile" -> ProfileScreen(vm,openAccount=openAccount,openMural=openMural,onGame={previous="profile";gameId=it})
                         screen=="community" -> CommunityScreen(vm,onBack={screen="profile"},onAccount={openAccount=true;screen="profile"})
                         screen=="settings" -> SettingsScreen(vm,onBack={screen="profile"})
                     }
@@ -274,6 +282,5 @@ private val tabs=listOf(
         Spacer(Modifier.height(18.dp))
         Text("Explore · Complete · Conquiste",color=Gold,textAlign=TextAlign.Center)
         Spacer(Modifier.height(80.dp))
-        OutlinedButton(onClick=onFinish){Text("Pular introdução",color=Parchment)}
     }
 }

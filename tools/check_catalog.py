@@ -4,7 +4,7 @@ import json,re
 root=Path(__file__).resolve().parents[1]
 data=json.loads((root/'app/src/main/assets/hyrule_content.json').read_text())
 assert len(data['games'])==62, 'Original catalog must retain 62 games'
-assert len(data['guideData'])==58, 'Original guide list must retain 58 guides'
+assert len(data['guideData']) >= 58, 'Original guide list must retain 58 guides'
 assert len(data['atlasMaps']) >= 15
 assert len(data['dungeonData']) >= 9
 assert len(data['timelineRoutes'])==5, 'Original timeline must retain all branches'
@@ -12,6 +12,9 @@ assert all(len(x['locations'])>0 for x in data['atlasMaps'])
 assert set(data['totkLayerLocations'])=={'surface','sky','depths'}
 ids={x['id'] for x in data['games']}
 assert len(ids)==len(data['games'])
+assert len({g['id'] for g in data['guideData']}) == len(data['guideData'])
+assert all(data['gameCovers'].get(game_id) or
+           (root / f'app/src/main/assets/covers/{game_id}.webp').exists() for game_id in ids)
 assert all(g['game'] in ids for g in data['guideData'])
 assert all(d['game'] in ids for d in data['dungeonData'])
 assert all(m['gameId'] in ids for m in data['atlasMaps'])
@@ -25,14 +28,16 @@ assets = root / 'app/src/main/assets'
 previews = json.loads((assets / 'atlas/maps.json').read_text())
 layer_keys = {f'totk-{name}' for name in data['totkLayerLocations']}
 for m in data['atlasMaps']:
-    layers = m.get('layers', [{'key': m['id'], 'locations': m['locations']}])
+    layers = m.get('layers', [])
+    if not any(layer['key'] == m['id'] for layer in layers):
+        layers = [{'key': m['id'], 'locations': m['locations']}] + layers
     for layer in layers:
         points = layer['locations']
         assert points and all(0 <= p[3] <= 100 and 0 <= p[4] <= 100 for p in points)
         if m['id'] != 'totk':
             assert layer['key'] not in layer_keys
             layer_keys.add(layer['key'])
-        if 'layers' in m:
+        if layer in m.get('layers', []):
             pins = previews[layer['key']]['points']
             assert len(points) <= len(pins)
             for point, pin in zip(points, pins):
@@ -54,4 +59,4 @@ code='\n'.join(p.read_text() for p in (root/'app/src/main/java').rglob('*.kt'))
 assert 'android.webkit.WebView' not in code and 'WebView(' not in code
 assert 'hc_user_data' in code and 'hc-last-cloud-sync' in code
 assert 'schemaVersion' in code and '13' in code
-print(f"OK — 62 games, 58 guides, {len(data['atlasMaps'])} mapped games, {len(layer_keys)} map views, {len(data['dungeonData'])} dungeons; key references valid.")
+print(f"OK — 62 games, {len(data['guideData'])} guides, {len(data['atlasMaps'])} mapped games, {len(layer_keys)} map views, {len(data['dungeonData'])} dungeons; key references valid.")

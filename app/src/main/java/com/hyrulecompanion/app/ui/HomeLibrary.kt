@@ -8,6 +8,17 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import coil.compose.AsyncImage
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -67,23 +78,53 @@ import com.hyrulecompanion.app.data.Game
             TextButton(onClick={onNavigate("library")}) { Text("Abrir biblioteca") }
         }
         SmallHeading("Descubra Hyrule")
-        listOf(
-            Triple("⌛ Cronologia","Explore as linhas do tempo","timeline"),
-            Triple("🗺 Atlas","Visite os mapas e seus marcos","atlas"),
-            Triple("▤ Biblioteca","Jogos, guias e dungeons","library"),
-            Triple("♜ Meu mural","Acompanhe suas conquistas","profile")
-        ).forEach { (title,sub,target) ->
-            ParchmentCard(Modifier.fillMaxWidth().clickable{onNavigate(target)}) {
-                Row(verticalAlignment=Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(title,style=MaterialTheme.typography.titleLarge)
-                        Text(sub,style=MaterialTheme.typography.bodySmall)
-                    }
-                    Icon(Icons.Default.ChevronRight,contentDescription=null)
+        SectionCarousel(onNavigate)
+        Spacer(Modifier.height(14.dp))
+    }
+}
+
+private data class SectionCard(val label: String, val detail: String, val target: String, val image: String)
+
+private val homeSections = listOf(
+    SectionCard("Atlas", "Mapas e pontos de interesse", "atlas", "totk-surface"),
+    SectionCard("Cronologia", "Explore as linhas do tempo", "timeline", "alttp"),
+    SectionCard("Biblioteca", "Jogos, guias e dungeons", "library", "links-awakening-remake"),
+    SectionCard("Meu mural", "Reveja suas conquistas", "mural", "oot")
+)
+
+@Composable
+private fun SectionCarousel(onNavigate: (String) -> Unit) {
+    val pager = rememberPagerState { homeSections.size }
+    val scope = rememberCoroutineScope()
+    HorizontalPager(pager, contentPadding = PaddingValues(end = 28.dp), pageSpacing = 12.dp) { page ->
+        val section = homeSections[page]
+        Box(Modifier.fillMaxWidth().height(158.dp).clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            .clickable(role = Role.Button, onClickLabel = "Abrir ${section.label}") { onNavigate(section.target) }) {
+            AsyncImage("file:///android_asset/atlas/${section.image}.webp", null,
+                Modifier.matchParentSize(), contentScale = ContentScale.Crop)
+            Box(Modifier.matchParentSize().background(Brush.verticalGradient(
+                listOf(Color.Black.copy(alpha = .15f), Color(0xED101815))
+            )))
+            Row(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(section.label, color = Color.White, style = MaterialTheme.typography.titleLarge)
+                    Text(section.detail, color = Color(0xFFF0EEE5), style = MaterialTheme.typography.bodySmall)
                 }
+                Icon(Icons.Default.ChevronRight, null, tint = Color.White)
             }
         }
-        Spacer(Modifier.height(14.dp))
+    }
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+        homeSections.forEachIndexed { page, section ->
+            Box(Modifier.size(40.dp).clip(CircleShape)
+                .semantics { contentDescription = section.label }
+                .clickable { scope.launch { pager.animateScrollToPage(page) } }, contentAlignment = Alignment.Center) {
+                Box(Modifier.size(if (pager.currentPage == page) 10.dp else 7.dp).clip(CircleShape)
+                    .background(if (pager.currentPage == page) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline))
+            }
+        }
     }
 }
 

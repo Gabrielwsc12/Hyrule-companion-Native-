@@ -12,9 +12,9 @@ O **Hyrule Companion** é um guia de bolso para Android e um diário de jogo par
 
 ### Consulte o app durante a partida
 
-- **Atlas.** Explore 27 mapas offline de 17 jogos e toque nos 187 marcadores para identificar locais. Em *Tears of the Kingdom*, alterne entre céu, superfície e profundezas. O índice permite buscar marcos, filtrar por região e registrar visitas. Para uma exploração mais detalhada, abra o mapa interativo do ZeldaCollection com conexão à internet.
-- **Guias.** Encontre entre 58 guias a ajuda de que precisa para uma missão, um puzzle, um chefe ou uma área de exploração. Abra a ficha do jogo pela Biblioteca e toque em um guia para consultar etapas, favoritos e anotações. Guias com objetivos de 100% têm uma lista própria. As anotações pessoais ajudam a retomar a partida.
-- **Enciclopédia de Dungeons.** Consulte onze dungeons com rotas por salas, soluções de puzzles, inimigos, itens e tesouros. Acompanhe as etapas, marque o que já recolheu e consulte a estratégia do chefe e a lista final de objetivos.
+- **Atlas.** Explore 35 mapas offline de 18 jogos e toque nos 216 marcadores para identificar locais. Em *Tears of the Kingdom*, alterne entre céu, superfície e profundezas. O índice permite buscar marcos, filtrar por região e registrar visitas. Para uma exploração mais detalhada, abra o mapa interativo do ZeldaCollection com conexão à internet.
+- **Guias.** Encontre entre 80 guias a ajuda de que precisa para uma missão, um puzzle, um chefe ou uma área de exploração. Abra a ficha do jogo pela Biblioteca e toque em um guia para consultar etapas, favoritos e anotações. Guias com objetivos de 100% têm uma lista própria. As anotações pessoais ajudam a retomar a partida.
+- **Enciclopédia de Dungeons.** Consulte 22 dungeons com rotas por salas, soluções de puzzles, inimigos, itens e tesouros. Acompanhe as etapas, marque o que já recolheu e consulte a estratégia do chefe e a lista final de objetivos.
 
 ### Registre, compartilhe e proteja seu progresso
 
@@ -26,6 +26,13 @@ O **Hyrule Companion** é um guia de bolso para Android e um diário de jogo par
 Migração nativa do arquivo original `hyrule-companion-apk.zip`, **Web Edition 1.16.6**, sem WebView, Capacitor, HTML ou JavaScript em tempo de execução. Mantém o mesmo identificador de aplicativo (`com.hyrulecompanion.app`), o projeto Supabase e a estrutura **schema 13** de dados. A migração preserva o texto editorial original dos 62 jogos, 58 guias, 12 mapas, 5 dungeons e 5 ramificações da cronologia.
 
 ## Novidades
+
+### 1.17.2-native
+
+- **Perfil.** Banners JPG, PNG ou GIF de até 1,8 MB. A animação respeita **Reduzir animações**. Um ponto verde indica presença no perfil. Em **Configurações → Privacidade**, ative **Não perturbe** para ocultar a presença de outros jogadores. Toque nos cartões da sua jornada para abrir a ficha do jogo.
+- **Início e Atlas.** Carrossel ilustrado com atalhos para Atlas, Cronologia, Biblioteca e Meu mural. O mapa abre em tela cheia com um toque na imagem. A introdução pode ser desativada nas Configurações.
+- **Catálogo.** Oito mapas adicionais, incluindo Hyrule de Zelda II e sete áreas de The Minish Cap. São 35 mapas, 216 marcadores, 80 guias e 22 dungeons no total. As 44 edições sem capa e Twilight Princess, cujo link de capa falhava, receberam cards ilustrados próprios disponíveis offline. [Mapas de The Minish Cap](https://zeldacollection.de/en/walkthroughs/the-minish-cap/the-minish-cap-interactive-map/) · [Atlas de Zelda II](https://zeldacollection.de/en/walkthroughs/zelda-ii-the-adventure-of-link/zelda-ii-interactive-map/) · [NESMaps](https://nesmaps.com/maps/Zelda2/Zelda2.html)
+- **Referências dos guias.** [The Minish Cap](https://www.zeldadungeon.net/the-minish-cap-walkthrough/) · [Ocarina of Time](https://www.zeldadungeon.net/ocarina-of-time-walkthrough/) · [Majora’s Mask](https://www.zeldadungeon.net/majoras-mask-walkthrough/) · [The Wind Waker](https://www.zeldadungeon.net/the-wind-waker-walkthrough/)
 
 ### 1.17.1-native
 
@@ -99,6 +106,10 @@ Suba os arquivos do projeto para um repositório GitHub, abra **Actions > Build 
 ## Retorno ao app após confirmação de e-mail
 
 No mesmo projeto Supabase, adicione `com.hyrulecompanion.app://auth/confirm` em **Authentication → URL Configuration → Redirect URLs**. O e-mail de cadastro deve usar `{{ .ConfirmationURL }}` para que o Supabase confirme o endereço e retorne com o código PKCE de uso único. Abra o link no mesmo aparelho em que iniciou o cadastro. Depois de receber a confirmação no aplicativo, entre com e-mail e senha.
+
+## Ativar banners GIF e presença no Supabase
+
+Execute [COMMUNITY_PRESENCE_AND_BANNERS.sql](supabase/COMMUNITY_PRESENCE_AND_BANNERS.sql) uma vez no SQL Editor do mesmo projeto Supabase, depois das migrações de Comunidade e mídia de perfil. A presença pública exige conta, perfil visível e app em primeiro plano. O modo **Não perturbe** vale para todos os dispositivos da conta. Quando o app perde a conexão, o último sinal de presença expira em até 75 segundos.
 
 ## Ativar a Comunidade no Supabase
 

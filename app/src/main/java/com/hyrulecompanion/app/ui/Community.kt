@@ -40,6 +40,21 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
     var following by remember { mutableStateOf<List<CommunityProfile>>(emptyList()) }
     var results by remember { mutableStateOf<List<CommunityProfile>?>(null) }
     var selected by remember { mutableStateOf<CommunityProfile?>(null) }
+    var profileOnline by remember { mutableStateOf(false) }
+    LaunchedEffect(selected?.userId) {
+        profileOnline = false
+        val target = selected?.userId ?: return@LaunchedEffect
+        while (true) {
+            profileOnline = try {
+                vm.communityRequest(userId) { communityOnline(it, target) }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                false
+            }
+            kotlinx.coroutines.delay(10_000)
+        }
+    }
     var reactions by remember { mutableStateOf<Map<String, CommunityReaction>>(emptyMap()) }
     var isFollowing by remember { mutableStateOf(false) }
     var enabled by remember { mutableStateOf(false) }
@@ -112,7 +127,7 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
         if (profile != null) {
             item {
                 ParchmentCard {
-                    ProfileHeader("@${profile.handle}", media.avatar.orEmpty(), media.banner, vm.repo.preferences().reduceMotion)
+                    ProfileHeader("@${profile.handle}", media.avatar.orEmpty(), media.banner, vm.repo.preferences().reduceMotion, online = profileOnline)
                     Text("Zelda favorito: ${vm.catalog.game(profile.favoriteGame.orEmpty())?.name ?: "A escolher"}")
                     if (profile.userId != userId) {
                         val canFollow = own != null

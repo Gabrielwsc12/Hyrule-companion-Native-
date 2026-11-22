@@ -35,9 +35,10 @@ import com.hyrulecompanion.app.MuralOptions
 import com.hyrulecompanion.app.data.*
 import java.time.LocalDate
 
-@Composable internal fun Avatar(value:String,reduceMotion:Boolean,modifier:Modifier=Modifier){
+@Composable
+internal fun rememberProfileImage(value: String, reduceMotion: Boolean): coil.request.ImageRequest? {
     val context = LocalContext.current
-    val request = remember(value, context, reduceMotion) {
+    return remember(value, context, reduceMotion) {
         val bytes = runCatching {
             Base64.decode(value.substringAfter("base64,", ""), Base64.DEFAULT)
         }.getOrNull()?.takeIf { it.isNotEmpty() }
@@ -51,12 +52,16 @@ import java.time.LocalDate
             }.build()
         }
     }
+}
+
+@Composable internal fun Avatar(value:String,reduceMotion:Boolean,modifier:Modifier=Modifier){
+    val request = rememberProfileImage(value, reduceMotion)
     if (request != null) coil.compose.AsyncImage(model = request, contentDescription = "Foto do aventureiro",
         contentScale = androidx.compose.ui.layout.ContentScale.Crop, modifier = modifier.clip(CircleShape))
     else Surface(modifier=modifier,shape=CircleShape,color=MaterialTheme.colorScheme.primaryContainer){Box(contentAlignment=Alignment.Center){Text("🗡️",style=MaterialTheme.typography.headlineMedium)}}
 }
 
-@Composable fun ProfileScreen(vm:HyruleViewModel,openAccount:Boolean=false){
+@Composable fun ProfileScreen(vm:HyruleViewModel,openAccount:Boolean=false,openMural:Boolean=false,onGame:(String)->Unit){
     val revision=vm.revision
     val prefs=vm.repo.preferences()
     val userId = vm.session?.userId
@@ -68,7 +73,7 @@ import java.time.LocalDate
     var muralOptions by remember { mutableStateOf<MuralOptions?>(null) }
     var exportOptions by remember { mutableStateOf<MuralOptions?>(null) }
     val jpegLauncher=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("image/jpeg")){uri -> if(uri!=null)exportOptions?.let{vm.exportMural(uri,it)};exportOptions=null}
-    LazyColumn(Modifier.fillMaxSize(),state=androidx.compose.foundation.lazy.rememberLazyListState(initialFirstVisibleItemIndex=if(openAccount) 2 else 0),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
+    LazyColumn(Modifier.fillMaxSize(),state=androidx.compose.foundation.lazy.rememberLazyListState(initialFirstVisibleItemIndex=when { openAccount -> 2; openMural -> 3; else -> 0 }),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
         item {ScreenTitle("Meu Perfil","Seu registro como aventureiro de Hyrule","♜")}
         item {ParchmentCard {
             key(userId) { ProfileCommunitySettings(vm, userId, prefs.avatar, prefs.reduceMotion) }
@@ -91,7 +96,7 @@ import java.time.LocalDate
         if(started.isEmpty())item {ParchmentCard {Text("Você ainda não iniciou nenhuma aventura. Abra a Biblioteca e registre seu primeiro jogo.")}}
         items(started,key={it.id}){g->
             val p=vm.repo.gameProgress(g.id)
-            ParchmentCard {
+            ParchmentCard(Modifier.fillMaxWidth().clickable { onGame(g.id) }) {
                 Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                     CoverArt(g,Modifier.size(70.dp,82.dp))
                     Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(5.dp)) {
@@ -201,6 +206,20 @@ import java.time.LocalDate
                 vm.savePreferences(prefs.copy(reduceMotion=it))
             }
         }}
+        item { ParchmentCard {
+            SmallHeading("Privacidade")
+            val hidden = vm.presenceHidden
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Não perturbe")
+                    Text(if (vm.session == null) "Entre na conta para alterar a visibilidade."
+                        else "Oculta seu estado online de outros jogadores.", style = MaterialTheme.typography.bodySmall)
+                }
+                Switch(checked = hidden == true, enabled = hidden != null && !vm.changingPresence,
+                    onCheckedChange = vm::setPresenceHidden)
+            }
+            if (vm.session != null && hidden == null) Text("Presença indisponível neste momento.", style = MaterialTheme.typography.bodySmall)
+        } }
         item {ParchmentCard {
             SmallHeading("Durante o jogo")
             SettingSwitch("Proteção contra spoilers", "Revele cada dica, solução e recompensa quando quiser.", prefs.hideSpoilers) {
