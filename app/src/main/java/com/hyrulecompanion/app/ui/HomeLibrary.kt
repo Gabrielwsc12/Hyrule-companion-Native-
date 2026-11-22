@@ -35,16 +35,28 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.SubcomposeAsyncImage
+import androidx.compose.ui.platform.LocalContext
+import coil.request.ImageRequest
+import coil.size.Precision
 import com.hyrulecompanion.app.BuildConfig
 import com.hyrulecompanion.app.HyruleViewModel
 import com.hyrulecompanion.app.data.Game
 
-@Composable fun CoverArt(game:Game,modifier:Modifier=Modifier) {
-    if(game.cover.isNullOrBlank()) Box(modifier,contentAlignment=Alignment.Center){Text(game.icon,style=MaterialTheme.typography.headlineMedium)}
-    else SubcomposeAsyncImage(model=game.cover,contentDescription="Capa de ${game.name}",modifier=modifier.clip(RoundedCornerShape(10.dp)),contentScale=ContentScale.Crop,
-        loading={Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Text(game.icon)}},
-        error={Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Text(game.icon)}})
+@Composable
+fun CoverArt(game: Game, modifier: Modifier = Modifier, large: Boolean = false) {
+    val context = LocalContext.current
+    val request = remember(context, game.cover, large) {
+        game.cover?.let {
+            ImageRequest.Builder(context).data(it).size(if (large) 640 else 320)
+                .precision(Precision.INEXACT).build()
+        }
+    }
+    var visible by remember(request) { mutableStateOf(false) }
+    Box(modifier.clip(RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
+        if (!visible) Text(game.icon, style = MaterialTheme.typography.headlineMedium)
+        if (request != null) AsyncImage(request, "Capa de ${game.name}", Modifier.matchParentSize(),
+            contentScale = ContentScale.Crop, onSuccess = { visible = true }, onError = { visible = false })
+    }
 }
 
 @Composable fun HomeScreen(vm:HyruleViewModel,userName:String?,onNavigate:(String)->Unit,onGame:(String)->Unit) {
@@ -111,7 +123,7 @@ private val homeSections = listOf(
 private fun SectionCarousel(onNavigate: (String) -> Unit) {
     val pager = rememberPagerState { homeSections.size }
     val scope = rememberCoroutineScope()
-    HorizontalPager(pager, contentPadding = PaddingValues(end = 28.dp), pageSpacing = 12.dp) { page ->
+    HorizontalPager(pager, contentPadding = PaddingValues(end = 28.dp), pageSpacing = 12.dp, beyondViewportPageCount = 1) { page ->
         val section = homeSections[page]
         Box(Modifier.fillMaxWidth().height(158.dp).clip(RoundedCornerShape(18.dp))
             .background(MaterialTheme.colorScheme.primaryContainer)
@@ -197,7 +209,7 @@ private fun SectionCarousel(onNavigate: (String) -> Unit) {
     var statusExpanded by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
         TextButton(onClick=onBack){Text("← Voltar")}
-        CoverArt(game,Modifier.fillMaxWidth().height(188.dp))
+        CoverArt(game, Modifier.fillMaxWidth().height(188.dp), large = true)
         ScreenTitle(game.name,"${game.year} • ${game.platform} • ${game.type}",game.icon)
         ParchmentCard {
             Text(game.description)
@@ -228,6 +240,5 @@ private fun SectionCarousel(onNavigate: (String) -> Unit) {
                 Text(dungeon.name)
             }
         }
-        if(!game.cover.isNullOrBlank())Text("Arte de capa carregada da fonte externa original; requer internet.",style=MaterialTheme.typography.labelSmall)
     }
 }

@@ -1,4 +1,4 @@
-# Atualizações automáticas — Hyrule Companion 1.16.7-native
+# Atualizações automáticas — Hyrule Companion
 
 Esta edição adiciona **detecção automática de novas versões e notificação de atualização**. Ela **não instala APK silenciosamente**, o que não é permitido em aplicativos Android comuns. O usuário toca **Atualizar agora** para baixar o novo APK em HTTPS e confirma a instalação no Android.
 
@@ -49,13 +49,13 @@ Adicione os segredos no GitHub (**Settings > Secrets and variables > Actions**):
 
 Antes de gerar cada APK:
 
-1. Atualize `versionCode` (inteiro **estritamente maior** que o anterior) e `versionName` no arquivo `app/build.gradle.kts`. Exemplo: próximo depois de `1.16.7-native` (`11607`) seria `1.16.8-native` (`11608`).
+1. Atualize `versionCode` (inteiro **estritamente maior** que o anterior) e `versionName` no arquivo `app/build.gradle.kts`. A edição atual usa `1.18.0.1` (`11801`).
 2. Commit/push do código.
-3. Crie uma tag **exatamente igual a `v` + versionName** e faça push. Exemplo: `git tag v1.16.8-native && git push origin v1.16.8-native`.
+3. Crie uma tag **exatamente igual a `v` + versionName** e faça push. Para esta versão, use `git tag v1.18.0.1 && git push origin v1.18.0.1`.
 4. A GitHub Action **`Release Hyrule Companion APK and announce update`** compila e assina o APK, cria GitHub Release pública e publica a versão em `hc_app_releases` (somente se os segredos e a tabela já tiverem sido configurados).
 5. Usuários que têm o verificador instalado verão o aviso quando abrirem o app ou receberão a notificação em segundo plano, se habilitada.
 
-A tag atual (`v1.16.7-native`) pode ser usada para publicar o **primeiro APK com o sistema**. Se alguém instalou `1.16.6-native` ou a antiga Web Edition, esse app antigo **ainda não possui o verificador**. É necessário instalar `1.16.7-native` manualmente uma primeira vez. A partir daí, versões futuras são detectadas automaticamente.
+Usuários de edições sem o verificador podem instalar manualmente um APK oficial compatível que inclua esse recurso.
 
 ### Alternativa: publicar sem GitHub Actions automatizado
 
@@ -65,8 +65,8 @@ A tag atual (`v1.16.7-native`) pode ser usada para publicar o **primeiro APK com
 insert into public.hc_app_releases
 (version_code, version_name, notes, download_url, mandatory, active)
 values
-(11608, '1.16.8-native', 'Novidades da atualização.',
- 'https://SEU-HOST-HTTPS/HyruleCompanion-1.16.8-native.apk', false, true)
+(11801, '1.18.0.1', 'Capas offline, cache de imagens e dificuldade de pesca por raridade.',
+ 'https://SEU-HOST-HTTPS/HyruleCompanion-1.18.0.1.apk', false, true)
 on conflict (version_code) do update set
  version_name = excluded.version_name,
  notes = excluded.notes,
@@ -79,7 +79,7 @@ on conflict (version_code) do update set
 
 ## Como testar sem anunciar uma atualização falsa a todos
 
-- Em um projeto de teste com o SQL aplicado, instale a versão `1.16.7-native` (`11607`) e publique um APK real assinado com `11608`.
+- Em um projeto de teste com o SQL aplicado, instale um APK oficial com código inferior a `11801` e anuncie o APK da `1.18.0.1` assinado pela mesma chave.
 - Insira esse release com URL pública HTTPS na tabela. Abra o app `11607`. O diálogo deve surgir.
 - Teste **Lembrar depois**, a busca manual nas Configurações, o botão para o download e a permissão para notificação em segundo plano.
 - Instale `11608` por cima e confira que a jornada local permanece intacta. **Nunca** assine a atualização com outro certificado.

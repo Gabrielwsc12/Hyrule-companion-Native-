@@ -28,6 +28,8 @@ import androidx.compose.ui.zIndex
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import coil.size.Size as CoilSize
 import com.hyrulecompanion.app.data.AtlasLocation
 import org.json.JSONObject
 
@@ -38,7 +40,12 @@ internal fun InteractiveAtlas(
     mapKey: String, title: String, locations: List<AtlasLocation>,
     layers: List<Pair<String, String>>, onLayerChange: (String) -> Unit, onDismiss: () -> Unit
 ) {
-    val assets = LocalContext.current.assets
+    val context = LocalContext.current
+    val assets = context.assets
+    val mapImage = remember(context, mapKey) {
+        ImageRequest.Builder(context).data("file:///android_asset/atlas/$mapKey.webp")
+            .size(CoilSize.ORIGINAL).build()
+    }
     val map = remember(assets, mapKey) {
         assets.open("atlas/maps.json").bufferedReader().use { JSONObject(it.readText()).getJSONObject(mapKey) }
     }
@@ -113,7 +120,7 @@ internal fun InteractiveAtlas(
                             (y - 15.dp).coerceIn(0.dp, (viewHeight - 30.dp).coerceAtLeast(0.dp))
                     }
                     Box(Modifier.fillMaxSize().transformable(transform).clipToBounds()) {
-                        AsyncImage("file:///android_asset/atlas/$mapKey.webp", "Mapa de $title",
+                        AsyncImage(mapImage, "Mapa de $title",
                             Modifier.offset(left, top).wrapContentSize(Alignment.TopStart, unbounded = true)
                                 .requiredSize(mapWidth, mapHeight),
                             contentScale = ContentScale.FillBounds)

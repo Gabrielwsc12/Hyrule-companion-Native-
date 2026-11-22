@@ -2,7 +2,7 @@ package com.hyrulecompanion.app
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -12,7 +12,9 @@ import com.hyrulecompanion.app.data.Catalog
 import com.hyrulecompanion.app.data.JourneyRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.net.URL
+import coil.imageLoader
+import coil.request.ImageRequest
+import coil.size.Precision
 import kotlin.math.min
 
 /** Native Android Canvas JPEG renderer. Does not depend on the old HTML or a WebView. */
@@ -90,22 +92,18 @@ object MuralRenderer {
             val col=index%cols;val row=index/cols
             val x=66f+col*(itemWidth+18f);val y=startY+row*(boxHeight+16f)
             rect(x,y,itemWidth,boxHeight,surface,16f)
-            if(options.showCovers && !g.cover.isNullOrBlank()) {
-                runCatching {
-                    val cover = if (g.cover.startsWith("file:///android_asset/")) {
-                        context.assets.open(g.cover.removePrefix("file:///android_asset/")).use { BitmapFactory.decodeStream(it) }
-                    } else {
-                        URL(g.cover).openConnection().apply { connectTimeout=3000;readTimeout=3000 }
-                            .getInputStream().use { BitmapFactory.decodeStream(it) }
-                    }
-                    if(cover!=null){
-                        val iconH=125f;val iconW=108f
-                        val destination=RectF(x+14f,y+16f,x+14f+iconW,y+16f+iconH)
-                        canvas.drawBitmap(cover,null,destination,Paint(Paint.ANTI_ALIAS_FLAG));cover.recycle()
-                        multiline(g.name,x+135f,y+48f,22f,ink,itemWidth-150f,3)
-                    } else multiline(g.name,x+22f,y+64f,26f,ink,itemWidth-44f,2)
-                }.onFailure { multiline(g.name,x+22f,y+64f,26f,ink,itemWidth-44f,2) }
-            } else multiline(g.name,x+22f,y+64f,26f,ink,itemWidth-44f,2)
+            val cover = if (options.showCovers && g.cover != null) {
+                val request = ImageRequest.Builder(context).data(g.cover).size(320)
+                    .precision(Precision.INEXACT).allowHardware(false).build()
+                (context.imageLoader.execute(request).drawable as? BitmapDrawable)?.bitmap
+            } else null
+            if (cover != null) {
+                val destination = RectF(x + 14f, y + 16f, x + 122f, y + 141f)
+                canvas.drawBitmap(cover, null, destination, Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG))
+                multiline(g.name, x + 135f, y + 48f, 22f, ink, itemWidth - 150f, 3)
+            } else {
+                multiline(g.name, x + 22f, y + 64f, 26f, ink, itemWidth - 44f, 2)
+            }
             val status = repo.gameProgress(g.id).status
             txt(status, x + 20f, y + boxHeight - 21f, 23f, gold, true)
             if (repo.earnedTriforce(g.id)) {

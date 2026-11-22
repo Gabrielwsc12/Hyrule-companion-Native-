@@ -8,7 +8,6 @@ import com.hyrulecompanion.app.BuildConfig
 import com.hyrulecompanion.app.updates.AppUpdatePreferences
 import com.hyrulecompanion.app.updates.AppUpdateScheduler
 import android.net.Uri
-import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -35,7 +34,10 @@ import com.hyrulecompanion.app.data.TOTK_PALETTE
 import com.hyrulecompanion.app.HyruleViewModel
 import com.hyrulecompanion.app.MuralOptions
 import com.hyrulecompanion.app.data.*
+import coil.request.CachePolicy
 import coil.request.ImageRequest
+import com.hyrulecompanion.app.ProfileImageData
+import java.security.MessageDigest
 import coil.request.repeatCount
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -44,35 +46,35 @@ import java.time.LocalDate
 @Composable
 internal fun rememberProfileImage(value: String, reduceMotion: Boolean): ImageRequest? {
     val context = LocalContext.current
-    val bytes = key(value) {
-        produceState<ByteArray?>(null) {
-            if (value.isBlank()) return@produceState
+    val image = key(value) {
+        produceState<ProfileImageData?>(null) {
+            if (!value.startsWith("data:image/") || !value.contains(";base64,")) return@produceState
             this.value = withContext(Dispatchers.Default) {
-                try {
-                    Base64.decode(value.substringAfter("base64,", ""), Base64.DEFAULT)
-                        .takeIf { it.isNotEmpty() }
-                } catch (_: IllegalArgumentException) {
-                    null
-                }
+                val digest = MessageDigest.getInstance("SHA-256").digest(value.toByteArray())
+                    .joinToString("") { "%02x".format(it) }
+                ProfileImageData(value, digest)
             }
         }.value
     }
-    return remember(bytes, context, reduceMotion) {
-        bytes?.let { image ->
-            ImageRequest.Builder(context).data(image).apply {
-                if (image.size >= 6 && String(image, 0, 3, Charsets.US_ASCII) == "GIF") {
-                    if (reduceMotion) {
-                        decoderFactory(coil.decode.BitmapFactoryDecoder.Factory())
-                    } else {
-                        repeatCount(-1)
-                        decoderFactory(if (Build.VERSION.SDK_INT >= 28) {
-                            coil.decode.ImageDecoderDecoder.Factory(enforceMinimumFrameDelay = true)
+    return remember(image, context, reduceMotion) {
+        image?.let { data ->
+            ImageRequest.Builder(context).data(data)
+                .memoryCacheKey("profile:${data.digest}:$reduceMotion")
+                .diskCachePolicy(CachePolicy.DISABLED)
+                .apply {
+                    if (data.encoded.startsWith("data:image/gif;")) {
+                        if (reduceMotion) {
+                            decoderFactory(coil.decode.BitmapFactoryDecoder.Factory())
                         } else {
-                            coil.decode.GifDecoder.Factory(enforceMinimumFrameDelay = true)
-                        })
+                            repeatCount(-1)
+                            decoderFactory(if (Build.VERSION.SDK_INT >= 28) {
+                                coil.decode.ImageDecoderDecoder.Factory(enforceMinimumFrameDelay = true)
+                            } else {
+                                coil.decode.GifDecoder.Factory(enforceMinimumFrameDelay = true)
+                            })
+                        }
                     }
-                }
-            }.build()
+                }.build()
         }
     }
 }

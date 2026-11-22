@@ -14,8 +14,8 @@ android {
         applicationId = "com.hyrulecompanion.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 11800
-        versionName = "1.18.0"
+        versionCode = 11801
+        versionName = "1.18.0.1"
         manifestPlaceholders["hcAppLabel"] = "Hyrule Companion"
 
         // These are the public project URL + publishable key in the supplied web source.
@@ -25,7 +25,7 @@ android {
     }
     if (previewApk) {
         buildTypes.getByName("debug") {
-            applicationIdSuffix = ".preview"
+            applicationIdSuffix = ".preview.v${defaultConfig.versionCode}"
             manifestPlaceholders["hcAppLabel"] = "Hyrule Companion Teste"
         }
     }

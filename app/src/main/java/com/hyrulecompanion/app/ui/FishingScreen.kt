@@ -28,6 +28,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.hyrulecompanion.app.R
 import com.hyrulecompanion.app.data.CatchAttempt
 import com.hyrulecompanion.app.data.FishRarity
+import com.hyrulecompanion.app.data.FishMotion
 import com.hyrulecompanion.app.data.StoreRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
@@ -49,16 +50,12 @@ internal fun FishingScreen(store: StoreRepository, userId: String?, reduceMotion
     var pendingCast by remember { mutableStateOf<String?>(null) }
     var reward by remember { mutableStateOf<Int?>(null) }
     var elapsed by remember { mutableFloatStateOf(0f) }
-    var fishAt by remember { mutableFloatStateOf(.42f) }
-    var barAt by remember { mutableFloatStateOf(.42f) }
+    var fishAt by remember { mutableFloatStateOf(FishMotion.START_POSITION) }
+    var barAt by remember { mutableFloatStateOf(FishMotion.START_POSITION) }
     var held by remember { mutableStateOf(false) }
     var progress by remember { mutableFloatStateOf(0f) }
     var resumed by remember { mutableStateOf(false) }
-    val pace = when (attempt?.rarity) {
-        FishRarity.RARE -> 1.85f
-        FishRarity.UNCOMMON -> 1.4f
-        else -> 1f
-    }
+    var fishMotion by remember { mutableStateOf<FishMotion?>(null) }
 
     LifecycleResumeEffect(Unit) {
         resumed = true
@@ -114,14 +111,14 @@ internal fun FishingScreen(store: StoreRepository, userId: String?, reduceMotion
                 phase = FishingPhase.READY
             }
             FishingPhase.REELING -> {
+                val movement = fishMotion ?: return@LaunchedEffect
                 var last = withFrameNanos { it }
                 while (phase == FishingPhase.REELING) {
                     val now = withFrameNanos { it }
                     val dt = ((now - last) / 1_000_000_000f).coerceIn(0f, .08f)
                     last = now
                     elapsed += dt
-                    fishAt = (.42f + .23f * sin(elapsed * pace) +
-                        .12f * sin(elapsed * pace * 1.93f)).coerceIn(.05f, .95f)
+                    fishAt = movement.advance(dt)
                     val motion = if (held) .57f else -.47f
                     barAt = (barAt + motion * dt).coerceIn(CAPTURE_WIDTH / 2, 1f - CAPTURE_WIDTH / 2)
                     val matches = abs(fishAt - barAt) < CAPTURE_WIDTH / 2
@@ -141,11 +138,13 @@ internal fun FishingScreen(store: StoreRepository, userId: String?, reduceMotion
 
     fun hook() {
         if (phase != FishingPhase.BITE) return
+        val cast = attempt ?: return
+        fishMotion = FishMotion(cast.rarity)
         held = false
         progress = 0f
         elapsed = 0f
-        fishAt = .42f
-        barAt = .42f
+        fishAt = FishMotion.START_POSITION
+        barAt = FishMotion.START_POSITION
         phase = FishingPhase.REELING
     }
 

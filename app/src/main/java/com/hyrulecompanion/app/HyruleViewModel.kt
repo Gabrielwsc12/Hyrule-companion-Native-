@@ -35,7 +35,7 @@ data class MuralOptions(val name: String = "Herói de Hyrule", val theme: String
 class HyruleViewModel(application: Application) : AndroidViewModel(application) {
     val catalog = Catalog(application)
     val repo = JourneyRepository(application,catalog)
-    private val supabase = SupabaseClient()
+    private val supabase = SupabaseClient((application as HyruleApplication).communityMediaCache)
     private val appUpdates = AppUpdateRepository()
     internal val store = StoreRepository(this)
     private val updatePreferences = AppUpdatePreferences(application)
@@ -371,6 +371,9 @@ class HyruleViewModel(application: Application) : AndroidViewModel(application) 
         session=null;repo.erase(K_SESSION)
         recordSync("")
         message="Conta desconectada. Modo visitante disponível."
-        if(prev != null) viewModelScope.launch { runCatching { supabase.signOut(prev) } }
+        if (prev != null) viewModelScope.launch {
+            supabase.clearCommunityMedia()
+            runCatching { supabase.signOut(prev) }
+        }
     }
 }

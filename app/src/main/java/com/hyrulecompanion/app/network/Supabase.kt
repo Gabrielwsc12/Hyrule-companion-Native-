@@ -42,7 +42,11 @@ data class AuthSession(val accessToken: String, val refreshToken: String, val ex
 
 data class CloudData(val payload: JSONObject, val updatedAt: String)
 
-class SupabaseClient {
+class SupabaseClient internal constructor(private val profileMedia: CommunityMediaCache) {
+    @Volatile private var mediaRevisionSupported = true
+
+    suspend fun clearCommunityMedia() = withContext(Dispatchers.IO) { profileMedia.clear() }
+
     private val client = OkHttpClient.Builder().connectTimeout(15,TimeUnit.SECONDS).readTimeout(30,TimeUnit.SECONDS).build()
     private val base = BuildConfig.SUPABASE_URL.trimEnd('/')
     private val apiKey = BuildConfig.SUPABASE_ANON_KEY
@@ -62,7 +66,7 @@ class SupabaseClient {
             if(!response.isSuccessful){
                 val j=runCatching { JSONObject(text) }.getOrNull()
                 if (j?.optString("error_code") in listOf("user_already_exists", "email_exists")) throw AccountAlreadyExists()
-                throw IOException(j?.optString("msg")?.takeIf { it.isNotEmpty() } ?: j?.optString("message")?.takeIf { it.isNotEmpty() } ?: j?.optString("error_description")?.takeIf { it.isNotEmpty() } ?: j?.optString("error")?.takeIf { it.isNotEmpty() } ?: "Erro no Supabase: ${response.code}")
+                throw SupabaseError(j?.optString("code").orEmpty(), j?.optString("msg")?.takeIf { it.isNotEmpty() } ?: j?.optString("message")?.takeIf { it.isNotEmpty() } ?: j?.optString("error_description")?.takeIf { it.isNotEmpty() } ?: j?.optString("error")?.takeIf { it.isNotEmpty() } ?: "Erro no Supabase: ${response.code}")
             }
             text
         }
@@ -167,15 +171,32 @@ class SupabaseClient {
     suspend fun communityProfileWithMedia(
         session: AuthSession, userId: String
     ): Pair<CommunityProfile?, CommunityMedia> = withContext(Dispatchers.IO) {
-        val id = java.util.UUID.fromString(userId)
+        val id = java.util.UUID.fromString(userId).toString()
+        val key = "${session.userId}:$id"
+        if (mediaRevisionSupported) {
+            try {
+                val cached = profileMedia.get(key)
+                val args = JSONObject().put("target", id).put("known_media", cached?.revision ?: JSONObject.NULL)
+                val response = request("POST", "/rest/v1/rpc/hc_read_community_profile", args, session.accessToken)
+                if (response.trim() == "null" || response.isBlank()) {
+                    profileMedia.remove(key)
+                    return@withContext null to CommunityMedia()
+                }
+                val row = JSONObject(response)
+                val revision = row.getString("media_revision")
+                val images = if (cached != null && cached.revision == revision) cached.images
+                    else readCommunityMedia(row).also { profileMedia.put(key, CachedMedia(revision, it)) }
+                return@withContext CommunityProfile.fromJson(row) to images
+            } catch (error: SupabaseError) {
+                if (error.code != "PGRST202") throw error
+                mediaRevisionSupported = false
+            }
+        }
         val rows = JSONArray(request("GET",
             "/rest/v1/hc_community_profiles?select=$COMMUNITY_FIELDS,avatar_image,banner_image&user_id=eq.$id",
             bearer = session.accessToken))
         val row = rows.optJSONObject(0) ?: return@withContext null to CommunityMedia()
-        CommunityProfile.fromJson(row) to CommunityMedia(
-            row.optString("avatar_image").takeUnless { row.isNull("avatar_image") },
-            row.optString("banner_image").takeUnless { row.isNull("banner_image") }
-        )
+        CommunityProfile.fromJson(row) to readCommunityMedia(row)
     }
 
     suspend fun saveCommunityProfile(session: AuthSession, profile: CommunityProfile, media: CommunityMedia? = null) {
@@ -264,4 +285,5 @@ data class CommunityMedia(val avatar: String? = null, val banner: String? = null
 
 
 internal const val EMAIL_CONFIRMATION_REDIRECT = "${BuildConfig.APPLICATION_ID}://auth/confirm"
+private class SupabaseError(val code: String, message: String) : IOException(message)
 internal class AccountAlreadyExists : IOException("Opa, você já está conectado com Hyrule. Por favor faça log in")

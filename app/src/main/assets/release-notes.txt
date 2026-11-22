@@ -1,4 +1,3 @@
-• O Início chama você pelo nome de usuário e ganhou quatro cards ilustrados. Este pergaminho sempre mostra as novidades da versão.
-• A Store chegou. Pesque no Mar de Hyrule para ganhar rúpias verdes e compre cosméticos para o seu perfil ou o tema Tears of the Kingdom.
-• Todos os jogos da Biblioteca ganharam cobertura de guias, com rotas específicas para Ocarina of Time 3D e Majora’s Mask 3D.
-• A Enciclopédia cobre todos os jogos principais e o Atlas ganhou mapas e roteiros para Koholint, Four Swords, Four Swords Adventures, Tri Force Heroes e as edições de 3DS.
+• Capas e cards carregam sem internet. As 62 capas do catálogo agora vêm com o app.
+• As imagens reaparecem mais rápido ao voltar às telas, e o Atlas mantém o mapa carregado durante o zoom.
+• Peixes comuns se movem devagar. Incomuns variam o caminho, e raros fazem arrancadas rápidas e mudam de direção com mais frequência.

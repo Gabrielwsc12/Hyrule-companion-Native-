@@ -13,8 +13,7 @@ assert set(data['totkLayerLocations'])=={'surface','sky','depths'}
 ids={x['id'] for x in data['games']}
 assert len(ids)==len(data['games'])
 assert len({g['id'] for g in data['guideData']}) == len(data['guideData'])
-assert all(data['gameCovers'].get(game_id) or
-           (root / f'app/src/main/assets/covers/{game_id}.webp').exists() for game_id in ids)
+assert all((root / f'app/src/main/assets/covers/{game_id}.webp').is_file() for game_id in ids), 'Every cover must work offline'
 assert {g['game'] for g in data['guideData']} == ids, 'Each catalog game needs a guide'
 primary_ids = {g['id'] for g in data['games'] if g['type'] == 'Principal'}
 assert primary_ids <= {d['game'] for d in data['dungeonData']}
