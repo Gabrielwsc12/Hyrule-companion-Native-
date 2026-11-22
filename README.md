@@ -34,25 +34,6 @@ Migração nativa do arquivo original `hyrule-companion-apk.zip`, **Web Edition 
 - **Guias, atlas e dungeons.** Todos os 62 títulos têm ao menos um guia. Ocarina of Time 3D e Majora’s Mask 3D têm atenção especial às diferenças de edição. Os jogos principais têm cobertura no Atlas e na Enciclopédia. Four Swords, Four Swords Adventures e Tri Force Heroes usam mapas esquemáticos de progressão.
 - **Fontes.** [Compêndio de Hyrule](https://www.zeldadungeon.net/wiki/Tears_of_the_Kingdom_Hyrule_Compendium) · [Ocarina of Time 3D](https://www.zeldadungeon.net/ocarina-of-time-walkthrough/) · [Mudanças nos chefes de Majora’s Mask 3D](https://www.zeldadungeon.net/does-majoras-mask-3d-handle-bosses-better-than-the-original/) · [Four Swords Adventures](https://www.zeldadungeon.net/four-swords-adventures-walkthrough/) · [Tri Force Heroes](https://www.zeldadungeon.net/tri-force-heroes-walkthrough/woodlands/)
 
-#### Ativar a Store e preparar a publicação
-
-1. No SQL Editor do projeto Supabase que já atende à Comunidade, execute [STORE_1_18_0.sql](supabase/STORE_1_18_0.sql). A migração adiciona tabelas e funções da Store. Se você executou a primeira revisão da 1.18.0, execute o arquivo atualizado para incorporar os novos recursos.
-2. Compile o APK assinado pelo fluxo documentado em [UPDATES-README.md](UPDATES-README.md), com a mesma chave das versões anteriores. A versão que o app anuncia é `1.18.0`, código `11800`.
-3. Na atualização 2.00, encerre a venda do Beta tester com `update public.hc_store_flags set beta_on_sale = false where singleton;`. Itens adquiridos continuam equipáveis. O app também limita novas compras na carteira de visitante a versões com código menor que 20000.
-
-Para compilar um APK de teste que instala em paralelo, use `gradle :app:assembleDebug -PhcPreviewApk=true`. Entre com uma conta existente para testar a Store. Para testar o cadastro por e-mail nessa variante, adicione `com.hyrulecompanion.app.preview://auth/confirm` à lista de URLs de redirecionamento do ambiente de teste do Supabase.
-
-#### Configuração privada do criador
-
-No painel Supabase, encontre seu cadastro em **Authentication → Users** e copie o UUID da sua conta. Depois da migração da Store, execute no SQL Editor, trocando `SEU_UUID_AQUI` pelo valor que você conferiu.
-
-```sql
-insert into public.hc_store_creator (singleton, user_id)
-values (true, 'SEU_UUID_AQUI'::uuid)
-on conflict (singleton) do update set user_id = excluded.user_id;
-```
-
-Essa linha define a única conta que recebe o emblema Creator e rúpias infinitas. O emblema aparece para visitantes quando o perfil é público.
 
 Os ícones dos peixes são artes do inventário de *Tears of the Kingdom*, da Nintendo, consultadas nas páginas das 15 espécies. [Compêndio de Hyrule no Zelda Dungeon Wiki](https://www.zeldadungeon.net/wiki/Tears_of_the_Kingdom_Hyrule_Compendium).
 
