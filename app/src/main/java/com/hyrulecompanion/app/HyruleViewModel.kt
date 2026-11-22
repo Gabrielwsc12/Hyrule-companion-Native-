@@ -37,6 +37,7 @@ class HyruleViewModel(application: Application) : AndroidViewModel(application) 
     val repo = JourneyRepository(application,catalog)
     private val supabase = SupabaseClient()
     private val appUpdates = AppUpdateRepository()
+    internal val store = StoreRepository(this)
     private val updatePreferences = AppUpdatePreferences(application)
     private var lastUpdateCheck = 0L
     var updateChecking by mutableStateOf(false)

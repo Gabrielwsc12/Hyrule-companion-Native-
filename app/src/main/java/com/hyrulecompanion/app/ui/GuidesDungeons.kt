@@ -135,7 +135,8 @@ internal fun GameReferenceScreen(vm: HyruleViewModel, reference: String, onBack:
         item{ScreenTitle(d.name,"${d.region} • ${d.difficulty}","▣")}
         item {ParchmentCard {
             Spoiler("Revelar resumo") { Text(d.summary) }
-            Text("Era: ${d.era}"); Spoiler("Revelar item principal") { Text(d.item) }
+            if (d.era.isNotBlank()) Text("Era: ${d.era}")
+            Spoiler("Revelar item principal") { Text(d.item) }
             Spoiler("Revelar chefe") { Text(d.boss) }
         }}
         item{SmallHeading("Rota pela dungeon")}

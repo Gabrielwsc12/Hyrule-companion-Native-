@@ -73,10 +73,25 @@ private val atlasPages = mapOf(
     "zelda2" to "zelda-ii-the-adventure-of-link",
 )
 
-private fun mapUrl(gameId: String): String {
-    val slug = atlasPages.getValue(gameId)
-    val suffix = if (gameId == "zelda1") "-first-and-second-quests" else ""
-    val page = if (gameId == "zelda2") "zelda-ii" else slug
+private val atlasEditionReferences = mapOf(
+    "links-awakening" to "links-awakening-remake", "links-awakening-dx" to "links-awakening-remake",
+    "oot-3d" to "oot", "mm-3d" to "mm", "skyward-sword-hd" to "ss",
+    "wind-waker-hd" to "ww", "twilight-princess-hd" to "tp",
+    "botw-switch2" to "botw", "totk-switch2" to "totk"
+)
+
+private val schematicReferences = mapOf(
+    "four-swords" to "https://www.zeldadungeon.net/wiki/The_Legend_of_Zelda:_Four_Swords",
+    "four-swords-anniversary" to "https://www.zeldadungeon.net/wiki/The_Legend_of_Zelda:_Four_Swords",
+    "four-swords-adventures" to "https://www.zeldadungeon.net/four-swords-adventures-walkthrough/",
+    "tri-force-heroes" to "https://www.zeldadungeon.net/tri-force-heroes-walkthrough/"
+)
+
+private fun mapUrl(gameId: String): String? {
+    val sourceGame = atlasEditionReferences[gameId] ?: gameId
+    val slug = atlasPages[sourceGame] ?: return null
+    val suffix = if (sourceGame == "zelda1") "-first-and-second-quests" else ""
+    val page = if (sourceGame == "zelda2") "zelda-ii" else slug
     return "https://zeldacollection.de/en/walkthroughs/$slug/$page-interactive-map$suffix/"
 }
 
@@ -159,15 +174,22 @@ private fun mapUrl(gameId: String): String {
         }
         item {ParchmentCard {
             MapPreview(key, map.name) { fullscreen = true }
-            Button(onClick={
-                try {
-                    androidx.browser.customtabs.CustomTabsIntent.Builder().setShowTitle(true).build()
-                        .launchUrl(context, android.net.Uri.parse(mapUrl(map.id)))
-                } catch (_: android.content.ActivityNotFoundException) {
-                    android.widget.Toast.makeText(context, "Instale um navegador para abrir o mapa.", android.widget.Toast.LENGTH_LONG).show()
+            val schematic = schematicReferences[map.id]
+            val source = schematic ?: mapUrl(map.id)
+            if (source != null) {
+                Button(onClick = {
+                    try {
+                        androidx.browser.customtabs.CustomTabsIntent.Builder().setShowTitle(true).build()
+                            .launchUrl(context, android.net.Uri.parse(source))
+                    } catch (_: android.content.ActivityNotFoundException) {
+                        android.widget.Toast.makeText(context, "Instale um navegador para abrir a referência.", android.widget.Toast.LENGTH_LONG).show()
+                    }
+                }, modifier = Modifier.fillMaxWidth()) {
+                    Text(if (schematic == null) "Abrir mapa de referência online" else "Abrir guia das fases")
                 }
-            },modifier=Modifier.fillMaxWidth()) { Text("Abrir mapa de referência online") }
-            Text("Fonte dos mapas e pontos: ZeldaCollection. O mapa completo requer internet.",style=MaterialTheme.typography.labelSmall)
+                Text(if (schematic == null) "Referência cartográfica: ZeldaCollection."
+                    else "Mapa esquemático · referência das fases: Zelda Dungeon.", style = MaterialTheme.typography.labelSmall)
+            }
             Text("${visited.size} / ${locations.size} marcos visitados",style=MaterialTheme.typography.labelLarge)
             LinearProgressIndicator(progress={if(locations.isEmpty())0f else visited.size.toFloat()/locations.size},modifier=Modifier.fillMaxWidth())
         }}

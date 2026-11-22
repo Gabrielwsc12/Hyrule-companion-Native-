@@ -30,6 +30,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.hyrulecompanion.app.data.Cosmetic
+import com.hyrulecompanion.app.data.TOTK_PALETTE
 import com.hyrulecompanion.app.HyruleViewModel
 import com.hyrulecompanion.app.MuralOptions
 import com.hyrulecompanion.app.data.*
@@ -182,9 +184,11 @@ internal fun rememberProfileImage(value: String, reduceMotion: Boolean): ImageRe
     }
 }
 
-@Composable fun SettingsScreen(vm:HyruleViewModel,onBack:()->Unit){
+@Composable fun SettingsScreen(vm:HyruleViewModel,onBack:()->Unit,backLabel:String="perfil"){
     val revision=vm.revision
     val prefs=vm.repo.preferences()
+    val hasTotkTheme = Cosmetic.THEME in vm.store.wallet(vm.session?.userId)?.owned.orEmpty()
+    val palettes = if (hasTotkTheme) gamePalettes + (TOTK_PALETTE to "Tears of the Kingdom") else gamePalettes
     var showCreatorNotes by rememberSaveable { mutableStateOf(false) }
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
     val context = LocalContext.current
@@ -199,7 +203,7 @@ internal fun rememberProfileImage(value: String, reduceMotion: Boolean): ImageRe
     var importUri by remember { mutableStateOf<Uri?>(null) }
     val importLauncher=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->importUri=uri}
     LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
-        item {TextButton(onClick=onBack){Text("← Voltar ao perfil")}}
+        item {TextButton(onClick=onBack){Text("← Voltar para $backLabel")}}
         item {ScreenTitle("Configurações","Personalize sua experiência em Hyrule","⚙")}
         item {
             OutlinedButton(onClick = { showCreatorNotes = true }, modifier = Modifier.fillMaxWidth()) {
@@ -211,7 +215,7 @@ internal fun rememberProfileImage(value: String, reduceMotion: Boolean): ImageRe
             ChoiceSetting("Tema do aplicativo", prefs.theme, listOf("system" to "Usar tema do aparelho", "light" to "Claro", "dark" to "Escuro")) {
                 vm.savePreferences(prefs.copy(theme=it))
             }
-            ChoiceSetting("Estilo inspirado em Zelda", prefs.palette, gamePalettes) {
+            ChoiceSetting("Estilo inspirado em Zelda", prefs.palette.takeIf { it != TOTK_PALETTE || hasTotkTheme } ?: "classic", palettes) {
                 vm.savePreferences(prefs.copy(palette=it))
             }
             Text("O texto acompanha o tamanho escolhido nas configurações do Android.")

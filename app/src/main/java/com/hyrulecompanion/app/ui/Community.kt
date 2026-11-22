@@ -15,6 +15,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.hyrulecompanion.app.HyruleViewModel
+import com.hyrulecompanion.app.data.Cosmetic
 import com.hyrulecompanion.app.network.CommunityProfile
 import com.hyrulecompanion.app.network.CommunityMedia
 import com.hyrulecompanion.app.network.CommunityReaction
@@ -44,6 +45,19 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
     var results by remember { mutableStateOf<List<CommunityProfile>?>(null) }
     var selected by remember { mutableStateOf<CommunityProfile?>(null) }
     var profileOnline by remember { mutableStateOf(false) }
+    val selectedId = selected?.userId
+    var equipped by remember(selectedId) { mutableStateOf<Set<Cosmetic>>(emptySet()) }
+    LaunchedEffect(userId, selectedId) {
+        if (selectedId != null) {
+            equipped = try {
+                vm.communityRequest(userId) { publicCosmetics(it, selectedId) }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                emptySet()
+            }
+        }
+    }
     LaunchedEffect(selected?.userId) {
         profileOnline = false
         val target = selected?.userId ?: return@LaunchedEffect
@@ -129,7 +143,7 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
         if (profile != null) {
             item {
                 ParchmentCard {
-                    ProfileHeader("@${profile.handle}", media.avatar.orEmpty(), media.banner, vm.repo.preferences().reduceMotion, online = profileOnline)
+                    ProfileHeader("@${profile.handle}", media.avatar.orEmpty(), media.banner, vm.repo.preferences().reduceMotion, online = profileOnline, equipped = equipped)
                     Text("Zelda favorito: ${vm.catalog.game(profile.favoriteGame.orEmpty())?.name ?: "A escolher"}")
                     if (profile.userId != userId) {
                         val canFollow = own != null

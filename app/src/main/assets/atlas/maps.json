@@ -1259,5 +1259,793 @@
         "Arena do casal Gyorg"
       ]
     ]
+  },
+  "four-swords": {
+    "aspect": 1.5,
+    "points": [
+      [
+        0.21,
+        0.76,
+        "Chambers of Insight",
+        "Treino",
+        "Aprenda a cooperar, usar ferramentas e arremessar um aliado."
+      ],
+      [
+        0.21,
+        0.28,
+        "Sea of Trees",
+        "Grande Fada da Floresta",
+        "Supere duas fases da floresta e ataque as cabeças coloridas de Big Manhandla."
+      ],
+      [
+        0.5,
+        0.53,
+        "Talus Cave",
+        "Grande Fada do Gelo",
+        "Atravesse terrenos escorregadios e coordene a coleta de rúpias."
+      ],
+      [
+        0.78,
+        0.26,
+        "Death Mountain",
+        "Grande Fada da Montanha",
+        "Use ferramentas cooperativas e evite a lava nos trechos de fogo."
+      ],
+      [
+        0.79,
+        0.75,
+        "Palácio de Vaati",
+        "Final",
+        "Abra a porta correspondente ao grau das três chaves obtidas."
+      ]
+    ]
+  },
+  "four-swords-adventures": {
+    "aspect": 1.5,
+    "points": [
+      [
+        0.17,
+        0.25,
+        "Whereabouts of the Wind",
+        "Capítulo 1",
+        "Lake Hylia, Cave of No Return e Hyrule Castle."
+      ],
+      [
+        0.37,
+        0.25,
+        "Eastern Hyrule",
+        "Capítulo 2",
+        "Passe pela costa, pela vila e pelo Eastern Temple."
+      ],
+      [
+        0.6,
+        0.25,
+        "Death Mountain",
+        "Capítulo 3",
+        "Suba à torre de chamas pela região montanhosa."
+      ],
+      [
+        0.83,
+        0.25,
+        "Near the Fields",
+        "Capítulo 4",
+        "Avance pelos campos e bosques antes do Dark World."
+      ],
+      [
+        0.83,
+        0.72,
+        "The Dark World",
+        "Capítulo 5",
+        "Procure as passagens entre o mundo normal e o sombrio."
+      ],
+      [
+        0.6,
+        0.72,
+        "The Desert of Doubt",
+        "Capítulo 6",
+        "Atravesse o deserto rumo à Pyramid."
+      ],
+      [
+        0.37,
+        0.72,
+        "Frozen Hyrule",
+        "Capítulo 7",
+        "Explore as áreas nevadas e o templo de gelo."
+      ],
+      [
+        0.17,
+        0.72,
+        "Realm of the Heavens",
+        "Capítulo 8",
+        "A última sequência leva ao Palace of Winds."
+      ]
+    ]
+  },
+  "tri-force-heroes": {
+    "aspect": 1.5,
+    "points": [
+      [
+        0.13,
+        0.29,
+        "Castelo de Hytopia",
+        "Base",
+        "Equipe roupas, forme o trio e selecione regiões de Drablands."
+      ],
+      [
+        0.32,
+        0.29,
+        "Woodlands",
+        "Drablands",
+        "Mundo inicial para aprender totem, arco e trabalho em equipe."
+      ],
+      [
+        0.5,
+        0.29,
+        "Riverside",
+        "Drablands",
+        "Provas de rios e movimentação em plataformas aquáticas."
+      ],
+      [
+        0.68,
+        0.29,
+        "Volcano",
+        "Drablands",
+        "Região de calor e lava com desafios de travessia."
+      ],
+      [
+        0.87,
+        0.29,
+        "Ice Cavern",
+        "Drablands",
+        "Use roupas e ferramentas adequadas para os trechos de gelo."
+      ],
+      [
+        0.86,
+        0.72,
+        "Fortress",
+        "Drablands",
+        "Fortificações com perigos e mecanismos que exigem coordenação."
+      ],
+      [
+        0.68,
+        0.72,
+        "The Dunes",
+        "Drablands",
+        "Percursos desérticos com areia e inimigos enterrados."
+      ],
+      [
+        0.5,
+        0.72,
+        "The Ruins",
+        "Drablands",
+        "Explore passagens antigas e suas armadilhas."
+      ],
+      [
+        0.31,
+        0.72,
+        "Sky Realm",
+        "Drablands",
+        "Missões de plataformas altas e deslocamento nos céus."
+      ]
+    ]
+  },
+  "links-awakening": {
+    "aspect": 1.7889087656529516,
+    "points": [
+      [
+        0.1100586,
+        0.5518079,
+        "Lago de pesca"
+      ],
+      [
+        0.0701221,
+        0.3947511,
+        "Caverna dos cogumelos"
+      ],
+      [
+        0.3603662,
+        0.6226987,
+        "Teletransporte da pradaria"
+      ],
+      [
+        0.6871973,
+        0.5736157,
+        "Teletransporte da mansão"
+      ],
+      [
+        0.7835352,
+        0.8866288,
+        "Teletransporte da vila"
+      ],
+      [
+        0.4597559,
+        0.8969956,
+        "Teletransporte da baía"
+      ],
+      [
+        0.7835352,
+        0.2589694,
+        "Teletransporte da montanha"
+      ],
+      [
+        0.956709,
+        0.7590306,
+        "Caverna sob a areia movediça"
+      ],
+      [
+        0.0472559,
+        0.0719214,
+        "Cume do Monte Tamaranch"
+      ],
+      [
+        0.2262207,
+        0.7235808,
+        "Boneco do Yoshi",
+        "Easter eggs",
+        "Na Vila Mabe, use a máquina de garra do Trendy Game para pegar o boneco do Yoshi, referência à série Mario."
+      ]
+    ]
+  },
+  "oot-3d": {
+    "aspect": 1.7699115044247788,
+    "points": [
+      [
+        0.68351,
+        0.24471,
+        "Bottom of the Well"
+      ],
+      [
+        0.65625,
+        0.01647,
+        "Death Mountain Crater"
+      ],
+      [
+        0.87965,
+        0.55529,
+        "Great Deku Tree"
+      ],
+      [
+        0.07114,
+        0.22824,
+        "Desert Colossus"
+      ],
+      [
+        0.78191,
+        0.39412,
+        "Forest Temple"
+      ],
+      [
+        0.23271,
+        0.24706,
+        "Gerudo Fortress"
+      ],
+      [
+        0.52261,
+        0.12471,
+        "Hyrule Castle"
+      ],
+      [
+        0.53657,
+        0.37412,
+        "Hyrule Field"
+      ],
+      [
+        0.90359,
+        0.16588,
+        "Ice Cavern"
+      ],
+      [
+        0.38231,
+        0.80471,
+        "Lake Hylia"
+      ]
+    ]
+  },
+  "mm-3d": {
+    "aspect": 1.6891891891891893,
+    "points": [
+      [
+        0.53538,
+        0.64352,
+        "Piece of Heart 17. Tree on the way to the swamp"
+      ],
+      [
+        0.48217,
+        0.90926,
+        "Piece of Heart 20. Inner Gardens of Deku Palace"
+      ],
+      [
+        0.36698,
+        0.61481,
+        "Piece of Heart 24. Dog Race 500 at Mamamu Yan"
+      ],
+      [
+        0.48217,
+        0.4713,
+        "Piece of Heart 26. Dodongo Cave"
+      ],
+      [
+        0.76248,
+        0.14907,
+        "Piece of Heart 30. Deku Trader in Goron Village"
+      ],
+      [
+        0.5107,
+        0.23981,
+        "Piece of Heart 31. Way to Snowhead"
+      ],
+      [
+        0.19857,
+        0.54352,
+        "Piece of Heart 34. Marine Research Lab"
+      ],
+      [
+        0.67965,
+        0.44352,
+        "Piece of Heart 44. Second night at Ikana Cemetery"
+      ],
+      [
+        0.77071,
+        0.58981,
+        "Piece of Heart 45. Deku Merchant in Ikana Canyon"
+      ],
+      [
+        0.2633,
+        0.7713,
+        "Great Fairy: Great Bay"
+      ]
+    ]
+  },
+  "four-swords-anniversary": {
+    "aspect": 1.5,
+    "points": [
+      [
+        0.21,
+        0.76,
+        "Chambers of Insight",
+        "Treino",
+        "Aprenda a cooperar, usar ferramentas e arremessar um aliado."
+      ],
+      [
+        0.21,
+        0.28,
+        "Sea of Trees",
+        "Grande Fada da Floresta",
+        "Supere duas fases da floresta e ataque as cabeças coloridas de Big Manhandla."
+      ],
+      [
+        0.5,
+        0.53,
+        "Talus Cave",
+        "Grande Fada do Gelo",
+        "Atravesse terrenos escorregadios e coordene a coleta de rúpias."
+      ],
+      [
+        0.78,
+        0.26,
+        "Death Mountain",
+        "Grande Fada da Montanha",
+        "Use ferramentas cooperativas e evite a lava nos trechos de fogo."
+      ],
+      [
+        0.79,
+        0.75,
+        "Palácio de Vaati",
+        "Final",
+        "Abra a porta correspondente ao grau das três chaves obtidas."
+      ]
+    ]
+  },
+  "skyward-sword-hd": {
+    "aspect": 1.0789473684210527,
+    "points": [
+      [
+        0.7,
+        0.81,
+        "Piece of Heart 05 – On the chandelier"
+      ],
+      [
+        0.44,
+        0.71,
+        "Piece of Heart 13 – Archipelago"
+      ],
+      [
+        0.78,
+        0.19,
+        "Piece of Heart 14 - Beedle's Island"
+      ],
+      [
+        0.06,
+        0.39,
+        "Piece of Heart 15 – Island in the south"
+      ]
+    ]
+  },
+  "wind-waker-hd": {
+    "aspect": 1.0,
+    "points": [
+      [
+        0.07722,
+        0.07722,
+        "Forsaken Fortress"
+      ],
+      [
+        0.05792,
+        0.36583,
+        "Western Fairy Island"
+      ],
+      [
+        0.04537,
+        0.53764,
+        "Three-Eye Reef"
+      ],
+      [
+        0.08205,
+        0.78861,
+        "Diamond Steppe Island"
+      ],
+      [
+        0.23745,
+        0.22394,
+        "Mother and Child Isles"
+      ],
+      [
+        0.22008,
+        0.50772,
+        "Greatfish Isle"
+      ],
+      [
+        0.2249,
+        0.94884,
+        "Outset Island"
+      ],
+      [
+        0.3832,
+        0.11293,
+        "Northern Fairy Island"
+      ],
+      [
+        0.35425,
+        0.39768,
+        "Tingle Island"
+      ],
+      [
+        0.32336,
+        0.64382,
+        "Stone Watcher Island"
+      ]
+    ]
+  },
+  "twilight-princess-hd": {
+    "aspect": 0.8711111111111111,
+    "points": [
+      [
+        0.53333,
+        0.73291,
+        "Faron Woods"
+      ],
+      [
+        0.69188,
+        0.52734,
+        "Kakariko Valley"
+      ],
+      [
+        0.56583,
+        0.90723,
+        "Ordon Village"
+      ],
+      [
+        0.93669,
+        0.36523,
+        "Goron Mines"
+      ],
+      [
+        0.87899,
+        0.53955,
+        "Kakariko"
+      ],
+      [
+        0.77087,
+        0.36865,
+        "Eldin Province"
+      ],
+      [
+        0.54062,
+        0.39697,
+        "Castle Town"
+      ],
+      [
+        0.68011,
+        0.08691,
+        "Upper reaches of the Zora River / fishing pond"
+      ],
+      [
+        0.34286,
+        0.48096,
+        "Lake Hylia"
+      ],
+      [
+        0.36863,
+        0.72559,
+        "Sacred Grove"
+      ]
+    ]
+  },
+  "botw-switch2": {
+    "aspect": 1.2004801920768307,
+    "points": [
+      [
+        0.82496,
+        0.36972,
+        "Dah Hesho Shrine"
+      ],
+      [
+        0.88792,
+        0.129,
+        "Tu Ka'loh Shrine"
+      ],
+      [
+        0.35873,
+        0.67001,
+        "Dah Kaso Shrine"
+      ],
+      [
+        0.44697,
+        0.46549,
+        "Katah Chuki Shrine"
+      ],
+      [
+        0.52874,
+        0.6007,
+        "Wahgo Katta Shrine"
+      ],
+      [
+        0.67215,
+        0.26716,
+        "Daqa Koh Shrine"
+      ],
+      [
+        0.17888,
+        0.57167,
+        "Keeha Yoog Shrine"
+      ],
+      [
+        0.35042,
+        0.84654,
+        "Dila Maag Shrine"
+      ],
+      [
+        0.18191,
+        0.78199,
+        "Daqo Chisay Shrine"
+      ],
+      [
+        0.26396,
+        0.3422,
+        "Dunba Taag Shrine"
+      ]
+    ]
+  },
+  "links-awakening-dx": {
+    "aspect": 1.7889087656529516,
+    "points": [
+      [
+        0.1100586,
+        0.5518079,
+        "Lago de pesca"
+      ],
+      [
+        0.0701221,
+        0.3947511,
+        "Caverna dos cogumelos"
+      ],
+      [
+        0.3603662,
+        0.6226987,
+        "Teletransporte da pradaria"
+      ],
+      [
+        0.6871973,
+        0.5736157,
+        "Teletransporte da mansão"
+      ],
+      [
+        0.7835352,
+        0.8866288,
+        "Teletransporte da vila"
+      ],
+      [
+        0.4597559,
+        0.8969956,
+        "Teletransporte da baía"
+      ],
+      [
+        0.7835352,
+        0.2589694,
+        "Teletransporte da montanha"
+      ],
+      [
+        0.956709,
+        0.7590306,
+        "Caverna sob a areia movediça"
+      ],
+      [
+        0.0472559,
+        0.0719214,
+        "Cume do Monte Tamaranch"
+      ],
+      [
+        0.2262207,
+        0.7235808,
+        "Boneco do Yoshi",
+        "Easter eggs",
+        "Na Vila Mabe, use a máquina de garra do Trendy Game para pegar o boneco do Yoshi, referência à série Mario."
+      ]
+    ]
+  },
+  "totk-switch2": {
+    "aspect": 1.2004801920768307,
+    "points": [
+      [
+        0.47558,
+        0.4863,
+        "Lookout Landing Skyview Tower"
+      ],
+      [
+        0.34083,
+        0.3755,
+        "Lindor's Brow Skyview Tower"
+      ],
+      [
+        0.612,
+        0.617,
+        "Sahasra Slope Skyview Tower"
+      ],
+      [
+        0.73817,
+        0.4418,
+        "Upland Zorana Skyview Tower"
+      ],
+      [
+        0.52858,
+        0.1867,
+        "Thyphlo Ruins Skyview Tower"
+      ],
+      [
+        0.19283,
+        0.2658,
+        "Rospro Pass Skyview Tower"
+      ],
+      [
+        0.8205,
+        0.6307,
+        "Mount Lanayru Skyview Tower"
+      ],
+      [
+        0.70158,
+        0.7762,
+        "Rabella Wetlands Skyview Tower"
+      ],
+      [
+        0.29733,
+        0.7178,
+        "Gerudo Canyon Skyview Tower"
+      ],
+      [
+        0.86225,
+        0.2124,
+        "Jochi-iu Shrine"
+      ]
+    ]
+  },
+  "totk-switch2-sky": {
+    "aspect": 1.2004801920768307,
+    "points": [
+      [
+        0.35708,
+        0.7119,
+        "Rakashog Shrine"
+      ],
+      [
+        0.41917,
+        0.1465,
+        "Tenbez Shrine"
+      ],
+      [
+        0.17825,
+        0.2318,
+        "Ijo-o Shrine"
+      ],
+      [
+        0.743,
+        0.4466,
+        "Jirutagumac Shrine"
+      ],
+      [
+        0.88792,
+        0.15,
+        "Mogisari Shrine"
+      ],
+      [
+        0.52292,
+        0.5913,
+        "Ukouh Shrine"
+      ],
+      [
+        0.88442,
+        0.5947,
+        "Mayanas Shrine"
+      ],
+      [
+        0.58958,
+        0.8348,
+        "Joku-usin Shrine"
+      ],
+      [
+        0.5135,
+        0.3028,
+        "Simosiwak Shrine"
+      ],
+      [
+        0.69592,
+        0.6783,
+        "Yansamin Shrine"
+      ]
+    ]
+  },
+  "totk-switch2-depths": {
+    "aspect": 1.2004801920768307,
+    "points": [
+      [
+        0.52867,
+        0.6009,
+        "Stakijat Lightroot"
+      ],
+      [
+        0.86225,
+        0.2124,
+        "Ui-ihcoj Lightroot"
+      ],
+      [
+        0.69742,
+        0.2404,
+        "Mustis Lightroot"
+      ],
+      [
+        0.24342,
+        0.3383,
+        "Kawumoro Lightroot"
+      ],
+      [
+        0.534,
+        0.2866,
+        "Rikonasum Lightroot"
+      ],
+      [
+        0.21608,
+        0.6363,
+        "Umamustor Lightroot"
+      ],
+      [
+        0.775,
+        0.4576,
+        "Kawagom Lightroot"
+      ],
+      [
+        0.78917,
+        0.7181,
+        "Kimnaz Lightroot"
+      ],
+      [
+        0.1765,
+        0.7963,
+        "Gonatoyros Lightroot"
+      ],
+      [
+        0.36358,
+        0.2358,
+        "Muihcoro Lightroot"
+      ]
+    ]
   }
 }

@@ -12,9 +12,9 @@ O **Hyrule Companion** é um guia de bolso para Android e um diário de jogo par
 
 ### Consulte o app durante a partida
 
-- **Atlas.** Explore 35 mapas offline de 18 jogos e toque nos 216 marcadores para identificar locais. Em *Tears of the Kingdom*, alterne entre céu, superfície e profundezas. O índice permite buscar marcos, filtrar por região e registrar visitas. Para uma exploração mais detalhada, abra o mapa interativo do ZeldaCollection com conexão à internet.
-- **Guias.** Encontre entre 80 guias a ajuda de que precisa para uma missão, um puzzle, um chefe ou uma área de exploração. Abra a ficha do jogo pela Biblioteca e toque em um guia para consultar etapas, favoritos e anotações. Guias com objetivos de 100% têm uma lista própria. As anotações pessoais ajudam a retomar a partida.
-- **Enciclopédia de Dungeons.** Consulte 22 dungeons com rotas por salas, soluções de puzzles, inimigos, itens e tesouros. Acompanhe as etapas, marque o que já recolheu e consulte a estratégia do chefe e a lista final de objetivos.
+- **Atlas.** Explore 50 mapas offline de 31 jogos e toque nos marcadores para identificar locais. Em *Tears of the Kingdom*, alterne entre céu, superfície e profundezas. O índice permite buscar marcos, filtrar por região e registrar visitas. Para uma exploração mais detalhada, abra o mapa interativo do ZeldaCollection com conexão à internet.
+- **Guias.** Encontre entre 194 guias a ajuda de que precisa para uma missão, um puzzle, um chefe ou uma área de exploração. Abra a ficha do jogo pela Biblioteca e toque em um guia para consultar etapas, favoritos e anotações. Guias com objetivos de 100% têm uma lista própria. As anotações pessoais ajudam a retomar a partida.
+- **Enciclopédia de Dungeons.** Consulte 120 fichas de dungeons com rotas por salas, soluções de puzzles, inimigos, itens e tesouros. Acompanhe as etapas, marque o que já recolheu e consulte a estratégia do chefe e a lista final de objetivos.
 
 ### Registre, compartilhe e proteja seu progresso
 
@@ -26,6 +26,37 @@ O **Hyrule Companion** é um guia de bolso para Android e um diário de jogo par
 Migração nativa do arquivo original `hyrule-companion-apk.zip`, **Web Edition 1.16.6**, sem WebView, Capacitor, HTML ou JavaScript em tempo de execução. Mantém o mesmo identificador de aplicativo (`com.hyrulecompanion.app`), o projeto Supabase e a estrutura **schema 13** de dados. A migração preserva o texto editorial original dos 62 jogos, 58 guias, 12 mapas, 5 dungeons e 5 ramificações da cronologia.
 
 ## Novidades
+
+### 1.18.0
+
+- **Início.** Biblioteca, Atlas e Cronologia com ilustrações próprias. O quarto card é um pergaminho com as notas da versão, que pode ser aberto a qualquer momento. O botão Store fica logo abaixo do carrossel. A saudação usa o nome do perfil quando ele está definido.
+- **Store e pesca.** Ganhe rúpias verdes no Mar de Hyrule e compre cinco itens. Cosméticos adquiridos podem ser equipados no perfil e ficam visíveis na Comunidade quando o perfil está público. O tema Tears of the Kingdom é ativado em Configurações. A pesca inclui 15 espécies, com duas fanfarras de captura.
+- **Guias, atlas e dungeons.** Todos os 62 títulos têm ao menos um guia. Ocarina of Time 3D e Majora’s Mask 3D têm atenção especial às diferenças de edição. Os jogos principais têm cobertura no Atlas e na Enciclopédia. Four Swords, Four Swords Adventures e Tri Force Heroes usam mapas esquemáticos de progressão.
+- **Fontes.** [Compêndio de Hyrule](https://www.zeldadungeon.net/wiki/Tears_of_the_Kingdom_Hyrule_Compendium) · [Ocarina of Time 3D](https://www.zeldadungeon.net/ocarina-of-time-walkthrough/) · [Mudanças nos chefes de Majora’s Mask 3D](https://www.zeldadungeon.net/does-majoras-mask-3d-handle-bosses-better-than-the-original/) · [Four Swords Adventures](https://www.zeldadungeon.net/four-swords-adventures-walkthrough/) · [Tri Force Heroes](https://www.zeldadungeon.net/tri-force-heroes-walkthrough/woodlands/)
+
+#### Ativar a Store e preparar a publicação
+
+1. No SQL Editor do projeto Supabase que já atende à Comunidade, execute [STORE_1_18_0.sql](supabase/STORE_1_18_0.sql). A migração adiciona tabelas e funções da Store. Se você executou a primeira revisão da 1.18.0, execute o arquivo atualizado para incorporar os novos recursos.
+2. Compile o APK assinado pelo fluxo documentado em [UPDATES-README.md](UPDATES-README.md), com a mesma chave das versões anteriores. A versão que o app anuncia é `1.18.0`, código `11800`.
+3. Na atualização 2.00, encerre a venda do Beta tester com `update public.hc_store_flags set beta_on_sale = false where singleton;`. Itens adquiridos continuam equipáveis. O app também limita novas compras na carteira de visitante a versões com código menor que 20000.
+
+Para compilar um APK de teste que instala em paralelo, use `gradle :app:assembleDebug -PhcPreviewApk=true`. Entre com uma conta existente para testar a Store. Para testar o cadastro por e-mail nessa variante, adicione `com.hyrulecompanion.app.preview://auth/confirm` à lista de URLs de redirecionamento do ambiente de teste do Supabase.
+
+#### Configuração privada do criador
+
+No painel Supabase, encontre seu cadastro em **Authentication → Users** e copie o UUID da sua conta. Depois da migração da Store, execute no SQL Editor, trocando `SEU_UUID_AQUI` pelo valor que você conferiu.
+
+```sql
+insert into public.hc_store_creator (singleton, user_id)
+values (true, 'SEU_UUID_AQUI'::uuid)
+on conflict (singleton) do update set user_id = excluded.user_id;
+```
+
+Essa linha define a única conta que recebe o emblema Creator e rúpias infinitas. O emblema aparece para visitantes quando o perfil é público.
+
+Os ícones dos peixes são artes do inventário de *Tears of the Kingdom*, da Nintendo, consultadas nas páginas das 15 espécies. [Compêndio de Hyrule no Zelda Dungeon Wiki](https://www.zeldadungeon.net/wiki/Tears_of_the_Kingdom_Hyrule_Compendium).
+
+A carteira de uma conta é mantida no servidor. A carteira de visitante fica separada no aparelho. Guias, mapas e pesca como visitante funcionam sem conexão.
 
 ### 1.17.2.1-native
 

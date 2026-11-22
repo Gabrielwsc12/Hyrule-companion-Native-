@@ -9,7 +9,7 @@ gradle = (app / 'build.gradle.kts').read_text()
 manifest = ET.parse(app / 'src/main/AndroidManifest.xml').getroot()
 code = int(re.search(r'versionCode\s*=\s*(\d+)', gradle).group(1))
 name = re.search(r'versionName\s*=\s*"([^"]+)"', gradle).group(1)
-assert re.fullmatch(r'\d+(?:\.\d+){2,3}-native', name) and code >= 11607
+assert re.fullmatch(r'\d+(?:\.\d+){2,3}(?:-native)?', name) and code >= 11607
 assert 'androidx.work:work-runtime-ktx' in gradle
 assert 'androidx.lifecycle:lifecycle-runtime-compose' in gradle
 assert any(p.attrib.get('{http://schemas.android.com/apk/res/android}name') == 'android.permission.POST_NOTIFICATIONS'

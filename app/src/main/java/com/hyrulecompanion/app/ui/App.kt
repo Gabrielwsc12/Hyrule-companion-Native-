@@ -38,6 +38,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hyrulecompanion.app.HyruleViewModel
 import com.hyrulecompanion.app.R
+import com.hyrulecompanion.app.data.Cosmetic
+import com.hyrulecompanion.app.data.TOTK_PALETTE
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 
 private data class Tab(val id:String, val title:String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
@@ -92,6 +95,38 @@ private val tabs=listOf(
     val online=isOnline()
     val lifecycleOwner = LocalLifecycleOwner.current
     val account = vm.session
+    val userId = account?.userId
+    var showController by remember(userId) { mutableStateOf(false) }
+    val wallet = vm.store.wallet(userId)
+    val handleKey = userId?.let { "hc-last-handle-$it" }
+    var userName by remember(handleKey) {
+        mutableStateOf(handleKey?.let(vm.repo::raw)?.takeIf { it.isNotBlank() })
+    }
+    LaunchedEffect(userId, screen, online) {
+        if (userId != null && handleKey != null && online && screen == "home") {
+            try {
+                userName = vm.communityRequest(userId) { communityProfile(it) }?.handle
+                vm.repo.storeRaw(handleKey, userName.orEmpty())
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                // Keep the last known handle during a connection failure.
+            }
+        }
+    }
+    LaunchedEffect(userId, online, lifecycleOwner) {
+        if (userId != null && online) lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            try {
+                vm.store.refresh(userId)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                // The Store has a dedicated retry for server or connection failures.
+            }
+        }
+    }
+    val palette = if (prefs.palette == TOTK_PALETTE && Cosmetic.THEME !in wallet?.owned.orEmpty()) "classic"
+        else prefs.palette
     LaunchedEffect(lifecycleOwner, account?.userId, online) {
         if (account != null && online) lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             vm.trackPresence(account)
@@ -112,6 +147,7 @@ private val tabs=listOf(
     var openMural by rememberSaveable { mutableStateOf(false) }
     var openAccount by rememberSaveable { mutableStateOf(false) }
     var atlasGame by rememberSaveable { mutableStateOf("oot") }
+    var settingsBack by rememberSaveable { mutableStateOf("profile") }
     fun closeInvite() {
         invite = false
         welcomePrefs.edit().putBoolean("seen", true).apply()
@@ -125,15 +161,18 @@ private val tabs=listOf(
         if (!intro) vm.checkForUpdates()
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
-    BackHandler(contentEntry != null || dungeonIndex || gameId!=null || screen=="settings" || screen=="community") {
+    BackHandler(contentEntry != null || dungeonIndex || gameId!=null || screen in listOf("settings", "community", "store", "fishing")) {
         when {
             contentEntry != null -> contentEntry = null
             dungeonIndex -> dungeonIndex = false
             gameId != null -> { gameId = null; screen = previous }
+            screen == "fishing" -> screen = "store"
+            screen == "store" -> screen = "home"
+            screen == "settings" -> screen = settingsBack
             else -> screen = "profile"
         }
     }
-    HyruleTheme(prefs.theme=="dark" || (prefs.theme=="system" && androidx.compose.foundation.isSystemInDarkTheme()), prefs.palette) {
+    HyruleTheme(prefs.theme=="dark" || (prefs.theme=="system" && androidx.compose.foundation.isSystemInDarkTheme()), palette) {
         if(intro) {
             IntroScreen(prefs.introMusic,onFinish={intro=false})
         } else {
@@ -147,11 +186,11 @@ private val tabs=listOf(
             Scaffold(
                 topBar={
                     Column {
-                        TopAppBar(title={ Text("▲ Hyrule Companion",style=MaterialTheme.typography.titleLarge) },actions={
+                        TopAppBar(title={ AppBarTitle { showController = true } },actions={
                             IconButton(onClick={contentEntry=null;dungeonIndex=false;gameId=null;screen="community"}) {
                                 Icon(Icons.Default.Group,contentDescription="Comunidade")
                             }
-                            IconButton(onClick={contentEntry=null;dungeonIndex=false;gameId=null;screen="settings"}) { Icon(Icons.Default.Settings,contentDescription="Configurações") }
+                            IconButton(onClick={contentEntry=null;dungeonIndex=false;gameId=null;settingsBack="profile";screen="settings"}) { Icon(Icons.Default.Settings,contentDescription="Configurações") }
                         },colors=TopAppBarDefaults.topAppBarColors(containerColor=MaterialTheme.colorScheme.primaryContainer))
                         Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant).padding(horizontal=16.dp,vertical=4.dp),verticalAlignment=Alignment.CenterVertically) {
                             Text(if(online)"● Online" else "● Offline",color=if(online)Color(0xFF4E976C) else Color(0xFFBA723B),style=MaterialTheme.typography.labelSmall)
@@ -161,7 +200,7 @@ private val tabs=listOf(
                     }
                 },
                 bottomBar={
-                    if(screen!="settings" && screen!="community" && gameId==null && !dungeonIndex) NavigationBar(containerColor=MaterialTheme.colorScheme.primaryContainer,tonalElevation=7.dp) {
+                    if(tabs.any { it.id == screen } && gameId==null && !dungeonIndex) NavigationBar(containerColor=MaterialTheme.colorScheme.primaryContainer,tonalElevation=7.dp) {
                         tabs.forEach { tab -> NavigationBarItem(selected=screen==tab.id,onClick={openAccount=false;openMural=false;screen=tab.id},icon={Icon(tab.icon,contentDescription=tab.title)},label={Text(tab.title,maxLines=1,style=MaterialTheme.typography.labelSmall)},alwaysShowLabel=false) }
                     }
                 }
@@ -184,16 +223,29 @@ private val tabs=listOf(
                         }
                         gameId!=null -> GameDetailScreen(vm,gameId!!,onBack={gameId=null;screen=previous},
                             onAtlas={id->atlasGame=id;gameId=null;screen="atlas"},onReference={contentEntry=it})
-                        screen=="home" -> HomeScreen(vm,onNavigate={target -> openAccount=false; openMural=target=="mural"; screen=if(openMural) "profile" else target},onGame={previous="home";gameId=it})
+                        screen=="home" -> HomeScreen(vm,userName,onNavigate={target ->
+                            if (target == "changelog") showChanges = true
+                            else { openAccount=false; openMural=target=="mural"; screen=if(openMural) "profile" else target }
+                        },onGame={previous="home";gameId=it})
+                        screen=="store" -> key(userId) {
+                            StoreScreen(vm.store, userId, prefs.reduceMotion, onBack={screen="home"}, onFish={screen="fishing"},
+                                onSettings={settingsBack="store";screen="settings"})
+                        }
+                        screen=="fishing" -> key(userId) {
+                            FishingScreen(vm.store, userId, prefs.reduceMotion, onBack={screen="store"})
+                        }
                         screen=="timeline" -> TimelineScreen(vm,onGame={previous="timeline";gameId=it})
                         screen=="atlas" -> AtlasScreen(vm,atlasGame,onGame={previous="atlas";gameId=it})
                         screen=="library" -> LibraryScreen(vm,onGame={previous="library";gameId=it},onDungeons={dungeonIndex=true})
                         screen=="profile" -> ProfileScreen(vm,openAccount=openAccount,openMural=openMural,onGame={previous="profile";gameId=it})
                         screen=="community" -> CommunityScreen(vm,onBack={screen="profile"},onAccount={openAccount=true;screen="profile"})
-                        screen=="settings" -> SettingsScreen(vm,onBack={screen="profile"})
+                        screen=="settings" -> SettingsScreen(vm,onBack={screen=settingsBack}, backLabel=if(settingsBack=="store") "Store" else "perfil")
                     }
                 }
             }
+        }
+        if (showController && !intro) {
+            ControllerDialog(vm.store, userId, onDismiss = { showController = false })
         }
         if (!intro && !vm.emailConfirmed && (!invite || vm.session != null) && vm.pendingCloud == null && showChanges && changeNotes.isNotBlank()) {
             AlertDialog(onDismissRequest = { closeChanges() },

@@ -1,5 +1,10 @@
 package com.hyrulecompanion.app.network
 
+import com.hyrulecompanion.app.data.CatchAttempt
+import com.hyrulecompanion.app.data.Cosmetic
+import com.hyrulecompanion.app.data.FishRarity
+import com.hyrulecompanion.app.data.Wallet
+import com.hyrulecompanion.app.data.cosmetics
 import com.hyrulecompanion.app.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -102,6 +107,37 @@ class SupabaseClient {
         request("POST","/rest/v1/hc_user_data?on_conflict=user_id",JSONObject().put("user_id",session.userId).put("payload",payload).put("updated_at",now),bearer=session.accessToken,prefer="resolution=merge-duplicates,return=minimal")
         return now
     }
+    private suspend fun storeRpc(session: AuthSession, action: String, args: JSONObject = JSONObject()): String =
+        request("POST", "/rest/v1/rpc/hc_store_$action", args, session.accessToken)
+
+    internal suspend fun storeState(session: AuthSession): Wallet =
+        Wallet.from(JSONObject(storeRpc(session, "state")))
+
+    internal suspend fun storeBuy(session: AuthSession, item: Cosmetic) {
+        storeRpc(session, "buy", JSONObject().put("p_item", item.id))
+    }
+
+    internal suspend fun storeEquip(session: AuthSession, item: Cosmetic, equipped: Boolean) {
+        storeRpc(session, "equip", JSONObject().put("p_item", item.id).put("p_equipped", equipped))
+    }
+
+    internal suspend fun storeCast(session: AuthSession, id: String): CatchAttempt {
+        val json = JSONObject(storeRpc(session, "cast", JSONObject().put("p_cast", id)))
+        return CatchAttempt(id, FishRarity.valueOf(json.getString("rarity")),
+            json.getString("species"), json.getLong("wait_ms"))
+    }
+
+    internal suspend fun storeClaim(session: AuthSession, id: String): Int =
+        storeRpc(session, "claim", JSONObject().put("p_cast", id)).trim().toInt()
+
+    internal suspend fun storeRedeem(session: AuthSession, keys: List<String>): Pair<Boolean, Wallet> {
+        val result = JSONObject(storeRpc(session, "redeem", JSONObject().put("p_keys", JSONArray(keys))))
+        return result.getBoolean("unlocked") to Wallet.from(result.getJSONObject("wallet"))
+    }
+
+    internal suspend fun publicCosmetics(session: AuthSession, userId: String): Set<Cosmetic> =
+        cosmetics(JSONArray(storeRpc(session, "public_cosmetics", JSONObject().put("p_profile", userId))))
+
     suspend fun communityProfile(session: AuthSession): CommunityProfile? =
         communityProfiles(session, "user_id=eq.${session.userId}").firstOrNull()
 
@@ -227,5 +263,5 @@ data class CommunityReaction(val count: Int, val applauded: Boolean)
 data class CommunityMedia(val avatar: String? = null, val banner: String? = null)
 
 
-internal const val EMAIL_CONFIRMATION_REDIRECT = "com.hyrulecompanion.app://auth/confirm"
+internal const val EMAIL_CONFIRMATION_REDIRECT = "${BuildConfig.APPLICATION_ID}://auth/confirm"
 internal class AccountAlreadyExists : IOException("Opa, você já está conectado com Hyrule. Por favor faça log in")

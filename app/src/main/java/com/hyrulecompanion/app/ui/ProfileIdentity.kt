@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.hyrulecompanion.app.HyruleViewModel
+import com.hyrulecompanion.app.data.Cosmetic
 import com.hyrulecompanion.app.network.CommunityMedia
 import com.hyrulecompanion.app.network.CommunityProfile
 import kotlinx.coroutines.CancellationException
@@ -33,9 +34,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ProfileHeader(
-    name: String, avatar: String, banner: String?, reduceMotion: Boolean, online: Boolean = false,
+    name: String, avatar: String, banner: String?, reduceMotion: Boolean, online: Boolean = false, equipped: Set<Cosmetic> = emptySet(),
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     val image = rememberProfileImage(banner.orEmpty(), reduceMotion)
@@ -51,15 +53,41 @@ internal fun ProfileHeader(
             verticalArrangement = Arrangement.SpaceBetween) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, content = actions)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Box {
-                    Avatar(avatar, reduceMotion, Modifier.size(72.dp))
+                val hasSword = Cosmetic.SWORD in equipped
+                val hasHat = Cosmetic.HAT in equipped
+                val avatarTop = when {
+                    hasSword -> 33.dp
+                    hasHat -> 21.dp
+                    else -> 0.dp
+                }
+                Box(Modifier.size(72.dp, 72.dp + avatarTop)) {
+                    if (hasSword) SwordCosmetic(reduceMotion,
+                        Modifier.align(Alignment.TopCenter).offset(x = if (hasHat) 17.dp else 8.dp)
+                            .size(32.dp, 76.dp), behindAvatar = true)
+                    Avatar(avatar, reduceMotion, Modifier.align(Alignment.BottomCenter).size(72.dp)
+                        .background(MaterialTheme.colorScheme.primaryContainer, CircleShape))
+                    if (hasHat) HatCosmetic(Modifier.align(Alignment.TopCenter).offset(y = avatarTop - 21.dp)
+                        .size(72.dp, 41.dp))
                     if (online) Box(Modifier.align(Alignment.BottomEnd).size(16.dp)
                         .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape)
                         .background(Color(0xFF38BC6E), CircleShape)
                         .semantics { contentDescription = "Online" })
                 }
-                Text(name, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge,
-                    color = if (image == null) MaterialTheme.colorScheme.onPrimaryContainer else Color.White)
+                if (Cosmetic.GOLD in equipped) GoldenCosmetic(reduceMotion, Modifier.size(24.dp, 40.dp))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Text(name, Modifier.weight(1f, fill = false), style = MaterialTheme.typography.titleLarge,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, maxLines = 2,
+                            color = if (image == null) MaterialTheme.colorScheme.onPrimaryContainer else Color.White)
+                        if (Cosmetic.CREATOR in equipped) ProfileBadge(Cosmetic.CREATOR, reduceMotion)
+                    }
+                    if (Cosmetic.BETA in equipped || Cosmetic.CHESTER in equipped) {
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                            if (Cosmetic.BETA in equipped) ProfileBadge(Cosmetic.BETA, reduceMotion)
+                            if (Cosmetic.CHESTER in equipped) ProfileBadge(Cosmetic.CHESTER, reduceMotion)
+                        }
+                    }
+                }
             }
         }
     }
@@ -172,8 +200,9 @@ internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String?, loca
         }
     }
 
+    val equipped = vm.store.wallet(userId)?.profileCosmetics.orEmpty()
     LaunchedEffect(userId) { loadProfile() }
-    ProfileHeader(profile?.let { "@${it.handle}" } ?: "Herói de Hyrule", localAvatar, publishedBanner, reduceMotion, online = userId != null && vm.presenceHidden == false) {
+    ProfileHeader(profile?.let { "@${it.handle}" } ?: "Herói de Hyrule", localAvatar, publishedBanner, reduceMotion, online = userId != null && vm.presenceHidden == false, equipped = equipped) {
         FilledTonalIconButton(onClick = { editProfile(); loadProfile() }, enabled = !busy,
             modifier = Modifier.semantics { contentDescription = "Editar perfil" }) {
             Text("🪶")
@@ -190,7 +219,7 @@ internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String?, loca
     if (editing && userId == null) AlertDialog(onDismissRequest = { if (!busy) editing = false },
         title = { Text("Editar perfil") }, text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                ProfileHeader("Herói de Hyrule", avatar, null, reduceMotion)
+                ProfileHeader("Herói de Hyrule", avatar, null, reduceMotion, equipped = equipped)
                 photoControls()
                 Text("Entre na sua conta para configurar nome, banner e visibilidade.")
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
@@ -223,7 +252,7 @@ internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String?, loca
         Text(if (visible) "Prévia do perfil público" else "Prévia · este perfil está privado")
         val visibleAvatar = if (publishPhoto) (if (!avatarEdited) publishedAvatar ?: avatar else avatar) else ""
         ProfileHeader(if (handle.isBlank()) "Herói de Hyrule" else "@$handle",
-            visibleAvatar, banner, reduceMotion)
+            visibleAvatar, banner, reduceMotion, equipped = equipped)
         if (!publishPhoto && avatar.isNotBlank()) Avatar(avatar, reduceMotion, Modifier.size(48.dp))
         photoControls()
         OutlinedButton(enabled = !busy, onClick = { bannerPicker.launch(arrayOf("image/jpeg", "image/png", "image/gif")) }) {

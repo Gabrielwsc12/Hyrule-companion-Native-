@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.hyrulecompanion.app.data.TOTK_PALETTE
 
 val Gold=Color(0xFFD5A552)
 val DeepForest=Color(0xFF142A1D)
@@ -56,10 +57,11 @@ internal val gamePalettes = listOf("classic" to "Clássico", "ocarina" to "Ocari
         "ocarina" -> listOf(0xFF284D70, 0xFFF3C870, 0xFFD7E5F7, 0xFF283749)
         "majora" -> listOf(0xFF62366D, 0xFFE7AFEF, 0xFFF0DDF3, 0xFF41294C)
         "wind" -> listOf(0xFF155F66, 0xFF84DCD3, 0xFFCBEDE8, 0xFF18454B)
+        TOTK_PALETTE -> listOf(0xFF216051, 0xFF76E7BD, 0xFFD3F3DF, 0xFF1C3D33)
         "twilight" -> listOf(0xFF694437, 0xFFFFB89A, 0xFFFFE0CA, 0xFF503127)
         else -> emptyList()
     }
-    val scheme = if (colors.isEmpty()) base else {
+    val paletteScheme = if (colors.isEmpty()) base else {
         val (primary, highlight, light, shadow) = colors.map { Color(it) }
         base.copy(
             primary = if (dark) highlight else primary,
@@ -72,6 +74,11 @@ internal val gamePalettes = listOf("classic" to "Clássico", "ocarina" to "Ocari
             onSurfaceVariant = if (dark) Color.White else shadow
         )
     }
+    val scheme = if (palette == TOTK_PALETTE) paletteScheme.copy(
+        secondary = if (dark) Color(0xFFFFD294) else Color(0xFF785014),
+        background = if (dark) Color(0xFF0E2621) else Color(0xFFF2F4DB),
+        surface = if (dark) Color(0xFF15342D) else Color(0xFFFCFAE8)
+    ) else paletteScheme
     MaterialTheme(colorScheme=scheme,typography=Typography(
         headlineMedium=Typography().headlineMedium.copy(fontFamily=FontFamily.Serif,fontWeight=FontWeight.Bold),
         headlineSmall=Typography().headlineSmall.copy(fontFamily=FontFamily.Serif,fontWeight=FontWeight.Bold),

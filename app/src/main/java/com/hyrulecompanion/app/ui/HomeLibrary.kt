@@ -32,9 +32,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
+import com.hyrulecompanion.app.BuildConfig
 import com.hyrulecompanion.app.HyruleViewModel
 import com.hyrulecompanion.app.data.Game
 
@@ -45,14 +47,29 @@ import com.hyrulecompanion.app.data.Game
         error={Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Text(game.icon)}})
 }
 
-@Composable fun HomeScreen(vm:HyruleViewModel,onNavigate:(String)->Unit,onGame:(String)->Unit) {
+@Composable fun HomeScreen(vm:HyruleViewModel,userName:String?,onNavigate:(String)->Unit,onGame:(String)->Unit) {
     val revision=vm.revision
     val games=vm.catalog.games
     val done=vm.repo.doneCount()
     val playing=vm.repo.playingCount()
     val latest=vm.repo.latestCompletedGame()
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
-        ScreenTitle("Bem-vindo de volta, Herói!","Que a Triforce guie sua jornada...","▲")
+        ScreenTitle(userName?.let { "Bem-vindo de volta, $it!" } ?: "Bem-vindo de volta!", "", "▲")
+        SmallHeading("Descubra Hyrule")
+        SectionCarousel(onNavigate)
+        ParchmentCard(Modifier.fillMaxWidth().clickable(role = Role.Button, onClickLabel = "Abrir Store") {
+            onNavigate("store")
+        }) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                AsyncImage("file:///android_asset/home/store.webp", null,
+                    Modifier.size(68.dp, 48.dp).clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
+                Column(Modifier.weight(1f)) {
+                    Text("Store", style = MaterialTheme.typography.titleLarge)
+                    Text("Cosméticos e pesca no Mar de Hyrule", style = MaterialTheme.typography.bodySmall)
+                }
+                Icon(Icons.Default.ChevronRight, null)
+            }
+        }
         ParchmentCard {
             SmallHeading("✦ Seu progresso")
             LinearProgressIndicator(progress={ done.toFloat()/games.size },modifier=Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(16.dp)))
@@ -77,20 +94,18 @@ import com.hyrulecompanion.app.data.Game
             Text(if (done == 0) "Quando você concluir uma aventura, ela aparecerá aqui." else "Adicione a data de conclusão para destacar sua última aventura.")
             TextButton(onClick={onNavigate("library")}) { Text("Abrir biblioteca") }
         }
-        SmallHeading("Descubra Hyrule")
-        SectionCarousel(onNavigate)
-        Spacer(Modifier.height(14.dp))
+
     }
 }
 
 private data class SectionCard(val label: String, val detail: String, val target: String, val image: String)
 
+// Replace one of the three feature slots by request. The changelog stays in slot four.
 private val homeSections = listOf(
-    SectionCard("Atlas", "Mapas e pontos de interesse", "atlas", "totk-surface"),
-    SectionCard("Cronologia", "Explore as linhas do tempo", "timeline", "alttp"),
-    SectionCard("Biblioteca", "Jogos, guias e dungeons", "library", "links-awakening-remake"),
-    SectionCard("Meu mural", "Reveja suas conquistas", "mural", "oot")
-)
+    SectionCard("Biblioteca", "Jogos, guias e dungeons", "library", "library"),
+    SectionCard("Atlas", "Mapas e pontos de interesse", "atlas", "atlas"),
+    SectionCard("Cronologia", "Explore as linhas do tempo", "timeline", "timeline")
+).take(3) + SectionCard("Novidades da ${BuildConfig.VERSION_NAME}", "", "changelog", "changelog")
 
 @Composable
 private fun SectionCarousel(onNavigate: (String) -> Unit) {
@@ -101,18 +116,24 @@ private fun SectionCarousel(onNavigate: (String) -> Unit) {
         Box(Modifier.fillMaxWidth().height(158.dp).clip(RoundedCornerShape(18.dp))
             .background(MaterialTheme.colorScheme.primaryContainer)
             .clickable(role = Role.Button, onClickLabel = "Abrir ${section.label}") { onNavigate(section.target) }) {
-            AsyncImage("file:///android_asset/atlas/${section.image}.webp", null,
+            AsyncImage("file:///android_asset/home/${section.image}.webp", null,
                 Modifier.matchParentSize(), contentScale = ContentScale.Crop)
-            Box(Modifier.matchParentSize().background(Brush.verticalGradient(
-                listOf(Color.Black.copy(alpha = .15f), Color(0xED101815))
-            )))
-            Row(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(14.dp),
-                verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(section.label, color = Color.White, style = MaterialTheme.typography.titleLarge)
-                    Text(section.detail, color = Color(0xFFF0EEE5), style = MaterialTheme.typography.bodySmall)
+            if (section.target == "changelog") {
+                Text(section.label, Modifier.align(Alignment.Center).fillMaxWidth(.65f),
+                    textAlign = TextAlign.Center, color = Color(0xFF3A2919),
+                    style = MaterialTheme.typography.titleLarge)
+            } else {
+                Box(Modifier.matchParentSize().background(Brush.verticalGradient(
+                    listOf(Color.Black.copy(alpha = .15f), Color(0xED101815))
+                )))
+                Row(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(section.label, color = Color.White, style = MaterialTheme.typography.titleLarge)
+                        Text(section.detail, color = Color(0xFFF0EEE5), style = MaterialTheme.typography.bodySmall)
+                    }
+                    Icon(Icons.Default.ChevronRight, null, tint = Color.White)
                 }
-                Icon(Icons.Default.ChevronRight, null, tint = Color.White)
             }
         }
     }

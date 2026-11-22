@@ -4,6 +4,8 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val previewApk = providers.gradleProperty("hcPreviewApk").orNull == "true"
+
 android {
     namespace = "com.hyrulecompanion.app"
     compileSdk = 35
@@ -12,13 +14,20 @@ android {
         applicationId = "com.hyrulecompanion.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 11703
-        versionName = "1.17.2.1-native"
+        versionCode = 11800
+        versionName = "1.18.0"
+        manifestPlaceholders["hcAppLabel"] = "Hyrule Companion"
 
         // These are the public project URL + publishable key in the supplied web source.
         // NEVER put a Supabase service_role or secret key in an Android client.
         buildConfigField("String", "SUPABASE_URL", "\"https://kramrknuxdkwxusskmrv.supabase.co\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"sb_publishable_gBTd7h9gqie13ZvpOhdSMA_TZWHkxjD\"")
+    }
+    if (previewApk) {
+        buildTypes.getByName("debug") {
+            applicationIdSuffix = ".preview"
+            manifestPlaceholders["hcAppLabel"] = "Hyrule Companion Teste"
+        }
     }
     // CI release signatures are supplied through environment variables (never committed).
     // All release APKs MUST use the same keystore to update existing installations.
