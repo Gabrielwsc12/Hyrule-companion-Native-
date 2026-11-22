@@ -1,0 +1,184 @@
+package com.hyrulecompanion.app.ui
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import coil.compose.AsyncImage
+import com.hyrulecompanion.app.data.AtlasLocation
+import org.json.JSONObject
+
+internal data class AtlasPin(val x: Float, val y: Float, val name: String, val category: String, val description: String)
+
+@Composable
+internal fun InteractiveAtlas(
+    mapKey: String, title: String, locations: List<AtlasLocation>,
+    layers: List<Pair<String, String>>, onLayerChange: (String) -> Unit, onDismiss: () -> Unit
+) {
+    val assets = LocalContext.current.assets
+    val map = remember(assets, mapKey) {
+        assets.open("atlas/maps.json").bufferedReader().use { JSONObject(it.readText()).getJSONObject(mapKey) }
+    }
+    val pins = remember(map, locations) {
+        val points = map.getJSONArray("points")
+        (0 until points.length()).map { index ->
+            val point = points.getJSONArray(index)
+            val name = point.getString(2)
+            val place = locations.find { it.name.equals(name, ignoreCase = true) }
+            val category = point.optString(3).ifBlank { atlasCategory(name) }
+            AtlasPin(point.getDouble(0).toFloat(), point.getDouble(1).toFloat(), name, category,
+                point.optString(4).ifBlank { place?.description ?: atlasDescription(name, category) })
+        }
+    }
+    val categories = remember(pins) { listOf("Todos") + pins.map { it.category }.distinct() }
+    var category by remember(mapKey) { mutableStateOf("Todos") }
+    var showPoints by remember(mapKey) { mutableStateOf(false) }
+    var selected by remember(mapKey) { mutableStateOf<AtlasPin?>(null) }
+    var scale by remember(mapKey) { mutableFloatStateOf(1f) }
+    var pan by remember(mapKey) { mutableStateOf(Offset.Zero) }
+
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Surface(Modifier.fillMaxSize()) {
+            Column(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 12.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
+                    TextButton(onClick = onDismiss) { Text("Fechar") }
+                }
+                if (layers.size > 1) Row(
+                    Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    layers.forEach { (key, label) ->
+                        FilterChip(selected = key == mapKey, onClick = { onLayerChange(key) }, label = { Text(label) })
+                    }
+                }
+                if (categories.size > 2) Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    categories.forEach { value ->
+                        FilterChip(selected = value == category, onClick = {
+                            category = value
+                            if (value != "Todos" && selected?.category != value) selected = null
+                        }, label = { Text(value) })
+                    }
+                }
+                BoxWithConstraints(Modifier.fillMaxWidth().weight(1f).clipToBounds().background(MaterialTheme.colorScheme.surfaceVariant)) {
+                    val density = LocalDensity.current
+                    val aspect = map.getDouble("aspect").toFloat()
+                    val viewWidth = maxWidth
+                    val viewHeight = maxHeight
+                    val width = minOf(viewWidth, viewHeight * aspect)
+                    val height = width / aspect
+                    fun clampPan(candidate: Offset, zoom: Float): Offset = with(density) {
+                        val xBound = ((width * zoom - viewWidth).toPx() / 2).coerceAtLeast(0f)
+                        val yBound = ((height * zoom - viewHeight).toPx() / 2).coerceAtLeast(0f)
+                        Offset(candidate.x.coerceIn(-xBound, xBound), candidate.y.coerceIn(-yBound, yBound))
+                    }
+                    fun setZoom(value: Float, movement: Offset = Offset.Zero) {
+                        scale = value.coerceIn(1f, 6f)
+                        pan = clampPan(pan + movement, scale)
+                    }
+                    val transform = rememberTransformableState { zoom, movement, _ -> setZoom(scale * zoom, movement) }
+                    val position = clampPan(pan, scale)
+                    val mapWidth = width * scale
+                    val mapHeight = height * scale
+                    val left = (viewWidth - mapWidth) / 2 + with(density) { position.x.toDp() }
+                    val top = (viewHeight - mapHeight) / 2 + with(density) { position.y.toDp() }
+                    Box(Modifier.fillMaxSize().transformable(transform).clipToBounds()) {
+                        AsyncImage("file:///android_asset/atlas/$mapKey.webp", "Mapa de $title",
+                            Modifier.offset(left, top).wrapContentSize(Alignment.TopStart, unbounded = true)
+                                .requiredSize(mapWidth, mapHeight),
+                            contentScale = ContentScale.FillBounds)
+                        pins.forEachIndexed { index, pin ->
+                            if (category == "Todos" || pin.category == category) {
+                                val x = left + mapWidth * pin.x
+                                val y = top + mapHeight * pin.y
+                                if (x >= 0.dp && x <= viewWidth && y >= 0.dp && y <= viewHeight) {
+                                    Surface(Modifier.offset((x - 15.dp).coerceIn(0.dp, (viewWidth - 30.dp).coerceAtLeast(0.dp)),
+                                        (y - 15.dp).coerceIn(0.dp, (viewHeight - 30.dp).coerceAtLeast(0.dp)))
+                                        .size(30.dp).zIndex(if (pin == selected) 1f else 0f)
+                                        .semantics { contentDescription = pin.name }.clickable { selected = pin },
+                                        shape = CircleShape, color = if (pin == selected)
+                                            MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface) {
+                                        Box(contentAlignment = Alignment.Center) { Text("${index + 1}", style = MaterialTheme.typography.labelSmall) }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Box(Modifier.align(Alignment.TopEnd).padding(8.dp)) {
+                        FilledTonalButton(onClick = { showPoints = true }) { Text("Pontos do mapa") }
+                        DropdownMenu(expanded = showPoints, onDismissRequest = { showPoints = false },
+                            modifier = Modifier.heightIn(max = 280.dp)) {
+                            pins.forEachIndexed { index, pin ->
+                                if (category == "Todos" || category == pin.category) {
+                                    DropdownMenuItem(text = { Text("${index + 1}. ${pin.name}") }, onClick = {
+                                        showPoints = false
+                                        selected = pin
+                                        scale = maxOf(2f, scale)
+                                        pan = with(density) {
+                                            clampPan(Offset((width * scale).toPx() * (.5f - pin.x),
+                                                (height * scale).toPx() * (.5f - pin.y)), scale)
+                                        }
+                                    })
+                                }
+                            }
+                        }
+                    }
+                    Row(Modifier.align(Alignment.BottomEnd).padding(8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        FilledTonalIconButton(onClick = { setZoom(scale / 1.5f) }, enabled = scale > 1f,
+                            modifier = Modifier.semantics { contentDescription = "Diminuir zoom" }) { Text("−") }
+                        FilledTonalIconButton(onClick = { setZoom(scale * 1.5f) }, enabled = scale < 6f,
+                            modifier = Modifier.semantics { contentDescription = "Aumentar zoom" }) { Text("+") }
+                        FilledTonalIconButton(onClick = { setZoom(1f) },
+                            modifier = Modifier.semantics { contentDescription = "Restaurar zoom" }) { Text("↺") }
+                    }
+                }
+                Column(Modifier.fillMaxWidth().heightIn(min = 68.dp, max = 124.dp)
+                    .verticalScroll(key(selected) { rememberScrollState() }).padding(vertical = 8.dp)) {
+                    val pin = selected
+                    if (pin == null) Text("Toque em um marcador. Use dois dedos ou os botões para ampliar o mapa.")
+                    else {
+                        Text(pin.name, style = MaterialTheme.typography.titleMedium)
+                        Text("${pin.category} · ${pin.description}", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun atlasCategory(name: String): String = when {
+    listOf("santuário", "shrine", "tower", "lightroot", "teletransporte").any { name.contains(it, true) } -> "Exploração"
+    listOf("heart", "coração", "stamp", "peach", "concha", "loja", "mercado").any { name.contains(it, true) } -> "Itens e colecionáveis"
+    listOf("temple", "templo", "palácio", "dungeon", "caverna").any { name.contains(it, true) } -> "Dungeons e acessos"
+    else -> "Locais"
+}
+
+private fun atlasDescription(name: String, category: String): String = when {
+    name.contains("Skyview Tower", true) -> "Torre de observação. Ative o terminal para liberar viagem rápida e revelar a região no mapa."
+    name.contains("Shrine", true) -> "Entrada de um santuário. Examine o ponto no mapa para localizar o acesso à prova."
+    name.contains("Lightroot", true) -> "Raiz luminosa das Profundezas. Ative-a para iluminar uma parte do mapa subterrâneo."
+    name.contains("Stamp", true) -> "Local de um carimbo colecionável. Interaja com a estação para preencher seu cartão."
+    name.contains("Heart", true) -> "Local ou acesso indicado para obter uma melhoria de coração. Confira o requisito no mapa de referência do jogo."
+    category == "Dungeons e acessos" -> "Marco da dungeon ou de seu acesso no mapa da região."
+    else -> "Ponto de referência para explorar a região de $name."
+}

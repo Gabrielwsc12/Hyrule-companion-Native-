@@ -92,7 +92,9 @@ import com.hyrulecompanion.app.data.Game
     var query by remember { mutableStateOf("") }
     var type by remember { mutableStateOf("Todos") }
     val types=listOf("Todos","Principal","Spin-off","Remake","Remaster","Edição","Coleção","DLC")
-    val filtered=vm.catalog.games.filter { (type=="Todos" || it.type==type) && "${it.name} ${it.platform} ${it.year} ${it.type}".contains(query,ignoreCase=true) }
+    var onlyCompleted by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    val filtered=vm.catalog.games.filter {
+        (!onlyCompleted || vm.repo.gameProgress(it.id).status in listOf("Concluído", "100%")) && (type=="Todos" || it.type==type) && "${it.name} ${it.platform} ${it.year} ${it.type}".contains(query,ignoreCase=true) }
     LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
         item {ScreenTitle("Biblioteca","Catálogo de aventuras, remakes e spin-offs","▤")}
         item { OutlinedButton(onClick=onDungeons) { Text("Enciclopédia de Dungeons") } }
@@ -100,7 +102,9 @@ import com.hyrulecompanion.app.data.Game
         item {Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
             types.forEach {t->FilterChip(selected=type==t,onClick={type=t},label={Text(t)})}
         }}
+        item { FilterChip(selected=onlyCompleted,onClick={onlyCompleted=!onlyCompleted},label={Text("Só concluídos")}) }
         item{ Text("${filtered.size} aventuras",style=MaterialTheme.typography.labelLarge) }
+        if (filtered.isEmpty()) item { Text("Nenhum jogo corresponde aos filtros.") }
         items(filtered,key={it.id}) { g ->
             ParchmentCard(Modifier.fillMaxWidth().clickable{onGame(g.id)}) {
                 Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {

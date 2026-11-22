@@ -150,15 +150,6 @@ class HyruleViewModel(application: Application) : AndroidViewModel(application) 
     fun favorite(id: String) { repo.toggleFavorite(id);notifyChange() }
     fun note(id: String,value: String) { repo.saveGuideNote(id,value);notifyChange();message="Anotação salva." }
     fun savePreferences(preferences: Preferences) { repo.savePreferences(preferences);notifyChange() }
-    fun changeAvatar(uri: Uri) {
-        viewModelScope.launch {
-            try {
-                val image=withContext(Dispatchers.IO) { repo.avatarImage(uri) }
-                savePreferences(repo.preferences().copy(avatar=image));message="Foto do perfil atualizada."
-            } catch(e: Exception) { message=e.message ?: "Não foi possível abrir a foto." }
-        }
-    }
-    fun removeAvatar() { savePreferences(repo.preferences().copy(avatar="")) }
     fun exportBackup(uri: Uri) {
         viewModelScope.launch {
             try {
@@ -203,13 +194,54 @@ class HyruleViewModel(application: Application) : AndroidViewModel(application) 
         fresh
     }
     private fun persistSession(value: AuthSession) { session=value;repo.store(K_SESSION,value.toJson()) }
+    private var confirmationJob: Job? = null
+    var emailConfirmed by mutableStateOf(false)
+        private set
+
+    fun dismissEmailConfirmation() { emailConfirmed = false }
+
+    fun confirmEmail(code: String) {
+        if (confirmationJob?.isActive == true) return
+        val verifier = repo.raw("email-confirmation-verifier") ?: return
+        confirmationJob = viewModelScope.launch {
+            try {
+                supabase.confirmSignup(code, verifier)
+                if (repo.raw("email-confirmation-verifier") == verifier) repo.erase("email-confirmation-verifier")
+                emailConfirmed = true
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                message = "Não foi possível concluir a confirmação. Abra o link do e-mail novamente."
+            }
+        }
+    }
+
+    private suspend fun registerEmail(email: String, password: String): AuthSession? {
+        val random = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
+        val flags = android.util.Base64.URL_SAFE or android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP
+        val verifier = android.util.Base64.encodeToString(random, flags)
+        val hashed = java.security.MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray(Charsets.US_ASCII))
+        val challenge = android.util.Base64.encodeToString(hashed, flags)
+        val previous = repo.raw("email-confirmation-verifier")
+        repo.storeRaw("email-confirmation-verifier", verifier)
+        try {
+            return supabase.signUp(email, password, challenge).also {
+                if (it != null) repo.erase("email-confirmation-verifier")
+            }
+        } catch (failure: Exception) {
+            if (previous == null) repo.erase("email-confirmation-verifier")
+            else repo.storeRaw("email-confirmation-verifier", previous)
+            throw failure
+        }
+    }
+
     fun signIn(email: String,password: String,register: Boolean=false) {
         if (busy) return
         if (!email.contains('@') || password.length < (if(register)8 else 1)) { message=if(register)"Informe um e-mail válido e senha com ao menos 8 caracteres." else "Informe e-mail e senha.";return }
         viewModelScope.launch {
             busy=true
             try {
-                val logged=if(register) supabase.signUp(email.trim(),password) else supabase.signIn(email.trim(),password)
+                val logged=if(register) registerEmail(email.trim(),password) else supabase.signIn(email.trim(),password)
                 if (logged == null) { message="Conta criada. Confirme seu e-mail para entrar." }
                 else { persistSession(logged);message="Conta conectada.";initialSync() }
             } catch(e: Exception) { message=e.message ?: "Falha de autenticação." }

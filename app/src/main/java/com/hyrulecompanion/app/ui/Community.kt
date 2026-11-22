@@ -104,7 +104,7 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
             TextButton(onClick = { if (selected != null) selected = null else onBack() }) {
                 Text(if (selected != null) "Voltar à comunidade" else "Voltar ao perfil")
             }
-            ScreenTitle(selected?.let { "@${it.handle}" } ?: "Comunidade", "Hyrule Companion", "♜")
+            if (selected == null) ScreenTitle("Comunidade", "", "♜")
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }
@@ -112,8 +112,7 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
         if (profile != null) {
             item {
                 ParchmentCard {
-                    ProfileBanner(media.banner)
-                    Avatar(media.avatar.orEmpty(), vm.repo.preferences().reduceMotion, Modifier.size(72.dp))
+                    ProfileHeader("@${profile.handle}", media.avatar.orEmpty(), media.banner, vm.repo.preferences().reduceMotion)
                     Text("Zelda favorito: ${vm.catalog.game(profile.favoriteGame.orEmpty())?.name ?: "A escolher"}")
                     if (profile.userId != userId) {
                         val canFollow = own != null
@@ -214,7 +213,7 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
 @Composable
 internal fun CommunityProfileEditor(
     vm: HyruleViewModel, userId: String, current: CommunityProfile?, busy: Boolean,
-    error: String?, mediaEditor: @Composable (Boolean) -> Unit, onClose: () -> Unit, onSave: (CommunityProfile) -> Unit
+    error: String?, mediaEditor: @Composable (String, Boolean) -> Unit, onClose: () -> Unit, onSave: (CommunityProfile) -> Unit
 ) {
     var handle by remember { mutableStateOf(current?.handle.orEmpty()) }
     var favorite by remember { mutableStateOf(current?.favoriteGame) }
@@ -223,7 +222,7 @@ internal fun CommunityProfileEditor(
     var picking by remember { mutableStateOf(false) }
     val normalized = handle.trim().lowercase()
 
-    AlertDialog(onDismissRequest = { if (!busy) onClose() }, title = { Text("Meu perfil na comunidade") }, text = {
+    AlertDialog(onDismissRequest = { if (!busy) onClose() }, title = { Text("Editar perfil") }, text = {
         Column(Modifier.heightIn(max = 380.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(handle, { handle = it.take(24) }, singleLine = true, enabled = !busy,
                 label = { Text("Nome de usuário") }, supportingText = { Text("3 a 24 letras, números ou _") })
@@ -246,7 +245,7 @@ internal fun CommunityProfileEditor(
                 Switch(shareJourney && discoverable, { shareJourney = it }, enabled = !busy && discoverable)
                 Text("Compartilhar status dos jogos", Modifier.padding(start = 8.dp))
             }
-            mediaEditor(discoverable)
+            mediaEditor(normalized, discoverable)
             Text("Salve o perfil de novo para atualizar a jornada compartilhada.", style = MaterialTheme.typography.bodySmall)
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }

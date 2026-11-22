@@ -17,10 +17,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudSync
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -56,12 +56,10 @@ import java.time.LocalDate
     else Surface(modifier=modifier,shape=CircleShape,color=MaterialTheme.colorScheme.primaryContainer){Box(contentAlignment=Alignment.Center){Text("🗡️",style=MaterialTheme.typography.headlineMedium)}}
 }
 
-@Composable fun ProfileScreen(vm:HyruleViewModel,onSettings:()->Unit, openAccount:Boolean=false,onCommunity:()->Unit){
+@Composable fun ProfileScreen(vm:HyruleViewModel,openAccount:Boolean=false){
     val revision=vm.revision
     val prefs=vm.repo.preferences()
     val userId = vm.session?.userId
-    var communityHandle by remember(userId) { mutableStateOf<String?>(null) }
-    var banner by remember(userId) { mutableStateOf<String?>(null) }
     val completed=vm.repo.doneCount()
     val playing=vm.repo.playingCount()
     val started=vm.catalog.games.filter { vm.repo.gameProgress(it.id).status!="Não iniciado" || vm.repo.earnedTriforce(it.id) }
@@ -69,30 +67,12 @@ import java.time.LocalDate
     var name by rememberSaveable { mutableStateOf("Herói de Hyrule") }
     var muralOptions by remember { mutableStateOf<MuralOptions?>(null) }
     var exportOptions by remember { mutableStateOf<MuralOptions?>(null) }
-    val avatarLauncher=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->if(uri!=null)vm.changeAvatar(uri)}
     val jpegLauncher=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("image/jpeg")){uri -> if(uri!=null)exportOptions?.let{vm.exportMural(uri,it)};exportOptions=null}
     LazyColumn(Modifier.fillMaxSize(),state=androidx.compose.foundation.lazy.rememberLazyListState(initialFirstVisibleItemIndex=if(openAccount) 2 else 0),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
         item {ScreenTitle("Meu Perfil","Seu registro como aventureiro de Hyrule","♜")}
         item {ParchmentCard {
-            ProfileBanner(banner)
-            Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(16.dp)){
-                Avatar(prefs.avatar,prefs.reduceMotion,Modifier.size(86.dp))
-                Column(Modifier.weight(1f)){
-                    Text(communityHandle?.let { "@$it" } ?: "Herói de Hyrule",style=MaterialTheme.typography.titleLarge)
-                    Text("Explorador em treinamento")
-                    Text("${completed*100/vm.catalog.games.size}% da biblioteca concluída",style=MaterialTheme.typography.labelLarge)
-                }
-                IconButton(onClick=onSettings){Icon(Icons.Default.Settings,contentDescription="Configurações")}
-            }
-            OutlinedButton(onClick={avatarLauncher.launch(arrayOf("image/png","image/jpeg","image/webp","image/gif"))}){Text("Escolher foto ou GIF")}
-            Text("Formatos: JPG, PNG, WebP e GIF. Limite: 1,8 MB.",style=MaterialTheme.typography.labelSmall)
-            if(prefs.avatar.isNotBlank())TextButton(onClick=vm::removeAvatar){Text("Remover foto")}
-            if (userId != null) key(userId) {
-                ProfileCommunitySettings(vm, userId, prefs.avatar) { handle, image ->
-                    communityHandle = handle
-                    banner = image
-                }
-            }
+            key(userId) { ProfileCommunitySettings(vm, userId, prefs.avatar, prefs.reduceMotion) }
+            Text("${completed*100/vm.catalog.games.size}% da biblioteca concluída", style = MaterialTheme.typography.labelLarge)
             LinearProgressIndicator(progress={completed.toFloat()/vm.catalog.games.size},modifier=Modifier.fillMaxWidth())
             Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                 StatsTile("${started.size}","Iniciados",Modifier.weight(1f))
@@ -101,11 +81,6 @@ import java.time.LocalDate
             }
         }}
         item {AccountPanel(vm)}
-        item {ParchmentCard {
-            SmallHeading("Comunidade")
-            Text("Encontre outros aventureiros e compartilhe a sua jornada.")
-            OutlinedButton(onClick=onCommunity,modifier=Modifier.fillMaxWidth()){Text("Abrir comunidade")}
-        }}
         item {ParchmentCard {
             SmallHeading("✦ Meu mural de Hyrule")
             Text("Crie uma imagem JPEG com seu progresso e suas aventuras concluídas.")
@@ -184,6 +159,8 @@ import java.time.LocalDate
 @Composable fun SettingsScreen(vm:HyruleViewModel,onBack:()->Unit){
     val revision=vm.revision
     val prefs=vm.repo.preferences()
+    var showCreatorNotes by rememberSaveable { mutableStateOf(false) }
+    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
     val context = LocalContext.current
     val updatePrefs = remember(context) { AppUpdatePreferences(context) }
     var noticesEnabled by remember { mutableStateOf(updatePrefs.backgroundNotices) }
@@ -198,6 +175,11 @@ import java.time.LocalDate
     LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
         item {TextButton(onClick=onBack){Text("← Voltar ao perfil")}}
         item {ScreenTitle("Configurações","Personalize sua experiência em Hyrule","⚙")}
+        item {
+            OutlinedButton(onClick = { showCreatorNotes = true }, modifier = Modifier.fillMaxWidth()) {
+                Text("Notas do criador")
+            }
+        }
         item {ParchmentCard {
             SmallHeading("Aparência")
             ChoiceSetting("Tema do aplicativo", prefs.theme, listOf("system" to "Usar tema do aparelho", "light" to "Claro", "dark" to "Escuro")) {
@@ -302,6 +284,23 @@ import java.time.LocalDate
             Text("Banco remoto: public.hc_user_data • JSON schema 13",style=MaterialTheme.typography.labelSmall)
         }}
     }
+    if (showCreatorNotes) AlertDialog(
+        onDismissRequest = { showCreatorNotes = false },
+        title = { Text("Notas do criador") },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("""Obrigado por baixar Hyrule companion, essa ideia começou a partir de um querer meu, de zerar todas as linhas do tempo de Zelda. Acabei me aproveitando da IA, sem saber desenvolver o source bruto, fui brincar e experimentar a ""liberdade que"" que a IA dá, está em fases experimentais ainda, mas quero muito receber feedback seja no Github, ou seja pelo meu Discord, que deixarei anexado nessa aba. Obrigado, muito obrigado. E aproveite!""")
+                OutlinedButton(onClick = {
+                    try {
+                        uriHandler.openUri("https://discord.gg/kjkPDbpK")
+                    } catch (_: IllegalArgumentException) {
+                        vm.notifyMessage("Não foi possível abrir o Discord.")
+                    }
+                }) { Text("Abrir Discord") }
+            }
+        },
+        confirmButton = { TextButton(onClick = { showCreatorNotes = false }) { Text("Fechar") } }
+    )
     if(importUri!=null)AlertDialog(onDismissRequest={importUri=null},title={Text("Restaurar backup?")},text={Text("Os dados atuais deste dispositivo serão substituídos pelos do arquivo. Se necessário, faça um backup antes de prosseguir.")},confirmButton={TextButton(onClick={importUri?.let(vm::importBackup);importUri=null}){Text("Restaurar")}},dismissButton={TextButton(onClick={importUri=null}){Text("Cancelar")}})
 }
 

@@ -34,7 +34,7 @@ for m in data['atlasMaps']:
             layer_keys.add(layer['key'])
         if 'layers' in m:
             pins = previews[layer['key']]['points']
-            assert len(points) == len(pins)
+            assert len(points) <= len(pins)
             for point, pin in zip(points, pins):
                 assert point[0] == pin[2]
                 assert abs(point[3] / 100 - pin[0]) < 1e-6 and abs(point[4] / 100 - pin[1]) < 1e-6

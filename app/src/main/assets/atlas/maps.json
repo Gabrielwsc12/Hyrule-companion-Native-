@@ -786,6 +786,13 @@
         0.0472559,
         0.0719214,
         "Cume do Monte Tamaranch"
+      ],
+      [
+        0.2262207,
+        0.7235808,
+        "Boneco do Yoshi",
+        "Easter eggs",
+        "Na Vila Mabe, use a máquina de garra do Trendy Game para pegar o boneco do Yoshi, referência à série Mario."
       ]
     ]
   },
@@ -1051,6 +1058,20 @@
         0.369141,
         0.653646,
         "Ilha Mercay"
+      ],
+      [
+        0.359375,
+        0.091146,
+        "Ilha Bannan",
+        "Itens e colecionáveis",
+        "Mostre o peixe Neptoona ao pescador da ilha para receber um recipiente de coração."
+      ],
+      [
+        0.740234,
+        0.0625,
+        "Ilha do Labirinto",
+        "Itens e colecionáveis",
+        "Conclua o labirinto no nível especialista para obter um recipiente de coração."
       ]
     ]
   }

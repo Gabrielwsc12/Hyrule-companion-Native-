@@ -129,7 +129,7 @@ private val tabs=listOf(
         if(intro) {
             IntroScreen(prefs.introMusic,onFinish={intro=false})
         } else {
-            if (invite && vm.session == null) AlertDialog(
+            if (invite && vm.session == null && !vm.emailConfirmed) AlertDialog(
                 onDismissRequest = { closeInvite() },
                 title = { Text("Quer salvar sua jornada em uma conta?") },
                 text = { Text("Criar uma conta é opcional. Com ela você pode sincronizar seu progresso entre dispositivos. Como visitante, sua jornada fica salva neste aparelho.") },
@@ -140,6 +140,9 @@ private val tabs=listOf(
                 topBar={
                     Column {
                         TopAppBar(title={ Text("▲ Hyrule Companion",style=MaterialTheme.typography.titleLarge) },actions={
+                            IconButton(onClick={contentEntry=null;dungeonIndex=false;gameId=null;screen="community"}) {
+                                Icon(Icons.Default.Group,contentDescription="Comunidade")
+                            }
                             IconButton(onClick={contentEntry=null;dungeonIndex=false;gameId=null;screen="settings"}) { Icon(Icons.Default.Settings,contentDescription="Configurações") }
                         },colors=TopAppBarDefaults.topAppBarColors(containerColor=MaterialTheme.colorScheme.primaryContainer))
                         Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant).padding(horizontal=16.dp,vertical=4.dp),verticalAlignment=Alignment.CenterVertically) {
@@ -177,20 +180,20 @@ private val tabs=listOf(
                         screen=="timeline" -> TimelineScreen(vm,onGame={previous="timeline";gameId=it})
                         screen=="atlas" -> AtlasScreen(vm,atlasGame,onGame={previous="atlas";gameId=it})
                         screen=="library" -> LibraryScreen(vm,onGame={previous="library";gameId=it},onDungeons={dungeonIndex=true})
-                        screen=="profile" -> ProfileScreen(vm,openAccount=openAccount,onSettings={screen="settings"},onCommunity={screen="community"})
+                        screen=="profile" -> ProfileScreen(vm,openAccount=openAccount)
                         screen=="community" -> CommunityScreen(vm,onBack={screen="profile"},onAccount={openAccount=true;screen="profile"})
                         screen=="settings" -> SettingsScreen(vm,onBack={screen="profile"})
                     }
                 }
             }
         }
-        if (!intro && (!invite || vm.session != null) && vm.pendingCloud == null && showChanges && changeNotes.isNotBlank()) {
+        if (!intro && !vm.emailConfirmed && (!invite || vm.session != null) && vm.pendingCloud == null && showChanges && changeNotes.isNotBlank()) {
             AlertDialog(onDismissRequest = { closeChanges() },
                 title = { Text("Novidades da ${com.hyrulecompanion.app.BuildConfig.VERSION_NAME}") },
                 text = { Text(changeNotes, Modifier.verticalScroll(rememberScrollState())) },
                 confirmButton = { TextButton(onClick = { closeChanges() }) { Text("Continuar") } })
         }
-        if (!intro && (!invite || vm.session != null) && vm.pendingCloud == null &&
+        if (!intro && !vm.emailConfirmed && (!invite || vm.session != null) && vm.pendingCloud == null &&
             (!showChanges || changeNotes.isBlank()) && vm.showUpdateDialog) {
             vm.availableRelease?.let { release ->
                 AlertDialog(
@@ -218,7 +221,22 @@ private val tabs=listOf(
                 )
             }
         }
-        vm.pendingCloud?.let { decision ->
+        if (vm.emailConfirmed) AlertDialog(
+            onDismissRequest = vm::dismissEmailConfirmation,
+            title = { Text("Email confirmado, obrigado!") },
+            text = { Text("Entre com seu e-mail e senha para continuar.") },
+            confirmButton = { TextButton(onClick = {
+                vm.dismissEmailConfirmation()
+                if (invite) closeInvite()
+                intro = false
+                openAccount = true
+                screen = "profile"
+                gameId = null
+                contentEntry = null
+                dungeonIndex = false
+            }) { Text("Ir para login") } }
+        )
+        if (!vm.emailConfirmed) vm.pendingCloud?.let { decision ->
             AlertDialog(
                 onDismissRequest=vm::cancelCloudDecision,
                 icon={Icon(Icons.Default.CloudSync,contentDescription=null)},

@@ -56,6 +56,7 @@ class SupabaseClient {
             val text=response.body?.string().orEmpty()
             if(!response.isSuccessful){
                 val j=runCatching { JSONObject(text) }.getOrNull()
+                if (j?.optString("error_code") in listOf("user_already_exists", "email_exists")) throw AccountAlreadyExists()
                 throw IOException(j?.optString("msg")?.takeIf { it.isNotEmpty() } ?: j?.optString("message")?.takeIf { it.isNotEmpty() } ?: j?.optString("error_description")?.takeIf { it.isNotEmpty() } ?: j?.optString("error")?.takeIf { it.isNotEmpty() } ?: "Erro no Supabase: ${response.code}")
             }
             text
@@ -65,10 +66,28 @@ class SupabaseClient {
         val body=JSONObject().put("email",email).put("password",password)
         return AuthSession.fromResponse(JSONObject(request("POST","/auth/v1/token?grant_type=password",body))) ?: error("Resposta de login inválida.")
     }
-    suspend fun signUp(email: String,password: String): AuthSession? {
-        val body=JSONObject().put("email",email).put("password",password)
-        return AuthSession.fromResponse(JSONObject(request("POST","/auth/v1/signup",body)))
+    suspend fun signUp(email: String, password: String, challenge: String): AuthSession? {
+        val body = JSONObject().put("email", email).put("password", password)
+            .put("code_challenge", challenge).put("code_challenge_method", "s256")
+        val redirect = android.net.Uri.encode(EMAIL_CONFIRMATION_REDIRECT)
+        val response = try {
+            JSONObject(request("POST", "/auth/v1/signup?redirect_to=$redirect", body))
+        } catch (error: IOException) {
+            if (error.message.orEmpty().contains("already registered", ignoreCase = true)) throw AccountAlreadyExists()
+            throw error
+        }
+        if ((response.optJSONObject("user") ?: response).optJSONArray("identities")?.length() == 0) {
+            throw AccountAlreadyExists()
+        }
+        return AuthSession.fromResponse(response)
     }
+
+    suspend fun confirmSignup(code: String, verifier: String) {
+        val body = JSONObject().put("auth_code", code).put("code_verifier", verifier)
+        val result = JSONObject(request("POST", "/auth/v1/token?grant_type=pkce", body))
+        check(AuthSession.fromResponse(result) != null) { "Confirmação inválida." }
+    }
+
     suspend fun refresh(token: String): AuthSession = AuthSession.fromResponse(JSONObject(request("POST","/auth/v1/token?grant_type=refresh_token",JSONObject().put("refresh_token",token)))) ?: error("Não foi possível renovar a sessão.")
     suspend fun signOut(session: AuthSession) { request("POST","/auth/v1/logout",bearer=session.accessToken) }
     suspend fun fetch(session: AuthSession): CloudData? {
@@ -195,3 +214,7 @@ data class CommunityProfile(
 data class CommunityReaction(val count: Int, val applauded: Boolean)
 
 data class CommunityMedia(val avatar: String? = null, val banner: String? = null)
+
+
+internal const val EMAIL_CONFIRMATION_REDIRECT = "com.hyrulecompanion.app://auth/confirm"
+internal class AccountAlreadyExists : IOException("Opa, você já está conectado com Hyrule. Por favor faça log in")

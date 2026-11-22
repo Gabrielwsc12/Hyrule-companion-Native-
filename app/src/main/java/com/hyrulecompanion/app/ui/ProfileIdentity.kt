@@ -6,6 +6,14 @@ import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,21 +32,43 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-internal fun ProfileBanner(value: String?) {
-    if (value.isNullOrBlank()) return
-    val bytes = remember(value) {
-        runCatching { Base64.decode(value.substringAfter("base64,"), Base64.DEFAULT) }.getOrNull()
-    } ?: return
-    AsyncImage(bytes, "Banner do perfil", Modifier.fillMaxWidth().aspectRatio(3f)
-        .clip(RoundedCornerShape(12.dp)), contentScale = ContentScale.Crop)
+internal fun ProfileHeader(
+    name: String, avatar: String, banner: String?, reduceMotion: Boolean,
+    actions: @Composable RowScope.() -> Unit = {}
+) {
+    val bytes = remember(banner) {
+        banner?.let { runCatching { Base64.decode(it.substringAfter("base64,"), Base64.DEFAULT) }.getOrNull() }
+    }
+    Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+        .background(MaterialTheme.colorScheme.primaryContainer)) {
+        if (bytes != null) {
+            AsyncImage(bytes, null, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
+            Box(Modifier.matchParentSize().background(Brush.verticalGradient(
+                listOf(Color.Black.copy(alpha = .12f), Color.Black.copy(alpha = .81f))
+            )))
+        }
+        Column(Modifier.fillMaxWidth().heightIn(min = 132.dp).padding(12.dp),
+            verticalArrangement = Arrangement.SpaceBetween) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, content = actions)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Avatar(avatar, reduceMotion, Modifier.size(72.dp))
+                Text(name, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge,
+                    color = if (bytes == null) MaterialTheme.colorScheme.onPrimaryContainer else Color.White)
+            }
+        }
+    }
 }
 
 @Composable
-internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String, localAvatar: String,
-                                      onIdentity: (String?, String?) -> Unit) {
+internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String?, localAvatar: String,
+                                      reduceMotion: Boolean) {
     val scope = rememberCoroutineScope()
     val resolver = LocalContext.current.contentResolver
     var profile by remember { mutableStateOf<CommunityProfile?>(null) }
+    var avatar by remember { mutableStateOf("") }
+    var publishedAvatar by remember { mutableStateOf<String?>(null) }
+    var avatarEdited by remember { mutableStateOf(false) }
+    var publishedBanner by remember { mutableStateOf<String?>(null) }
     var banner by remember { mutableStateOf<String?>(null) }
     var publishPhoto by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf(false) }
@@ -58,22 +88,37 @@ internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String, local
                 error = when {
                     failure.message.orEmpty().contains("hc_community_profiles_handle_key") -> "Esse nome já está em uso."
                     failure.message.orEmpty().contains("schema cache") -> "A atualização do perfil ainda precisa ser ativada no servidor."
-                    else -> failure.message?.takeIf { it.startsWith("Banner:") } ?: "Não foi possível atualizar o perfil. Tente novamente."
+                    else -> failure.message?.takeIf { it.startsWith("Banner:") || it.startsWith("Foto:") } ?: "Não foi possível atualizar o perfil. Tente novamente."
                 }
             } finally { busy = false }
         }
     }
 
     fun load(open: Boolean) = action {
-        val (own, images) = vm.communityRequest(userId) { account ->
-            communityProfile(account) to communityMedia(account, userId)
+        if (userId != null) {
+            val (own, images) = vm.communityRequest(userId) { account ->
+                communityProfile(account) to communityMedia(account, userId)
+            }
+            profile = own
+            publishedBanner = images.banner
+            publishedAvatar = images.avatar
+            if (open) publishPhoto = images.avatar != null
         }
-        profile = own
-        onIdentity(own?.handle, images.banner)
         if (open) {
-            banner = images.banner
-            publishPhoto = images.avatar != null
+            avatar = localAvatar.ifBlank { publishedAvatar.orEmpty() }
+            avatarEdited = false
+            banner = publishedBanner
             editing = true
+        }
+    }
+
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) action {
+            avatar = withContext(Dispatchers.IO) {
+                try { vm.repo.avatarImage(uri) }
+                catch (failure: Exception) { throw IllegalArgumentException("Foto: ${failure.message.orEmpty()}") }
+            }
+            avatarEdited = true
         }
     }
 
@@ -103,30 +148,62 @@ internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String, local
         }
     }
 
-    LaunchedEffect(userId) { load(false) }
-    OutlinedButton(onClick = { load(true) }, enabled = !busy) { Text("Editar nome, banner e visibilidade") }
+    LaunchedEffect(userId) { if (userId != null) load(false) }
+    ProfileHeader(profile?.let { "@${it.handle}" } ?: "Herói de Hyrule", localAvatar, publishedBanner, reduceMotion) {
+        FilledTonalIconButton(onClick = { load(true) }, enabled = !busy,
+            modifier = Modifier.semantics { contentDescription = "Editar perfil" }) {
+            Text("🪶")
+        }
+    }
     if (!editing) error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
-    if (editing) CommunityProfileEditor(vm, userId, profile, busy, error, mediaEditor = {
-        ProfileBanner(banner)
-        Text("Banner JPG ou PNG · proporção recomendada 3:1 · até 1 MB")
+    val photoControls: @Composable () -> Unit = {
+        OutlinedButton(enabled = !busy, onClick = { photoPicker.launch(arrayOf("image/jpeg", "image/png", "image/webp", "image/gif")) }) {
+            Text("Trocar foto")
+        }
+        if (avatar.isNotBlank()) TextButton(enabled = !busy, onClick = { avatar = ""; avatarEdited = true }) { Text("Remover foto") }
+    }
+    if (editing && userId == null) AlertDialog(onDismissRequest = { if (!busy) editing = false },
+        title = { Text("Editar perfil") }, text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                ProfileHeader("Herói de Hyrule", avatar, null, reduceMotion)
+                photoControls()
+                Text("Entre na sua conta para configurar nome, banner e visibilidade.")
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            }
+        }, confirmButton = { TextButton(enabled = !busy, onClick = {
+            if (avatarEdited) vm.savePreferences(vm.repo.preferences().copy(avatar = avatar))
+            editing = false
+        }) { Text("Salvar") } }, dismissButton = {
+            TextButton(enabled = !busy, onClick = { editing = false }) { Text("Cancelar") }
+        }
+    )
+
+    if (editing && userId != null) CommunityProfileEditor(vm, userId, profile, busy, error, mediaEditor = { handle, visible ->
+        Text(if (visible) "Prévia do perfil público" else "Prévia · este perfil está privado")
+        val visibleAvatar = if (publishPhoto) (if (!avatarEdited) publishedAvatar ?: avatar else avatar) else ""
+        ProfileHeader(if (handle.isBlank()) "Herói de Hyrule" else "@$handle",
+            visibleAvatar, banner, reduceMotion)
+        if (!publishPhoto && avatar.isNotBlank()) Avatar(avatar, reduceMotion, Modifier.size(48.dp))
+        photoControls()
         OutlinedButton(enabled = !busy, onClick = { bannerPicker.launch(arrayOf("image/jpeg", "image/png")) }) {
-            Text("Escolher banner")
+            Text("Trocar banner")
         }
         if (banner != null) TextButton(enabled = !busy, onClick = { banner = null }) { Text("Remover banner") }
-        Row {
+        Text("Banner JPG ou PNG · até 1 MB", style = MaterialTheme.typography.bodySmall)
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(publishPhoto, onCheckedChange = { publishPhoto = it }, enabled = !busy)
-            Text("Compartilhar minha foto atual", Modifier.padding(top = 12.dp))
+            Text("Exibir foto no perfil público")
         }
-        if (publishPhoto) Text("Salve o perfil para atualizar ou remover a foto que os visitantes veem.", style = MaterialTheme.typography.bodySmall)
-        if (!it) Text("As imagens aparecem para outros jogadores quando o perfil está visível.")
-        if (publishPhoto && localAvatar.isBlank()) Text("Escolha uma foto no Perfil.")
     }, onClose = { editing = false; error = null }) { updated ->
         action {
-            val shared = CommunityMedia(if (publishPhoto) localAvatar.ifBlank { null } else null, banner)
+            val photo = if (!avatarEdited) publishedAvatar ?: avatar else avatar
+            val shared = CommunityMedia(if (publishPhoto) photo.ifBlank { null } else null, banner)
             vm.communityRequest(userId) { account -> saveCommunityProfile(account, updated, shared) }
+            if (avatarEdited) vm.savePreferences(vm.repo.preferences().copy(avatar = avatar))
             profile = updated
-            onIdentity(updated.handle, shared.banner)
+            publishedBanner = shared.banner
+            publishedAvatar = shared.avatar
             editing = false
         }
     }

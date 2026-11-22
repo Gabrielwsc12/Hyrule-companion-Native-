@@ -126,6 +126,7 @@ private fun mapUrl(gameId: String): String {
     val locations = layer.locations
     val key = layer.key
     val visited=vm.repo.checked(K_ATLAS_VISITED,key)
+    var fullscreen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     val current=locations.getOrNull(selectedLocation)
     val regions=listOf("Todas")+locations.map { it.region }.distinct()
     LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
@@ -160,6 +161,7 @@ private fun mapUrl(gameId: String): String {
         }
         item {ParchmentCard {
             MapPreview(key, map.name)
+            Button(onClick={fullscreen=true},modifier=Modifier.fillMaxWidth()) { Text("Abrir mapa em tela cheia") }
             Button(onClick={
                 try {
                     androidx.browser.customtabs.CustomTabsIntent.Builder().setShowTitle(true).build()
@@ -167,7 +169,7 @@ private fun mapUrl(gameId: String): String {
                 } catch (_: android.content.ActivityNotFoundException) {
                     android.widget.Toast.makeText(context, "Instale um navegador para abrir o mapa.", android.widget.Toast.LENGTH_LONG).show()
                 }
-            },modifier=Modifier.fillMaxWidth()) { Text("Explorar mapa de ${map.name}") }
+            },modifier=Modifier.fillMaxWidth()) { Text("Abrir mapa de referência online") }
             Text("Fonte dos mapas e pontos: ZeldaCollection. O mapa completo requer internet.",style=MaterialTheme.typography.labelSmall)
             Text("${visited.size} / ${locations.size} marcos visitados",style=MaterialTheme.typography.labelLarge)
             LinearProgressIndicator(progress={if(locations.isEmpty())0f else visited.size.toFloat()/locations.size},modifier=Modifier.fillMaxWidth())
@@ -202,4 +204,11 @@ private fun mapUrl(gameId: String): String {
         }
         item { OutlinedButton(onClick={onGame(map.gameId)},modifier=Modifier.fillMaxWidth()){Text("Ver detalhes de ${map.name}")} }
     }
+    if (fullscreen) InteractiveAtlas(key, map.name, locations,
+        layers = layers.map { it.key to it.label }, onLayerChange = {
+            layerKey = it
+            selectedLocation = 0
+            locationQuery = ""
+            region = "Todas"
+        }, onDismiss={fullscreen=false})
 }

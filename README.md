@@ -12,7 +12,7 @@ O **Hyrule Companion** é um guia de bolso para Android e um diário de jogo par
 
 ### Consulte o app durante a partida
 
-- **Atlas.** Explore 27 mapas offline de 17 jogos e toque nos 184 marcadores para identificar locais. Em *Tears of the Kingdom*, alterne entre céu, superfície e profundezas. O índice permite buscar marcos, filtrar por região e registrar visitas. Para uma exploração mais detalhada, abra o mapa interativo do ZeldaCollection com conexão à internet.
+- **Atlas.** Explore 27 mapas offline de 17 jogos e toque nos 187 marcadores para identificar locais. Em *Tears of the Kingdom*, alterne entre céu, superfície e profundezas. O índice permite buscar marcos, filtrar por região e registrar visitas. Para uma exploração mais detalhada, abra o mapa interativo do ZeldaCollection com conexão à internet.
 - **Guias.** Encontre entre 58 guias a ajuda de que precisa para uma missão, um puzzle, um chefe ou uma área de exploração. Abra a ficha do jogo pela Biblioteca e toque em um guia para consultar etapas, favoritos e anotações. Guias com objetivos de 100% têm uma lista própria. As anotações pessoais ajudam a retomar a partida.
 - **Enciclopédia de Dungeons.** Consulte onze dungeons com rotas por salas, soluções de puzzles, inimigos, itens e tesouros. Acompanhe as etapas, marque o que já recolheu e consulte a estratégia do chefe e a lista final de objetivos.
 
@@ -26,6 +26,14 @@ O **Hyrule Companion** é um guia de bolso para Android e um diário de jogo par
 Migração nativa do arquivo original `hyrule-companion-apk.zip`, **Web Edition 1.16.6**, sem WebView, Capacitor, HTML ou JavaScript em tempo de execução. Mantém o mesmo identificador de aplicativo (`com.hyrulecompanion.app`), o projeto Supabase e a estrutura **schema 13** de dados. A migração preserva o texto editorial original dos 62 jogos, 58 guias, 12 mapas, 5 dungeons e 5 ramificações da cronologia.
 
 ## Novidades
+
+### 1.17.1-native
+
+- **Perfil.** O ícone de pena abre um editor centralizado de foto ou GIF, banner, nome e visibilidade, com prévia do perfil público. O banner é recortado para preencher o fundo do cabeçalho atrás da foto. A Comunidade fica no ícone de duas pessoas ao lado da engrenagem geral.
+- **Biblioteca.** O filtro **Só concluídos** inclui jogos marcados como concluídos ou 100% e combina com a busca e o tipo de jogo.
+- **Atlas.** Os 27 mapas abrem em tela cheia com zoom, navegação por toque e seleção de marcadores por categoria. Inclui novos pontos como o boneco do Yoshi, a Ilha Bannan e a Ilha do Labirinto.
+- **Configurações.** A seção **Notas do criador** reúne a mensagem e o link do Discord.
+- **Conta.** A confirmação de e-mail pode retornar ao app. O aviso de conta existente chama o usuário para entrar.
 
 ### 1.17.0-native
 
@@ -87,6 +95,10 @@ O Hyrule Companion agora inclui verificação automática na abertura, botão de
 Suba os arquivos do projeto para um repositório GitHub, abra **Actions > Build Hyrule Companion Native APK > Run workflow**. O workflow usa Gradle 8.9, executa a checagem do catálogo, compila o app e disponibiliza o APK debug como artifact da execução. Não é necessário publicar nenhuma senha do Supabase para essa compilação: o cliente usa somente a chave **publishable**, igual ao fonte fornecido.
 
 **Aviso sobre instalação:** como o `applicationId` é igual ao original Capacitor, APKs assinados com certificados diferentes NÃO podem ser instalados por cima uns dos outros. Faça **backup JSON** do app antigo antes de desinstalá-lo, ou utilize sua conta Supabase para restaurar a jornada. Os arquivos de `localStorage` da versão Web não migram automaticamente para o armazenamento nativo Android.
+
+## Retorno ao app após confirmação de e-mail
+
+No mesmo projeto Supabase, adicione `com.hyrulecompanion.app://auth/confirm` em **Authentication → URL Configuration → Redirect URLs**. O e-mail de cadastro deve usar `{{ .ConfirmationURL }}` para que o Supabase confirme o endereço e retorne com o código PKCE de uso único. Abra o link no mesmo aparelho em que iniciou o cadastro. Depois de receber a confirmação no aplicativo, entre com e-mail e senha.
 
 ## Ativar a Comunidade no Supabase
 
