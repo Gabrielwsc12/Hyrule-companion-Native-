@@ -27,6 +27,13 @@ Migração nativa do arquivo original `hyrule-companion-apk.zip`, **Web Edition 
 
 ## Novidades
 
+### 1.17.2.1-native
+
+- **Banners animados.** O GIF do banner é reproduzido em loop no Perfil, na prévia do editor e nas visitas da Comunidade. A preferência **Reduzir animações** continua valendo.
+- **Atlas.** Toque em um marcador para ler o nome, a categoria e a descrição em uma janela junto ao ponto. A janela acompanha o marcador ao mover ou ampliar o mapa.
+- **Editor de perfil.** A pena abre o editor na hora. Se os dados do perfil ainda estiverem carregando, a janela mostra o andamento e permite tentar novamente em caso de falha.
+- **Jornada compartilhada.** Visite perfis da Comunidade para ver as capas e o progresso dos jogos. As conquistas **Concluído** e **100%** mostram a Triforce e o ícone de aplausos com a contagem.
+
 ### 1.17.2-native
 
 - **Perfil.** Banners JPG, PNG ou GIF de até 1,8 MB. A animação respeita **Reduzir animações**. Um ponto verde indica presença no perfil. Em **Configurações → Privacidade**, ative **Não perturbe** para ocultar a presença de outros jogadores. Toque nos cartões da sua jornada para abrir a ficha do jogo.

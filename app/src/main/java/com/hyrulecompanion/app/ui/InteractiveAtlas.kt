@@ -16,6 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
@@ -102,6 +105,13 @@ internal fun InteractiveAtlas(
                     val mapHeight = height * scale
                     val left = (viewWidth - mapWidth) / 2 + with(density) { position.x.toDp() }
                     val top = (viewHeight - mapHeight) / 2 + with(density) { position.y.toDp() }
+                    fun markerOffset(pin: AtlasPin): Pair<Dp, Dp>? {
+                        val x = left + mapWidth * pin.x
+                        val y = top + mapHeight * pin.y
+                        if (x !in 0.dp..viewWidth || y !in 0.dp..viewHeight) return null
+                        return (x - 15.dp).coerceIn(0.dp, (viewWidth - 30.dp).coerceAtLeast(0.dp)) to
+                            (y - 15.dp).coerceIn(0.dp, (viewHeight - 30.dp).coerceAtLeast(0.dp))
+                    }
                     Box(Modifier.fillMaxSize().transformable(transform).clipToBounds()) {
                         AsyncImage("file:///android_asset/atlas/$mapKey.webp", "Mapa de $title",
                             Modifier.offset(left, top).wrapContentSize(Alignment.TopStart, unbounded = true)
@@ -109,13 +119,11 @@ internal fun InteractiveAtlas(
                             contentScale = ContentScale.FillBounds)
                         pins.forEachIndexed { index, pin ->
                             if (category == "Todos" || pin.category == category) {
-                                val x = left + mapWidth * pin.x
-                                val y = top + mapHeight * pin.y
-                                if (x >= 0.dp && x <= viewWidth && y >= 0.dp && y <= viewHeight) {
-                                    Surface(Modifier.offset((x - 15.dp).coerceIn(0.dp, (viewWidth - 30.dp).coerceAtLeast(0.dp)),
-                                        (y - 15.dp).coerceIn(0.dp, (viewHeight - 30.dp).coerceAtLeast(0.dp)))
+                                val marker = markerOffset(pin)
+                                if (marker != null) {
+                                    Surface(Modifier.offset(marker.first, marker.second)
                                         .size(30.dp).zIndex(if (pin == selected) 1f else 0f)
-                                        .semantics { contentDescription = pin.name }.clickable { selected = pin },
+                                        .semantics { contentDescription = pin.name }.clickable { selected = if (selected == pin) null else pin },
                                         shape = CircleShape, color = if (pin == selected)
                                             MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface) {
                                         Box(contentAlignment = Alignment.Center) { Text("${index + 1}", style = MaterialTheme.typography.labelSmall) }
@@ -151,17 +159,68 @@ internal fun InteractiveAtlas(
                         FilledTonalIconButton(onClick = { setZoom(1f) },
                             modifier = Modifier.semantics { contentDescription = "Restaurar zoom" }) { Text("↺") }
                     }
-                }
-                Column(Modifier.fillMaxWidth().heightIn(min = 68.dp, max = 124.dp)
-                    .verticalScroll(key(selected) { rememberScrollState() }).padding(vertical = 8.dp)) {
-                    val pin = selected
-                    if (pin == null) Text("Toque em um marcador. Use dois dedos ou os botões para ampliar o mapa.")
-                    else {
-                        Text(pin.name, style = MaterialTheme.typography.titleMedium)
-                        Text("${pin.category} · ${pin.description}", style = MaterialTheme.typography.bodyMedium)
+                    selected?.let { pin ->
+                        markerOffset(pin)?.let { (x, y) ->
+                            AtlasPinDetails(pin, x, y, onClose = { selected = null })
+                        }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun AtlasPinDetails(pin: AtlasPin, markerX: Dp, markerY: Dp, onClose: () -> Unit) {
+    Layout(
+        modifier = Modifier.fillMaxSize().zIndex(2f),
+        content = {
+            ElevatedCard(Modifier.widthIn(max = 232.dp)) {
+                Column(Modifier.padding(start = 12.dp, end = 8.dp, bottom = 12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(pin.name, Modifier.weight(1f), style = MaterialTheme.typography.titleSmall)
+                        IconButton(onClick = onClose, modifier = Modifier.semantics {
+                            contentDescription = "Fechar detalhes do ponto"
+                        }) { Text("×") }
+                    }
+                    Column(Modifier.verticalScroll(key(pin) { rememberScrollState() })) {
+                        Text(pin.category, style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary)
+                        Text(pin.description, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+        }
+    ) { measurables, constraints ->
+        val width = constraints.maxWidth
+        val height = constraints.maxHeight
+        val markerLeft = markerX.roundToPx()
+        val markerTop = markerY.roundToPx()
+        val markerSize = 30.dp.roundToPx()
+        val gap = 6.dp.roundToPx()
+        val leftSpace = (markerLeft - gap).coerceAtLeast(0)
+        val rightSpace = (width - markerLeft - markerSize - gap).coerceAtLeast(0)
+        val sideSpace = maxOf(leftSpace, rightSpace)
+        val useSide = sideSpace >= 144.dp.roundToPx()
+        val card = measurables.single().measure(Constraints(
+            maxWidth = if (useSide) sideSpace else width,
+            maxHeight = minOf(186.dp.roundToPx(), if (useSide) height else maxOf(
+                markerTop - gap, height - markerTop - markerSize - gap
+            ).coerceAtLeast(0))
+        ))
+
+        layout(width, height) {
+            val x = when {
+                !useSide -> markerLeft + (markerSize - card.width) / 2
+                card.width <= rightSpace -> markerLeft + markerSize + gap
+                else -> markerLeft - card.width - gap
+            }.coerceIn(0, width - card.width)
+            val y = when {
+                useSide -> markerTop + (markerSize - card.height) / 2
+                markerTop + markerSize + gap + card.height <= height -> markerTop + markerSize + gap
+                else -> markerTop - card.height - gap
+            }.coerceIn(0, height - card.height)
+            card.place(x, y)
         }
     }
 }

@@ -10,6 +10,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.hyrulecompanion.app.HyruleViewModel
 import com.hyrulecompanion.app.network.CommunityProfile
@@ -92,19 +95,18 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
     }
 
     fun open(profile: CommunityProfile) = runAction {
-        val data = vm.communityRequest(userId) { account ->
-            val latest = communityProfileById(account, profile.userId)
-            Triple(latest, follows(account, profile.userId),
-                if (latest?.shareJourney == true) communityReactions(account, profile.userId) else emptyMap())
+        vm.communityRequest(userId) { account ->
+            val (latest, images) = communityProfileWithMedia(account, profile.userId)
+            if (latest != null) {
+                val followingProfile = follows(account, latest.userId)
+                val applause = if (latest.shareJourney) communityReactions(account, latest.userId) else emptyMap()
+                isFollowing = followingProfile
+                reactions = applause
+                media = images
+                selected = latest
+            }
         }
-        selected = data.first
-        isFollowing = data.second
-        reactions = data.third
-        media = CommunityMedia()
-        if (data.first != null) {
-            media = vm.communityRequest(userId) { account -> communityMedia(account, profile.userId) }
-        }
-        if (data.first == null) {
+        if (selected == null) {
             results = results?.filterNot { it.userId == profile.userId }
             following = following.filterNot { it.userId == profile.userId }
             error = "Esse perfil não está disponível."
@@ -149,28 +151,48 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
                 item { SmallHeading("Jornada compartilhada") }
                 if (games.isEmpty()) item { Text("Nenhuma aventura registrada.") }
                 items(games, key = { it.id }) { game ->
-                    ParchmentCard {
-                        Text(game.name)
-                        val status = profile.journey.getValue(game.id)
-                        StatusTag(status)
-                        if (status == "Concluído" || status == "100%") {
-                            val reaction = reactions[game.id] ?: CommunityReaction(0, false)
-                            if (profile.userId == userId) {
-                                val label = if (reaction.count == 1) "aplauso" else "aplausos"
-                                Text("${reaction.count} $label")
-                            } else {
-                                TextButton(enabled = !busy, onClick = {
-                                    runAction {
-                                        val updated = vm.communityRequest(userId) { account ->
-                                            setCommunityApplause(account, profile.userId, game.id, !reaction.applauded)
-                                            communityReactions(account, profile.userId)
-                                        }
-                                        reactions = updated
-                                    }
-                                }) {
-                                    val action = if (reaction.applauded) "Retirar aplauso" else "Aplaudir conquista"
-                                    Text("$action · ${reaction.count}")
+                    val status = profile.journey.getValue(game.id)
+                    val completed = status == "Concluído" || status == "100%"
+                    ParchmentCard(Modifier.fillMaxWidth()) {
+                        Row(verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            CoverArt(game, Modifier.size(68.dp, 84.dp))
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(game.name, style = MaterialTheme.typography.titleMedium)
+                                Row(verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    StatusTag(status)
+                                    if (completed) TriforceEmblem()
                                 }
+                            }
+                        }
+                        if (completed) {
+                            val reaction = reactions[game.id] ?: CommunityReaction(0, false)
+                            Row(Modifier.align(Alignment.End),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                if (profile.userId == userId) {
+                                    Text("👏", Modifier.clearAndSetSemantics {})
+                                } else {
+                                    val label = if (reaction.applauded) "Retirar aplauso" else "Aplaudir conquista"
+                                    FilledTonalIconToggleButton(
+                                        checked = reaction.applauded,
+                                        enabled = !busy,
+                                        modifier = Modifier.semantics { contentDescription = label },
+                                        onCheckedChange = { applaud ->
+                                            runAction {
+                                                reactions = vm.communityRequest(userId) { account ->
+                                                    setCommunityApplause(account, profile.userId, game.id, applaud)
+                                                    communityReactions(account, profile.userId)
+                                                }
+                                            }
+                                        }
+                                    ) { Text("👏", Modifier.clearAndSetSemantics {}) }
+                                }
+                                val countLabel = if (reaction.count == 1) "1 aplauso" else "${reaction.count} aplausos"
+                                Text(reaction.count.toString(), Modifier.clearAndSetSemantics {
+                                    contentDescription = countLabel
+                                }, style = MaterialTheme.typography.labelLarge)
                             }
                         }
                     }

@@ -1,4 +1,4 @@
-• Coloque GIF no banner do Perfil. Veja quem está online e escolha Não perturbe para ocultar sua presença.
-• Abra fichas de jogos pelo Perfil e mapas em tela cheia com um toque na imagem.
-• Explore o novo carrossel de atalhos para Atlas, Cronologia, Biblioteca e Meu mural.
-• Aproveite 8 novos mapas, 22 guias, 11 dungeons e 45 cards de capa inéditos.
+• Banners GIF animam em loop no Perfil, na prévia e na Comunidade.
+• Os detalhes de cada ponto do Atlas abrem em uma janela ao lado do marcador.
+• A pena abre a janela de edição do perfil imediatamente.
+• A jornada compartilhada ganhou capas, a Triforce nas conquistas e um ícone para aplaudir.

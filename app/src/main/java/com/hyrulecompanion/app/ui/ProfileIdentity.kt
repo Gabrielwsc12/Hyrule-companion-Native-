@@ -78,6 +78,9 @@ internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String?, loca
     var banner by remember { mutableStateOf<String?>(null) }
     var publishPhoto by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf(false) }
+    var loaded by remember { mutableStateOf(userId == null) }
+    var loading by remember { mutableStateOf(false) }
+    var loadFailed by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
@@ -100,21 +103,36 @@ internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String?, loca
         }
     }
 
-    fun load(open: Boolean) = action {
-        if (userId != null) {
-            val (own, images) = vm.communityRequest(userId) { account ->
-                communityProfile(account) to communityMedia(account, userId)
+    fun editProfile() {
+        avatar = localAvatar.ifBlank { publishedAvatar.orEmpty() }
+        avatarEdited = false
+        banner = publishedBanner
+        publishPhoto = publishedAvatar != null
+        error = null
+        editing = true
+    }
+
+    fun loadProfile() {
+        if (userId == null || loading || loaded) return
+        loading = true
+        loadFailed = false
+        scope.launch {
+            try {
+                val (own, images) = vm.communityRequest(userId) { account ->
+                    communityProfileWithMedia(account, userId)
+                }
+                profile = own
+                publishedBanner = images.banner
+                publishedAvatar = images.avatar
+                if (editing) editProfile()
+                loaded = true
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                loadFailed = true
+            } finally {
+                loading = false
             }
-            profile = own
-            publishedBanner = images.banner
-            publishedAvatar = images.avatar
-            if (open) publishPhoto = images.avatar != null
-        }
-        if (open) {
-            avatar = localAvatar.ifBlank { publishedAvatar.orEmpty() }
-            avatarEdited = false
-            banner = publishedBanner
-            editing = true
         }
     }
 
@@ -154,9 +172,9 @@ internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String?, loca
         }
     }
 
-    LaunchedEffect(userId) { if (userId != null) load(false) }
+    LaunchedEffect(userId) { loadProfile() }
     ProfileHeader(profile?.let { "@${it.handle}" } ?: "Herói de Hyrule", localAvatar, publishedBanner, reduceMotion, online = userId != null && vm.presenceHidden == false) {
-        FilledTonalIconButton(onClick = { load(true) }, enabled = !busy,
+        FilledTonalIconButton(onClick = { editProfile(); loadProfile() }, enabled = !busy,
             modifier = Modifier.semantics { contentDescription = "Editar perfil" }) {
             Text("🪶")
         }
@@ -185,7 +203,23 @@ internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String?, loca
         }
     )
 
-    if (editing && userId != null) CommunityProfileEditor(vm, userId, profile, busy, error, mediaEditor = { handle, visible ->
+    if (editing && userId != null && !loaded) AlertDialog(
+        onDismissRequest = { editing = false },
+        title = { Text("Editar perfil") },
+        text = {
+            if (loadFailed) Text("Não foi possível carregar o perfil. Verifique a conexão e tente novamente.")
+            else Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                LinearProgressIndicator(Modifier.fillMaxWidth())
+                Text("Carregando seu perfil…")
+            }
+        },
+        confirmButton = {
+            if (loadFailed) TextButton(onClick = ::loadProfile) { Text("Tentar novamente") }
+        },
+        dismissButton = { TextButton(onClick = { editing = false }) { Text("Cancelar") } }
+    )
+
+    if (editing && userId != null && loaded) CommunityProfileEditor(vm, userId, profile, busy, error, mediaEditor = { handle, visible ->
         Text(if (visible) "Prévia do perfil público" else "Prévia · este perfil está privado")
         val visibleAvatar = if (publishPhoto) (if (!avatarEdited) publishedAvatar ?: avatar else avatar) else ""
         ProfileHeader(if (handle.isBlank()) "Herói de Hyrule" else "@$handle",

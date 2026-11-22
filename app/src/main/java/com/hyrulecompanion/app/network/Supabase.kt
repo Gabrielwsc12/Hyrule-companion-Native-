@@ -105,9 +105,6 @@ class SupabaseClient {
     suspend fun communityProfile(session: AuthSession): CommunityProfile? =
         communityProfiles(session, "user_id=eq.${session.userId}").firstOrNull()
 
-    suspend fun communityProfileById(session: AuthSession, userId: String): CommunityProfile? =
-        communityProfiles(session, "user_id=eq.${java.util.UUID.fromString(userId)}").firstOrNull()
-
     suspend fun searchCommunity(session: AuthSession, handle: String): List<CommunityProfile> {
         require(handle.matches(Regex("[a-z0-9_]{1,24}")))
         val prefix = android.net.Uri.encode(handle.replace("_", "\\_") + "*")
@@ -131,15 +128,17 @@ class SupabaseClient {
         request("POST", "/rest/v1/rpc/hc_presence_online",
             JSONObject().put("target", userId), session.accessToken).trim().toBooleanStrict()
 
-    suspend fun communityMedia(session: AuthSession, userId: String): CommunityMedia {
+    suspend fun communityProfileWithMedia(
+        session: AuthSession, userId: String
+    ): Pair<CommunityProfile?, CommunityMedia> = withContext(Dispatchers.IO) {
         val id = java.util.UUID.fromString(userId)
         val rows = JSONArray(request("GET",
-            "/rest/v1/hc_community_profiles?select=avatar_image,banner_image&user_id=eq.$id",
+            "/rest/v1/hc_community_profiles?select=$COMMUNITY_FIELDS,avatar_image,banner_image&user_id=eq.$id",
             bearer = session.accessToken))
-        val row = rows.optJSONObject(0)
-        return CommunityMedia(
-            row?.takeUnless { it.isNull("avatar_image") }?.optString("avatar_image"),
-            row?.takeUnless { it.isNull("banner_image") }?.optString("banner_image")
+        val row = rows.optJSONObject(0) ?: return@withContext null to CommunityMedia()
+        CommunityProfile.fromJson(row) to CommunityMedia(
+            row.optString("avatar_image").takeUnless { row.isNull("avatar_image") },
+            row.optString("banner_image").takeUnless { row.isNull("banner_image") }
         )
     }
 

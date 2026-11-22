@@ -124,9 +124,12 @@ internal fun TriforceBadge(vm: HyruleViewModel, gameId: String, animateNew: Bool
             vm.consumeTriforce(gameId)
         }
     }
-    Canvas(Modifier.size(22.dp).alpha(brightness.value).then(
-        Modifier.triforceDescription()
-    )) {
+    TriforceEmblem(Modifier.alpha(brightness.value))
+}
+
+@Composable
+internal fun TriforceEmblem(modifier: Modifier = Modifier) {
+    Canvas(modifier.size(22.dp).semantics { contentDescription = "Triforce conquistada" }) {
         val unit = size.width / 2
         val height = unit * .866f
         val y = (size.height - height * 2) / 2
@@ -140,5 +143,3 @@ internal fun TriforceBadge(vm: HyruleViewModel, gameId: String, animateNew: Bool
         }
     }
 }
-
-private fun Modifier.triforceDescription() = semantics { contentDescription = "Triforce conquistada" }
