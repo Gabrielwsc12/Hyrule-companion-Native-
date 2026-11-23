@@ -20,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudSync
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -86,20 +87,25 @@ internal fun rememberProfileImage(value: String, reduceMotion: Boolean): ImageRe
     else Surface(modifier=modifier,shape=CircleShape,color=MaterialTheme.colorScheme.primaryContainer){Box(contentAlignment=Alignment.Center){Text("🗡️",style=MaterialTheme.typography.headlineMedium)}}
 }
 
-@Composable fun ProfileScreen(vm:HyruleViewModel,openAccount:Boolean=false,openMural:Boolean=false,onGame:(String)->Unit){
+@Composable fun ProfileScreen(vm:HyruleViewModel,openAccount:Boolean=false,openMural:Boolean=false,onGame:(String)->Unit,onFavorites:()->Unit){
     val revision=vm.revision
     val prefs=vm.repo.preferences()
     val userId = vm.session?.userId
     val completed=vm.repo.doneCount()
     val playing=vm.repo.playingCount()
-    val started=vm.catalog.games.filter { vm.repo.gameProgress(it.id).status!="Não iniciado" || vm.repo.earnedTriforce(it.id) }
+    val started=vm.repo.journeyGames()
     val perfect=vm.catalog.games.count { vm.repo.gameProgress(it.id).status=="100%" }
     var name by rememberSaveable { mutableStateOf("Herói de Hyrule") }
     var muralOptions by remember { mutableStateOf<MuralOptions?>(null) }
     var exportOptions by remember { mutableStateOf<MuralOptions?>(null) }
     val jpegLauncher=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("image/jpeg")){uri -> if(uri!=null)exportOptions?.let{vm.exportMural(uri,it)};exportOptions=null}
     LazyColumn(Modifier.fillMaxSize(),state=androidx.compose.foundation.lazy.rememberLazyListState(initialFirstVisibleItemIndex=when { openAccount -> 2; openMural -> 3; else -> 0 }),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
-        item {ScreenTitle("Meu Perfil","Seu registro como aventureiro de Hyrule","♜")}
+        item {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.weight(1f)) { ScreenTitle("Meu Perfil","Seu registro como aventureiro de Hyrule","♜") }
+                IconButton(onClick = onFavorites) { Icon(Icons.Default.FavoriteBorder, "Abrir jogos favoritos") }
+            }
+        }
         item {ParchmentCard {
             key(userId) { ProfileCommunitySettings(vm, userId, prefs.avatar, prefs.reduceMotion) }
             Text("${completed*100/vm.catalog.games.size}% da biblioteca concluída", style = MaterialTheme.typography.labelLarge)
@@ -194,6 +200,8 @@ internal fun rememberProfileImage(value: String, reduceMotion: Boolean): ImageRe
     var showCreatorNotes by rememberSaveable { mutableStateOf(false) }
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
     val context = LocalContext.current
+    val fishingHaptics = remember(context, prefs.fishingHaptics) { FishingHaptics(context, prefs.fishingHaptics) }
+    DisposableEffect(fishingHaptics) { onDispose { fishingHaptics.stop() } }
     val updatePrefs = remember(context) { AppUpdatePreferences(context) }
     var noticesEnabled by remember { mutableStateOf(updatePrefs.backgroundNotices) }
     val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -251,6 +259,12 @@ internal fun rememberProfileImage(value: String, reduceMotion: Boolean): ImageRe
             SmallHeading("Durante o jogo")
             SettingSwitch("Proteção contra spoilers", "Revele cada dica, solução e recompensa quando quiser.", prefs.hideSpoilers) {
                 vm.savePreferences(prefs.copy(hideSpoilers=it))
+            }
+            SettingSwitch("Feedback tátil na pesca", "Sinta a fisgada, os puxões da linha e a fuga do peixe.", prefs.fishingHaptics) {
+                vm.savePreferences(prefs.copy(fishingHaptics=it))
+            }
+            TextButton(onClick = fishingHaptics::hook, enabled = prefs.fishingHaptics) {
+                Text("Testar vibração da pesca")
             }
             SettingSwitch("Manter tela ligada", "Enquanto você consulta os guias, as dungeons ou o Atlas no aplicativo.", prefs.keepAwake) {
                 vm.savePreferences(prefs.copy(keepAwake=it))

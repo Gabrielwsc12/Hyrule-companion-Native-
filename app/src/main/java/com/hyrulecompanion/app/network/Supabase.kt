@@ -145,10 +145,23 @@ class SupabaseClient internal constructor(private val profileMedia: CommunityMed
     suspend fun communityProfile(session: AuthSession): CommunityProfile? =
         communityProfiles(session, "user_id=eq.${session.userId}").firstOrNull()
 
-    suspend fun searchCommunity(session: AuthSession, handle: String): List<CommunityProfile> {
+    suspend fun searchCommunity(session: AuthSession, handle: String): List<CommunityPerson> {
         require(handle.matches(Regex("[a-z0-9_]{1,24}")))
-        val prefix = android.net.Uri.encode(handle.replace("_", "\\_") + "*")
-        return communityProfiles(session, "discoverable=eq.true&user_id=neq.${session.userId}&handle=like.$prefix&order=handle&limit=30")
+        val prefix = android.net.Uri.encode(literalHandle(handle) + "*")
+        val path = "/rest/v1/hc_community_profiles?select=user_id,handle&discoverable=eq.true&user_id=neq.${session.userId}"
+        val first = people(JSONArray(request("GET", "$path&handle=like.$prefix&order=handle&limit=18",
+            bearer = session.accessToken)))
+        if (handle.length < 2 || first.size >= 18) return first
+        val related = relatedHandlePatterns(handle).joinToString(",") { "handle.like." + android.net.Uri.encode(it) }
+        val extra = people(JSONArray(request("GET",
+            "$path&handle=not.like.$prefix&or=($related)&order=handle&limit=${18 - first.size}",
+            bearer = session.accessToken)))
+        return (first + extra.sortedBy { !it.handle.contains(handle) }).distinctBy { it.userId }
+    }
+
+    private fun people(rows: JSONArray): List<CommunityPerson> = List(rows.length()) { i ->
+        val row = rows.getJSONObject(i)
+        CommunityPerson(row.getString("user_id"), row.getString("handle"))
     }
 
     private suspend fun communityProfiles(session: AuthSession, filters: String): List<CommunityProfile> {
@@ -209,11 +222,14 @@ class SupabaseClient internal constructor(private val profileMedia: CommunityMed
             body, session.accessToken, "resolution=merge-duplicates,return=minimal")
     }
 
-    suspend fun followedProfiles(session: AuthSession): List<CommunityProfile> {
+    suspend fun followedProfiles(session: AuthSession): List<CommunityPerson> {
         val rows = JSONArray(request("GET",
-            "/rest/v1/hc_community_follows?select=profile:hc_community_profiles!hc_community_follows_followed_id_fkey!inner($COMMUNITY_FIELDS)&order=followed_id",
+            "/rest/v1/hc_community_follows?select=profile:hc_community_profiles!hc_community_follows_followed_id_fkey!inner(user_id,handle)&order=followed_id",
             bearer=session.accessToken))
-        return List(rows.length()) { CommunityProfile.fromJson(rows.getJSONObject(it).getJSONObject("profile")) }
+        return List(rows.length()) { i ->
+            val row = rows.getJSONObject(i).getJSONObject("profile")
+            CommunityPerson(row.getString("user_id"), row.getString("handle"))
+        }.sortedBy { it.handle }
     }
 
     suspend fun follows(session: AuthSession, userId: String): Boolean {
@@ -275,6 +291,25 @@ data class CommunityProfile(
                 row.optString("favorite_game").takeUnless { row.isNull("favorite_game") || it.isBlank() },
                 row.optBoolean("discoverable"), row.optBoolean("share_journey"),
                 journey.keys().asSequence().associateWith { journey.optString(it) })
+        }
+    }
+}
+
+data class CommunityPerson(val userId: String, val handle: String)
+
+private fun literalHandle(value: String) = value.replace("_", "\\_")
+
+internal fun relatedHandlePatterns(handle: String): Set<String> = buildSet {
+    add("*${literalHandle(handle)}*")
+    if (handle.length < 4) return@buildSet
+    for (index in handle.indices) {
+        val before = literalHandle(handle.take(index))
+        val after = literalHandle(handle.drop(index + 1))
+        add("${before}_$after*") // One mistyped character.
+        add("$before$after*") // One extra character.
+        add("${before}_${literalHandle(handle.drop(index))}*") // One missing character.
+        if (index + 1 < handle.length) {
+            add(before + literalHandle("${handle[index + 1]}${handle[index]}") + literalHandle(handle.drop(index + 2)) + "*")
         }
     }
 }

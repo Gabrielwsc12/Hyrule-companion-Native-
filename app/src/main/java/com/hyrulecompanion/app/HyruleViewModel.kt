@@ -148,6 +148,7 @@ class HyruleViewModel(application: Application) : AndroidViewModel(application) 
     }
     fun toggleChecked(key: String,id: String,index: Int) { repo.toggleChecked(key,id,index);notifyChange() }
     fun clearChecked(key: String,id: String) { repo.clearChecked(key,id);notifyChange() }
+    fun toggleGameFavorite(id: String) { repo.toggleGameFavorite(id);notifyChange() }
     fun favorite(id: String) { repo.toggleFavorite(id);notifyChange() }
     fun note(id: String,value: String) { repo.saveGuideNote(id,value);notifyChange();message="Anotação salva." }
     fun savePreferences(preferences: Preferences) { repo.savePreferences(preferences);notifyChange() }

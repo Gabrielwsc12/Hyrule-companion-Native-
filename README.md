@@ -25,35 +25,9 @@ O **Hyrule Companion** é um guia de bolso para Android e um diário de jogo par
 
 Migração nativa do arquivo original `hyrule-companion-apk.zip`, **Web Edition 1.16.6**, sem WebView, Capacitor, HTML ou JavaScript em tempo de execução. Mantém o mesmo identificador de aplicativo (`com.hyrulecompanion.app`), o projeto Supabase e a estrutura **schema 13** de dados. A migração preserva o texto editorial original dos 62 jogos, 58 guias, 12 mapas, 5 dungeons e 5 ramificações da cronologia.
 
-## Novidades da 1.18.0.1
+## Novidades da 1.18.1.1
 
-- **Capas e imagens.** Todas as 62 capas estão disponíveis offline. Os cards reutilizam as miniaturas em memória, e o Atlas mantém a imagem carregada enquanto você amplia o mapa.
-- **Comunidade.** O app pode reutilizar avatares e banners em cache depois de validar a versão e a visibilidade da imagem no servidor. A migração opcional abaixo ativa esse recurso.
-- **Pesca.** Comuns se movem devagar, incomuns variam a velocidade e a direção, e raros fazem arrancadas mais rápidas e viram com mais frequência.
-
-## Store e publicação
-
-1. No SQL Editor do projeto Supabase que já atende à Comunidade, execute [STORE_1_18_0.sql](supabase/STORE_1_18_0.sql). A migração adiciona tabelas e funções da Store.
-2. Compile o APK assinado pelo fluxo documentado em [UPDATES-README.md](UPDATES-README.md), com a mesma chave das versões anteriores. A versão que o app anuncia é `1.18.0.1`, código `11801`.
-3. Na atualização 2.00, encerre a venda do Beta tester com `update public.hc_store_flags set beta_on_sale = false where singleton;`. Itens adquiridos continuam equipáveis. O app também limita novas compras na carteira de visitante a versões com código menor que 20000.
-
-Para compilar um APK de teste que instala em paralelo, use `gradle :app:assembleDebug -PhcPreviewApk=true`. Entre com uma conta existente para testar a Store. Para testar o cadastro por e-mail nessa variante, adicione `com.hyrulecompanion.app.preview.v11801://auth/confirm` à lista de URLs de redirecionamento do ambiente de teste do Supabase.
-
-### Configuração privada do criador
-
-No painel Supabase, encontre seu cadastro em **Authentication → Users** e copie o UUID da sua conta. Depois da migração da Store, execute no SQL Editor, trocando `SEU_UUID_AQUI` pelo valor que você conferiu.
-
-```sql
-insert into public.hc_store_creator (singleton, user_id)
-values (true, 'SEU_UUID_AQUI'::uuid)
-on conflict (singleton) do update set user_id = excluded.user_id;
-```
-
-Essa linha define a única conta que recebe o emblema Creator e rúpias infinitas. O emblema aparece para visitantes quando o perfil é público.
-
-Os ícones dos peixes são artes do inventário de *Tears of the Kingdom*, da Nintendo, consultadas nas páginas das 15 espécies. [Compêndio de Hyrule no Zelda Dungeon Wiki](https://www.zeldadungeon.net/wiki/Tears_of_the_Kingdom_Hyrule_Compendium).
-
-A carteira de uma conta é mantida no servidor. A carteira de visitante fica separada no aparelho. Guias, mapas e pesca como visitante funcionam sem conexão. As capas do catálogo usam as fontes registradas nos metadados, incluindo Zelda Temple e Nintendo.
+- **Pesca.** A vibração da fisgada, dos puxões e da fuga usa a categoria de jogos do Android, com pulsos mais perceptíveis. Use **Testar vibração da pesca** em **Configurações → Durante o jogo** para sentir a fisgada.
 
 ## Requisitos
 
@@ -108,7 +82,7 @@ O app usa, como o HTML original, a mesma URL Supabase e a mesma **chave pública
 
 ### Chaves locais espelhadas do código original
 
-`hc-progress`, `hc-guide-progress`, `hc-guide-completion`, `hc-guide-favorites`, `hc-guide-notes`, `hc-dungeon-progress`, `hc-dungeon-item-progress`, `hc-atlas-visited`, `hc-user-preferences`.
+`hc-progress`, `hc-guide-progress`, `hc-guide-completion`, `hc-guide-favorites`, `hc-game-favorites`, `hc-guide-notes`, `hc-dungeon-progress`, `hc-dungeon-item-progress`, `hc-atlas-visited`, `hc-user-preferences`.
 
 A conta salva seu token em armazenamento privado do app; `android:allowBackup="false"` evita backup automático de dados privados pelo Android. Não exponha uma chave `service_role` nem uma chave secreta no APK. A chave publishable do código-fonte é pública e o banco segue protegido pelas mesmas políticas RLS do Supabase.
 
@@ -118,7 +92,7 @@ Ao entrar numa conta que já possui jornada remota, aparece a opção **Recupera
 
 ## Backup JSON antigo e mural
 
-- **Configurações > Exportar backup JSON:** gera formato com `project`, `version`, `appVersion`, `schemaVersion`, `exportedAt`, `progress`, `guideProgress`, `guideCompletion`, `guideFavorites`, `guideNotes`, `dungeonProgress`, `dungeonItemProgress`, `atlasVisited`, `preferences`.
+- **Configurações > Exportar backup JSON:** gera formato com `project`, `version`, `appVersion`, `schemaVersion`, `exportedAt`, `progress`, `guideProgress`, `guideCompletion`, `guideFavorites`, `gameFavorites`, `guideNotes`, `dungeonProgress`, `dungeonItemProgress`, `atlasVisited`, `preferences`.
 - **Configurações > Restaurar backup JSON:** aceita backup da Web Edition e snapshots do Supabase (`schemaVersion=13`). Valida ids e limites dos checklists para backups em formato web.
 - **Perfil > Personalizar e exportar mural:** JPEG gerado por código nativo com seis temas, opções de retrato e paisagem, nome e capas do catálogo disponíveis offline.
 
@@ -150,6 +124,5 @@ UPDATES-README.md              — instalação, assinatura e publicação de no
 
 ## Verificar esta versão
 
-- Abra a Biblioteca e exporte um mural com o aparelho offline.
-- Abra um perfil duas vezes com a migração de cache aplicada. Altere ou remova a imagem em outra sessão e confirme a atualização ao reabrir o perfil.
-- Compare o movimento dos peixes de cada raridade e confira o pergaminho de novidades no Início.
+- Em **Configurações → Durante o jogo**, ligue o feedback tátil e toque em **Testar vibração da pesca**.
+- Durante uma rodada, confira a fisgada, os puxões e a fuga. Desligue o feedback tátil para confirmar que os efeitos ficam desativados.

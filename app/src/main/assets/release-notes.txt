@@ -1,3 +1,2 @@
-• Capas e cards carregam sem internet. As 62 capas do catálogo agora vêm com o app.
-• As imagens reaparecem mais rápido ao voltar às telas, e o Atlas mantém o mapa carregado durante o zoom.
-• Peixes comuns se movem devagar. Incomuns variam o caminho, e raros fazem arrancadas rápidas e mudam de direção com mais frequência.
+• Corrigimos a vibração da fisgada, dos puxões e da fuga do peixe.
+• Em Configurações → Durante o jogo, toque em Testar vibração da pesca para sentir a fisgada.

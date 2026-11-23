@@ -81,10 +81,10 @@ internal fun ProfileHeader(
                             color = if (image == null) MaterialTheme.colorScheme.onPrimaryContainer else Color.White)
                         if (Cosmetic.CREATOR in equipped) ProfileBadge(Cosmetic.CREATOR, reduceMotion)
                     }
-                    if (Cosmetic.BETA in equipped || Cosmetic.CHESTER in equipped) {
+                    if (Cosmetic.BETA in equipped || Cosmetic.CHEATER in equipped) {
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                             if (Cosmetic.BETA in equipped) ProfileBadge(Cosmetic.BETA, reduceMotion)
-                            if (Cosmetic.CHESTER in equipped) ProfileBadge(Cosmetic.CHESTER, reduceMotion)
+                            if (Cosmetic.CHEATER in equipped) ProfileBadge(Cosmetic.CHEATER, reduceMotion)
                         }
                     }
                 }
@@ -207,6 +207,18 @@ internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String?, loca
             modifier = Modifier.semantics { contentDescription = "Editar perfil" }) {
             Text("🪶")
         }
+    }
+    val published = profile
+    if (userId != null && published != null && published.discoverable && published.shareJourney &&
+        published.journey != sharedGameStatuses(vm)) {
+        TextButton(enabled = !busy, onClick = {
+            action {
+                val updated = published.copy(journey = sharedGameStatuses(vm))
+                vm.communityRequest(userId) { saveCommunityProfile(it, updated) }
+                profile = updated
+                vm.notifyMessage("Jornada compartilhada atualizada.")
+            }
+        }) { Text("Atualizar jornada compartilhada") }
     }
     if (!editing) error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 

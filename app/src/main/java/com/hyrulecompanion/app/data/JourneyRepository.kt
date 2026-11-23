@@ -13,6 +13,7 @@ import java.time.format.DateTimeFormatter
 const val K_PROGRESS = "hc-progress"
 const val K_GUIDE_PROGRESS = "hc-guide-progress"
 const val K_GUIDE_COMPLETION = "hc-guide-completion"
+const val K_GAME_FAVORITES = "hc-game-favorites"
 const val K_GUIDE_FAVORITES = "hc-guide-favorites"
 const val K_GUIDE_NOTES = "hc-guide-notes"
 const val K_DUNGEON_PROGRESS = "hc-dungeon-progress"
@@ -22,13 +23,14 @@ const val K_PREFS = "hc-user-preferences"
 const val K_SESSION = "hc-auth-session"
 const val K_LAST_CLOUD_SYNC = "hc-last-cloud-sync"
 
-val SYNC_KEYS = listOf(K_PROGRESS, K_GUIDE_PROGRESS, K_GUIDE_COMPLETION, K_GUIDE_FAVORITES, K_GUIDE_NOTES, K_DUNGEON_PROGRESS, K_DUNGEON_ITEMS, K_ATLAS_VISITED, K_PREFS)
-val GAME_STATUSES = listOf("Não iniciado", "Em andamento", "Concluído", "100%")
+val SYNC_KEYS = listOf(K_PROGRESS, K_GUIDE_PROGRESS, K_GUIDE_COMPLETION, K_GUIDE_FAVORITES, K_GAME_FAVORITES, K_GUIDE_NOTES, K_DUNGEON_PROGRESS, K_DUNGEON_ITEMS, K_ATLAS_VISITED, K_PREFS)
+internal val JOURNEY_STATUSES = setOf("Em andamento", "Concluído", "100%")
+val GAME_STATUSES = listOf("Não iniciado") + JOURNEY_STATUSES
 
 data class GameProgress(val status: String = "Não iniciado", val startDate: String = "", val finishDate: String = "", val notes: String = "")
 data class Preferences(val theme: String = "system", val avatar: String = "", val introSkip: Boolean = false, val introMusic: Boolean = true,
     val hideSpoilers: Boolean = true, val reduceMotion: Boolean = false,
-    val startScreen: String = "home", val keepAwake: Boolean = false, val palette: String = "classic")
+    val startScreen: String = "home", val keepAwake: Boolean = false, val palette: String = "classic", val fishingHaptics: Boolean = true)
 
 class JourneyRepository(private val context: Context, val catalog: Catalog) {
     // Only app-private storage; legacy localStorage uses the same literal keys, but is a separate origin.
@@ -90,25 +92,40 @@ class JourneyRepository(private val context: Context, val catalog: Catalog) {
         store(key,map)
     }
     fun clearChecked(key: String, id: String) { val map = obj(key); map.remove(id); store(key,map) }
-    fun isFavorite(id: String) = arr(K_GUIDE_FAVORITES).let { a -> (0 until a.length()).any { a.optString(it) == id } }
-    fun toggleFavorite(id: String) {
-        val old = arr(K_GUIDE_FAVORITES).let { a -> (0 until a.length()).map { a.optString(it) }.toMutableSet() }
-        if (!old.add(id)) old.remove(id)
-        store(K_GUIDE_FAVORITES, JSONArray(old.sorted()))
+    private fun savedIds(key: String): Set<String> = arr(key).let { values ->
+        (0 until values.length()).map { values.optString(it) }.toSet()
     }
+
+    private fun toggleSavedId(key: String, id: String) {
+        val ids = savedIds(key).toMutableSet()
+        if (!ids.add(id)) ids.remove(id)
+        store(key, JSONArray(ids.sorted()))
+    }
+
+    fun isFavorite(id: String) = id in savedIds(K_GUIDE_FAVORITES)
+    fun toggleFavorite(id: String) = toggleSavedId(K_GUIDE_FAVORITES, id)
+    fun gameFavorites() = savedIds(K_GAME_FAVORITES)
+    fun toggleGameFavorite(id: String) {
+        require(catalog.game(id) != null)
+        toggleSavedId(K_GAME_FAVORITES, id)
+    }
+
+    fun journeyGames(): List<Game> = catalog.games.filter { gameProgress(it.id).status in JOURNEY_STATUSES }
+
     fun guideNote(id: String) = obj(K_GUIDE_NOTES).optString(id, "")
     fun saveGuideNote(id: String, note: String) { val data=obj(K_GUIDE_NOTES);data.put(id,note.take(10000));store(K_GUIDE_NOTES,data) }
     fun preferences(): Preferences {
         val o=obj(K_PREFS)
         return Preferences(o.optString("theme","system"),o.optString("avatar",""),o.optBoolean("introSkip",false),o.optBoolean("introMusic",true),
             o.optBoolean("hideSpoilers",true), o.optBoolean("reduceMotion",false),
-            o.optString("startScreen","home"), o.optBoolean("keepAwake",false), o.optString("palette","classic"))
+            o.optString("startScreen","home"), o.optBoolean("keepAwake",false), o.optString("palette","classic"), o.optBoolean("fishingHaptics",true))
     }
     fun savePreferences(value: Preferences) { val o = obj(K_PREFS); o.put("theme",value.theme);o.put("avatar",value.avatar);o.put("introSkip",value.introSkip);o.put("introMusic",value.introMusic);o.put("hideSpoilers",value.hideSpoilers)
         o.put("reduceMotion",value.reduceMotion)
         o.put("startScreen",value.startScreen)
         o.put("keepAwake",value.keepAwake)
         o.put("palette",value.palette)
+        o.put("fishingHaptics",value.fishingHaptics)
         store(K_PREFS,o)
     }
     fun avatarImage(uri: Uri): String {
@@ -136,7 +153,7 @@ class JourneyRepository(private val context: Context, val catalog: Catalog) {
         val data=snapshot.optJSONObject("data") ?: error("Os dados na nuvem não possuem o formato esperado.")
         val editor=prefs.edit()
         SYNC_KEYS.forEach { key -> data.optString(key,"").takeIf { it.isNotEmpty() }?.let { value ->
-            runCatching { if (key == K_GUIDE_FAVORITES) JSONArray(value) else JSONObject(value) }.getOrElse { error("Dados inválidos em $key") }
+            runCatching { if (key == K_GUIDE_FAVORITES || key == K_GAME_FAVORITES) JSONArray(value) else JSONObject(value) }.getOrElse { error("Dados inválidos em $key") }
             editor.putString(key,value)
         } }
         editor.apply()
@@ -145,8 +162,8 @@ class JourneyRepository(private val context: Context, val catalog: Catalog) {
         val j=JSONObject()
         j.put("project","Hyrule Companion").put("version","1.15").put("appVersion",BuildConfig.VERSION_NAME)
             .put("schemaVersion",13).put("exportedAt",OffsetDateTime.now().toString())
-        val mapping=mapOf("progress" to K_PROGRESS,"guideProgress" to K_GUIDE_PROGRESS,"guideCompletion" to K_GUIDE_COMPLETION,"guideFavorites" to K_GUIDE_FAVORITES,"guideNotes" to K_GUIDE_NOTES,"dungeonProgress" to K_DUNGEON_PROGRESS,"dungeonItemProgress" to K_DUNGEON_ITEMS,"atlasVisited" to K_ATLAS_VISITED,"preferences" to K_PREFS)
-        mapping.forEach { (out,storage) -> j.put(out, if (storage == K_GUIDE_FAVORITES) arr(storage) else obj(storage)) }
+        val mapping=mapOf("progress" to K_PROGRESS,"guideProgress" to K_GUIDE_PROGRESS,"guideCompletion" to K_GUIDE_COMPLETION,"guideFavorites" to K_GUIDE_FAVORITES,"gameFavorites" to K_GAME_FAVORITES,"guideNotes" to K_GUIDE_NOTES,"dungeonProgress" to K_DUNGEON_PROGRESS,"dungeonItemProgress" to K_DUNGEON_ITEMS,"atlasVisited" to K_ATLAS_VISITED,"preferences" to K_PREFS)
+        mapping.forEach { (out,storage) -> j.put(out, if (storage == K_GUIDE_FAVORITES || storage == K_GAME_FAVORITES) arr(storage) else obj(storage)) }
         return j.toString(2)
     }
     fun importBackup(text: String) {
@@ -182,6 +199,11 @@ class JourneyRepository(private val context: Context, val catalog: Catalog) {
         val favorites=JSONArray()
         j.optJSONArray("guideFavorites")?.let { a -> (0 until a.length()).map { a.optString(it) }.filter { it in guideIds }.distinct().forEach { favorites.put(it) } }
         editor.putString(K_GUIDE_FAVORITES,favorites.toString())
+        j.optJSONArray("gameFavorites")?.let { saved ->
+            val games = (0 until saved.length()).map { saved.optString(it) }
+                .filter { catalog.game(it) != null }.distinct()
+            editor.putString(K_GAME_FAVORITES, JSONArray(games).toString())
+        }
         val notes=JSONObject()
         j.optJSONObject("guideNotes")?.let { old -> old.keys().forEach { id -> if (id in guideIds) notes.put(id,old.optString(id).take(10000)) } }
         editor.putString(K_GUIDE_NOTES,notes.toString())

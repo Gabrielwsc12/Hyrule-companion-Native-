@@ -67,7 +67,6 @@ object MuralRenderer {
         txt("▲  HYRULE COMPANION  ▲",66f,110f,38f,gold,true)
         multiline(options.name.ifBlank { "Herói de Hyrule" },66f,195f,65f,ink,w-132f,2)
         txt("MINHA JORNADA POR HYRULE",66f,278f,28f,muted)
-        val started=catalog.games.count { repo.gameProgress(it.id).status!="Não iniciado" }
         val completed=repo.doneCount()
         val playing=repo.playingCount()
         val progress=(completed*100f/catalog.games.size).toInt()
@@ -77,14 +76,11 @@ object MuralRenderer {
         rect(94f,464f,w-190f,15f,muted,10f)
         rect(94f,464f,(w-190f)*completed/catalog.games.size,15f,gold,10f)
         txt("$progress% da biblioteca",w-385f,391f,29f,ink,true)
-        val completedGames = repo.completedGames()
-        val previousAchievements = catalog.games.filter { it !in completedGames && repo.earnedTriforce(it.id) }
-        val chosen = (completedGames + previousAchievements)
-            .ifEmpty { catalog.games.filter { repo.gameProgress(it.id).status == "Em andamento" } }
+        val chosen = repo.journeyGames()
+            .sortedBy { repo.gameProgress(it.id).status == "Em andamento" }
             .take(if (portrait) 8 else 6)
         txt("✦ MEMÓRIAS DO HERÓI",66f,565f,40f,gold,true)
         val cols=if(portrait)2 else 3
-        val rows=(chosen.size+cols-1)/cols
         val itemWidth=(w-132f-(cols-1)*18f)/cols
         val startY=606f
         val boxHeight=if(portrait)187f else 180f

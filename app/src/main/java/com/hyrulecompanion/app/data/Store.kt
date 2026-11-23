@@ -11,10 +11,10 @@ internal enum class Cosmetic(val id: String, val title: String, val price: Int, 
     HAT("hat", "Gorro do herói", 200, "O gorro verde dá à sua foto o visual do herói."),
     THEME("theme", "Tears of the Kingdom", 70, "Desbloqueia a paleta de jade e ouro nas Configurações."),
     BETA("beta", "Emblema Beta tester", 20, "Fica ao lado do nome. À venda até a chegada da versão 2.00."),
-    CHESTER("chester", "Chester", 0, "Emblema para o seu perfil."),
+    CHEATER("chester", "Cheater", 0, "Emblema para o seu perfil."),
     CREATOR("creator", "Creator", 0, "");
 
-    val forSale: Boolean get() = this != CHESTER && this != CREATOR
+    val forSale: Boolean get() = this != CHEATER && this != CREATOR
 
     val available: Boolean get() = this != BETA || BuildConfig.VERSION_CODE < 20000
 }

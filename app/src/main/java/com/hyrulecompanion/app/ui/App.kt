@@ -161,7 +161,7 @@ private val tabs=listOf(
         if (!intro) vm.checkForUpdates()
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
-    BackHandler(contentEntry != null || dungeonIndex || gameId!=null || screen in listOf("settings", "community", "store", "fishing")) {
+    BackHandler(contentEntry != null || dungeonIndex || gameId!=null || screen in listOf("settings", "community", "store", "fishing", "favorites")) {
         when {
             contentEntry != null -> contentEntry = null
             dungeonIndex -> dungeonIndex = false
@@ -232,12 +232,13 @@ private val tabs=listOf(
                                 onSettings={settingsBack="store";screen="settings"})
                         }
                         screen=="fishing" -> key(userId) {
-                            FishingScreen(vm.store, userId, prefs.reduceMotion, onBack={screen="store"})
+                            FishingScreen(vm.store, userId, prefs.reduceMotion, prefs.fishingHaptics, onBack={screen="store"})
                         }
                         screen=="timeline" -> TimelineScreen(vm,onGame={previous="timeline";gameId=it})
                         screen=="atlas" -> AtlasScreen(vm,atlasGame,onGame={previous="atlas";gameId=it})
                         screen=="library" -> LibraryScreen(vm,onGame={previous="library";gameId=it},onDungeons={dungeonIndex=true})
-                        screen=="profile" -> ProfileScreen(vm,openAccount=openAccount,openMural=openMural,onGame={previous="profile";gameId=it})
+                        screen=="profile" -> ProfileScreen(vm,openAccount=openAccount,openMural=openMural,onGame={previous="profile";gameId=it},onFavorites={screen="favorites"})
+                        screen=="favorites" -> FavoriteGamesScreen(vm, onBack={screen="profile"}, onGame={previous="favorites";gameId=it})
                         screen=="community" -> CommunityScreen(vm,onBack={screen="profile"},onAccount={openAccount=true;screen="profile"})
                         screen=="settings" -> SettingsScreen(vm,onBack={screen=settingsBack}, backLabel=if(settingsBack=="store") "Store" else "perfil")
                     }

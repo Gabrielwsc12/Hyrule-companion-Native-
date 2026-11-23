@@ -65,7 +65,7 @@ internal fun ControllerDialog(store: StoreRepository, userId: String?, onDismiss
         scope.launch {
             try {
                 status = if (store.redeem(userId, candidate)) {
-                    "Chester desbloqueado · +${rupees(BONUS_RUPEES)} rúpias verdes"
+                    "Cheater desbloqueado · +${rupees(BONUS_RUPEES)} rúpias verdes"
                 } else {
                     "Recompensa já resgatada."
                 }

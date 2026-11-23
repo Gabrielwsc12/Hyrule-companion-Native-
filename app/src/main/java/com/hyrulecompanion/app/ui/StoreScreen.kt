@@ -82,7 +82,7 @@ internal fun StoreScreen(store: StoreRepository, userId: String?, reduceMotion: 
         Cosmetic.entries.filter { item ->
             when (item) {
                 Cosmetic.CREATOR -> false
-                Cosmetic.CHESTER -> item in wallet?.owned.orEmpty()
+                Cosmetic.CHEATER -> item in wallet?.owned.orEmpty()
                 Cosmetic.BETA -> item in wallet?.owned.orEmpty() || (item.available && wallet?.betaAvailable != false)
                 else -> true
             }
@@ -140,7 +140,7 @@ private fun CosmeticPreview(item: Cosmetic, reduceMotion: Boolean) {
         Cosmetic.GOLD -> GoldenCosmetic(reduceMotion, Modifier.size(44.dp, 62.dp))
         Cosmetic.HAT -> HatCosmetic(Modifier.size(72.dp, 48.dp))
         Cosmetic.BETA -> ProfileBadge(item, reduceMotion)
-        Cosmetic.CHESTER -> ProfileBadge(item, reduceMotion)
+        Cosmetic.CHEATER -> ProfileBadge(item, reduceMotion)
         Cosmetic.CREATOR -> ProfileBadge(item, reduceMotion)
         Cosmetic.THEME -> Canvas(Modifier.size(68.dp, 58.dp)) {
             listOf(Color(0xFF16483F), Color(0xFF63E4BC), Color(0xFFFFD294)).forEachIndexed { i, color ->
@@ -169,11 +169,11 @@ internal fun ProfileBadge(item: Cosmetic, reduceMotion: Boolean) {
             }
         }
     } else {
-        val chest = item == Cosmetic.CHESTER
+        val chest = item == Cosmetic.CHEATER
         Surface(shape = RoundedCornerShape(6.dp),
             color = if (chest) Color(0xFF412D66) else Color(0xFF745124),
             contentColor = if (chest) Color(0xFFEEE0FF) else Color(0xFFFFE8AE)) {
-            Text(if (chest) "Chester" else "Beta tester", Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+            Text(if (chest) "Cheater" else "Beta tester", Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
                 style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, maxLines = 1)
         }
     }

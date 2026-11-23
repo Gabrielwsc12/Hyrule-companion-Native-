@@ -10,6 +10,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -133,7 +136,13 @@ private fun mapUrl(gameId: String): String? {
     var region by remember { mutableStateOf("Todas") }
     val maps=vm.catalog.atlasMaps
     val shown=maps.filter { (branch=="all" || branch==it.branch) && "${it.name} ${it.subtitle} ${it.branchLabel}".contains(query,true) }
-    val map=maps.find { it.id==selectedMapId } ?: maps.first()
+    val map = shown.find { it.id == selectedMapId } ?: shown.firstOrNull() ?: maps.first()
+    LaunchedEffect(map.id) {
+        selectedLocation = 0
+        layerKey = ""
+        locationQuery = ""
+        region = "Todas"
+    }
     val layers = vm.catalog.atlasLayers(map)
     val layer = layers.find { it.key == layerKey } ?: layers.first()
     val locations = layer.locations
@@ -148,12 +157,24 @@ private fun mapUrl(gameId: String): String? {
         item{Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(8.dp)){
             listOf("all" to "Todos","shared" to "Antes da divisão","downfall" to "Herói derrotado","child" to "Criança","adult" to "Adulto","future" to "Era distante").forEach{(id,text)->FilterChip(selected=branch==id,onClick={branch=id},label={Text(text)})}
         }}
-        item {Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
-            shown.chunked(2).forEach { row -> Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                row.forEach{a->FilterChip(modifier=Modifier.weight(1f),selected=selectedMapId==a.id,onClick={selectedMapId=a.id;selectedLocation=0;layerKey="";locationQuery="";region="Todas"},label={Text("${a.symbol} ${a.name}",maxLines=2)})}
-                if(row.size==1) Spacer(Modifier.weight(1f))
-            }}
-        }}
+        if (shown.isEmpty()) {
+            item { Text("Nenhum mapa corresponde à busca.") }
+            return@LazyColumn
+        }
+        item {
+            val slider = rememberLazyListState(initialFirstVisibleItemIndex = shown.indexOf(map).coerceAtLeast(0))
+            LaunchedEffect(shown, map.id) {
+                val index = shown.indexOf(map).coerceAtLeast(0)
+                if (slider.layoutInfo.visibleItemsInfo.none { it.key == map.id }) slider.scrollToItem(index)
+            }
+            LazyRow(Modifier.fillMaxWidth(), state = slider, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(shown, key = { it.id }) { entry ->
+                    FilterChip(selected = map.id == entry.id, onClick = { selectedMapId = entry.id },
+                        modifier = Modifier.widthIn(max = 236.dp),
+                        label = { Text("${entry.symbol} ${entry.name}", maxLines = 2) })
+                }
+            }
+        }
         item {ParchmentCard {
             SmallHeading("${map.symbol} ${map.name}")
             Text(map.subtitle,style=MaterialTheme.typography.labelLarge)

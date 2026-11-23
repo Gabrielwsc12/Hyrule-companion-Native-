@@ -25,6 +25,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -179,21 +181,47 @@ private fun SectionCarousel(onNavigate: (String) -> Unit) {
         item { FilterChip(selected=onlyCompleted,onClick={onlyCompleted=!onlyCompleted},label={Text("Só concluídos")}) }
         item{ Text("${filtered.size} aventuras",style=MaterialTheme.typography.labelLarge) }
         if (filtered.isEmpty()) item { Text("Nenhum jogo corresponde aos filtros.") }
-        items(filtered,key={it.id}) { g ->
-            ParchmentCard(Modifier.fillMaxWidth().clickable{onGame(g.id)}) {
-                Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-                    CoverArt(g,Modifier.size(94.dp,104.dp))
-                    Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(7.dp)) {
-                        Text(g.name,fontWeight=FontWeight.Bold,maxLines=3)
-                        Text("${g.year} • ${g.platform}",style=MaterialTheme.typography.bodySmall)
-                        StatusTag(vm.repo.gameProgress(g.id).status)
-                        Text(g.type,style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.secondary)
-                    }
-                    Icon(Icons.Default.ChevronRight,contentDescription=null)
-                }
-            }
+        val favorites = vm.repo.gameFavorites()
+        items(filtered, key = { it.id }) { game ->
+            GameCard(vm, game, game.id in favorites, onGame)
         }
         item { Spacer(Modifier.height(14.dp)) }
+    }
+}
+
+@Composable
+internal fun FavoriteGamesScreen(vm: HyruleViewModel, onBack: () -> Unit, onGame: (String) -> Unit) {
+    val revision = vm.revision
+    val favorites = remember(revision) { vm.repo.gameFavorites() }
+    val games = vm.catalog.games.filter { it.id in favorites }
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item { TextButton(onClick = onBack) { Text("← Voltar ao perfil") } }
+        item { ScreenTitle("Jogos favoritos", "", "♥") }
+        if (games.isEmpty()) item { Text("Toque no coração de um jogo na Biblioteca para salvá-lo aqui.") }
+        items(games, key = { it.id }) { game -> GameCard(vm, game, true, onGame) }
+    }
+}
+
+@Composable
+private fun GameCard(vm: HyruleViewModel, game: Game, favorite: Boolean, onGame: (String) -> Unit) {
+    ParchmentCard(Modifier.fillMaxWidth().clickable { onGame(game.id) }) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            CoverArt(game, Modifier.size(82.dp, 104.dp))
+            Column(Modifier.weight(1f).padding(start = 12.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                Text(game.name, fontWeight = FontWeight.Bold, maxLines = 3)
+                Text("${game.year} • ${game.platform}", style = MaterialTheme.typography.bodySmall)
+                StatusTag(vm.repo.gameProgress(game.id).status)
+                Text(game.type, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
+            }
+            IconButton(onClick = { vm.toggleGameFavorite(game.id) }) {
+                Icon(if (favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = if (favorite) "Remover ${game.name} dos favoritos" else "Salvar ${game.name} nos favoritos",
+                    tint = if (favorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(19.dp))
+            }
+            Icon(Icons.Default.ChevronRight, contentDescription = null, modifier = Modifier.size(18.dp))
+        }
     }
 }
 

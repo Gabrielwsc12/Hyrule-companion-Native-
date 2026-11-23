@@ -1,15 +1,23 @@
 package com.hyrulecompanion.app.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -17,10 +25,14 @@ import androidx.compose.ui.unit.dp
 import com.hyrulecompanion.app.HyruleViewModel
 import com.hyrulecompanion.app.data.Cosmetic
 import com.hyrulecompanion.app.network.CommunityProfile
+import com.hyrulecompanion.app.network.CommunityPerson
 import com.hyrulecompanion.app.network.CommunityMedia
 import com.hyrulecompanion.app.network.CommunityReaction
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 
 @Composable
 fun CommunityScreen(vm: HyruleViewModel, onBack: () -> Unit, onAccount: () -> Unit) {
@@ -41,8 +53,8 @@ fun CommunityScreen(vm: HyruleViewModel, onBack: () -> Unit, onAccount: () -> Un
 private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     var own by remember { mutableStateOf<CommunityProfile?>(null) }
-    var following by remember { mutableStateOf<List<CommunityProfile>>(emptyList()) }
-    var results by remember { mutableStateOf<List<CommunityProfile>?>(null) }
+    var following by remember { mutableStateOf<List<CommunityPerson>>(emptyList()) }
+    var results by remember { mutableStateOf<List<CommunityPerson>?>(null) }
     var selected by remember { mutableStateOf<CommunityProfile?>(null) }
     var profileOnline by remember { mutableStateOf(false) }
     val selectedId = selected?.userId
@@ -80,6 +92,33 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
     var media by remember { mutableStateOf(CommunityMedia()) }
     var search by remember { mutableStateOf("") }
 
+    var searchError by remember { mutableStateOf(false) }
+    var submittedQuery by remember { mutableStateOf<String?>(null) }
+    var submission by remember { mutableIntStateOf(0) }
+    val focus = LocalFocusManager.current
+    val avatarLoads = remember { Semaphore(2) }
+    val handle = search.trim().removePrefix("@").lowercase()
+    val validSearch = handle.matches(Regex("[a-z0-9_]{1,24}"))
+    fun submitSearch() {
+        if (!validSearch) return
+        focus.clearFocus()
+        submittedQuery = handle
+        submission++
+    }
+    LaunchedEffect(search, submission, enabled, selectedId) {
+        if (!enabled || selectedId != null || !validSearch) return@LaunchedEffect
+        if (submittedQuery != handle) delay(300)
+        searchError = false
+        try {
+            results = vm.communityRequest(userId) { searchCommunity(it, handle) }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            results = null
+            searchError = true
+        }
+    }
+
     fun runAction(action: suspend () -> Unit) {
         if (busy) return
         busy = true
@@ -108,9 +147,9 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
         enabled = true
     }
 
-    fun open(profile: CommunityProfile) = runAction {
+    fun open(profileId: String) = runAction {
         vm.communityRequest(userId) { account ->
-            val (latest, images) = communityProfileWithMedia(account, profile.userId)
+            val (latest, images) = communityProfileWithMedia(account, profileId)
             if (latest != null) {
                 val followingProfile = follows(account, latest.userId)
                 val applause = if (latest.shareJourney) communityReactions(account, latest.userId) else emptyMap()
@@ -121,8 +160,8 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
             }
         }
         if (selected == null) {
-            results = results?.filterNot { it.userId == profile.userId }
-            following = following.filterNot { it.userId == profile.userId }
+            results = results?.filterNot { it.userId == profileId }
+            following = following.filterNot { it.userId == profileId }
             error = "Esse perfil não está disponível."
         }
     }
@@ -130,7 +169,7 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
     LaunchedEffect(Unit) { refresh() }
     BackHandler(selected != null) { selected = null }
 
-    LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             TextButton(onClick = { if (selected != null) selected = null else onBack() }) {
                 Text(if (selected != null) "Voltar à comunidade" else "Voltar ao perfil")
@@ -152,7 +191,7 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
                                 val target = !isFollowing
                                 vm.communityRequest(userId) { account -> setFollowing(account, profile.userId, target) }
                                 isFollowing = target
-                                following = if (target) (following + profile).distinctBy { it.userId }
+                                following = if (target) (following + CommunityPerson(profile.userId, profile.handle)).distinctBy { it.userId }.sortedBy { it.handle }
                                     else following.filterNot { it.userId == profile.userId }
                             }
                         }) { Text(if (isFollowing) "Deixar de seguir" else "Seguir") }
@@ -215,50 +254,66 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
         } else if (enabled) {
             item {
                 ParchmentCard {
-                    SmallHeading("Meu perfil na comunidade")
-                    Text(own?.let { "@${it.handle} · ${if (it.discoverable) "Visível" else "Privado"}" }
-                        ?: "Escolha um nome de usuário e o que deseja compartilhar.")
-                    TextButton(onClick = onBack) { Text("Editar em Meu Perfil") }
-                    own?.takeIf { it.discoverable }?.let { published ->
-                        TextButton(enabled = !busy, onClick = { open(published) }) { Text("Ver meu perfil público") }
-                        if (published.shareJourney) {
-                            TextButton(enabled = !busy, onClick = {
-                                runAction {
-                                    val updated = published.copy(journey = sharedGameStatuses(vm))
-                                    vm.communityRequest(userId) { account -> saveCommunityProfile(account, updated) }
-                                    own = updated
-                                    vm.notifyMessage("Jornada compartilhada atualizada.")
-                                }
-                            }) { Text("Atualizar jornada compartilhada") }
-                        }
-                    }
-                }
-            }
-            item {
-                ParchmentCard {
                     SmallHeading("Encontrar aventureiros")
-                    OutlinedTextField(search, { search = it.take(24); results = null }, label = { Text("Nome de usuário") },
-                        singleLine = true, enabled = !busy, modifier = Modifier.fillMaxWidth())
-                    val prefix = search.trim().lowercase()
-                    Button(enabled = !busy && prefix.matches(Regex("[a-z0-9_]{1,24}")), onClick = {
-                        runAction { results = vm.communityRequest(userId) { account -> searchCommunity(account, prefix) } }
-                    }) { Text("Buscar") }
-                    if (results?.isEmpty() == true) Text("Nenhum perfil encontrado.")
+                    OutlinedTextField(search, {
+                        search = it.take(25)
+                        submittedQuery = null
+                        results = null
+                        searchError = false
+                    }, label = { Text("Nome de usuário") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = { submitSearch() }),
+                        trailingIcon = {
+                            IconButton(enabled = validSearch, onClick = ::submitSearch) {
+                                Icon(Icons.Default.Search, "Buscar usuário")
+                            }
+                        })
+                    if (searchError) Text("Não foi possível buscar. Toque na lupa para tentar de novo.",
+                        color = MaterialTheme.colorScheme.error)
+                    else if (validSearch && results?.isEmpty() == true) Text("Nenhum perfil encontrado.")
+                    else if (validSearch && results == null) LinearProgressIndicator(Modifier.fillMaxWidth())
                 }
             }
             items(results.orEmpty(), key = { "result-${it.userId}" }) { user ->
-                OutlinedButton(enabled = !busy, onClick = { open(user) }) { Text("@${user.handle}") }
+                ParchmentCard(Modifier.fillMaxWidth().clickable(enabled = !busy) { open(user.userId) }) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("@${user.handle}", Modifier.weight(1f))
+                        Icon(Icons.Default.ChevronRight, contentDescription = null)
+                    }
+                }
             }
             item { SmallHeading("Seguindo") }
             if (following.isEmpty()) item { Text("Você ainda não segue nenhum perfil visível.") }
             items(following, key = { "following-${it.userId}" }) { user ->
-                OutlinedButton(enabled = !busy, onClick = { open(user) }) { Text("@${user.handle}") }
+                FollowedProfileCard(user, vm.repo.preferences().reduceMotion, !busy, onOpen = { open(user.userId) }) {
+                    avatarLoads.withPermit {
+                        vm.communityRequest(userId) { communityProfileWithMedia(it, user.userId).second.avatar }
+                    }
+                }
             }
         } else {
             item { OutlinedButton(enabled = !busy, onClick = ::refresh) { Text("Carregar comunidade") } }
         }
     }
 
+}
+
+@Composable
+private fun FollowedProfileCard(person: CommunityPerson, reduceMotion: Boolean, enabled: Boolean,
+                                onOpen: () -> Unit, loadAvatar: suspend () -> String?) {
+    var avatar by remember(person.userId) { mutableStateOf("") }
+    LaunchedEffect(person.userId) {
+        avatar = try { loadAvatar().orEmpty() }
+        catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { "" }
+    }
+    ParchmentCard(Modifier.fillMaxWidth().clickable(enabled = enabled, onClick = onOpen)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Avatar(avatar, reduceMotion, Modifier.size(52.dp))
+            Text("@${person.handle}", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        }
+    }
 }
 
 @Composable
@@ -310,8 +365,5 @@ internal fun CommunityProfileEditor(
 }
 
 
-private fun sharedGameStatuses(vm: HyruleViewModel): Map<String, String> =
-    vm.catalog.games.mapNotNull { game ->
-        val status = vm.repo.gameProgress(game.id).status
-        if (status in listOf("Em andamento", "Concluído", "100%")) game.id to status else null
-    }.toMap()
+internal fun sharedGameStatuses(vm: HyruleViewModel): Map<String, String> =
+    vm.repo.journeyGames().associate { it.id to vm.repo.gameProgress(it.id).status }

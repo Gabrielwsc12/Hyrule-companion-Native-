@@ -74,8 +74,8 @@ internal class StoreRepository(private val vm: HyruleViewModel) {
             saveCloud(userId, updated)
             unlocked
         } else {
-            if (Cosmetic.CHESTER in guest.owned) return@withLock false
-            saveGuest(guest.copy(balance = guest.balance + BONUS_RUPEES, owned = guest.owned + Cosmetic.CHESTER))
+            if (Cosmetic.CHEATER in guest.owned) return@withLock false
+            saveGuest(guest.copy(balance = guest.balance + BONUS_RUPEES, owned = guest.owned + Cosmetic.CHEATER))
             true
         }
     }

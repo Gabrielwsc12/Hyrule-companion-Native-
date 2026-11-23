@@ -42,8 +42,10 @@ private enum class FishingPhase { READY, CASTING, WAITING, BITE, REELING, CREDIT
 private const val CAPTURE_WIDTH = .24f
 
 @Composable
-internal fun FishingScreen(store: StoreRepository, userId: String?, reduceMotion: Boolean, onBack: () -> Unit) {
+internal fun FishingScreen(store: StoreRepository, userId: String?, reduceMotion: Boolean, hapticsEnabled: Boolean, onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val haptics = remember(context, hapticsEnabled) { FishingHaptics(context, hapticsEnabled) }
     var phase by remember { mutableStateOf(FishingPhase.READY) }
     var attempt by remember { mutableStateOf<CatchAttempt?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -57,9 +59,13 @@ internal fun FishingScreen(store: StoreRepository, userId: String?, reduceMotion
     var resumed by remember { mutableStateOf(false) }
     var fishMotion by remember { mutableStateOf<FishMotion?>(null) }
 
-    LifecycleResumeEffect(Unit) {
+    LifecycleResumeEffect(haptics) {
         resumed = true
-        onPauseOrDispose { resumed = false; held = false }
+        onPauseOrDispose {
+            resumed = false
+            held = false
+            haptics.stop()
+        }
     }
 
     fun cast() {
@@ -83,6 +89,7 @@ internal fun FishingScreen(store: StoreRepository, userId: String?, reduceMotion
     }
 
     fun claim(catch: CatchAttempt) {
+        haptics.stop()
         phase = FishingPhase.CREDITING
         error = null
         scope.launch {
@@ -106,6 +113,7 @@ internal fun FishingScreen(store: StoreRepository, userId: String?, reduceMotion
             }
             FishingPhase.BITE -> {
                 delay(2600)
+                haptics.escape()
                 attempt = null
                 error = "O peixe soltou a isca. Tente lançar de novo."
                 phase = FishingPhase.READY
@@ -118,17 +126,24 @@ internal fun FishingScreen(store: StoreRepository, userId: String?, reduceMotion
                     val dt = ((now - last) / 1_000_000_000f).coerceIn(0f, .08f)
                     last = now
                     elapsed += dt
+                    val previousPosition = fishAt
                     fishAt = movement.advance(dt)
                     val motion = if (held) .57f else -.47f
                     barAt = (barAt + motion * dt).coerceIn(CAPTURE_WIDTH / 2, 1f - CAPTURE_WIDTH / 2)
-                    val matches = abs(fishAt - barAt) < CAPTURE_WIDTH / 2
+                    val distance = abs(fishAt - barAt)
+                    val speed = abs(fishAt - previousPosition) / dt.coerceAtLeast(.001f)
+                    val tension = (speed * .9f + distance * 2.4f + if (held) .12f else 0f).coerceIn(0f, 1f)
+                    val matches = distance < CAPTURE_WIDTH / 2
                     progress = (progress + dt * if (matches) .17f else -.085f).coerceIn(0f, 1f)
                     if (progress >= 1f) {
                         attempt?.let(::claim)
                     } else if (elapsed >= 30f) {
+                        haptics.escape()
                         attempt = null
                         error = "O peixe escapou. Tente novamente!"
                         phase = FishingPhase.READY
+                    } else {
+                        haptics.pull(elapsed, tension)
                     }
                 }
             }
@@ -140,6 +155,7 @@ internal fun FishingScreen(store: StoreRepository, userId: String?, reduceMotion
         if (phase != FishingPhase.BITE) return
         val cast = attempt ?: return
         fishMotion = FishMotion(cast.rarity)
+        haptics.hook()
         held = false
         progress = 0f
         elapsed = 0f
