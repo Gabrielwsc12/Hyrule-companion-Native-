@@ -60,10 +60,23 @@ for name in ('hyrule_intro', 'small_item_catch', 'item_catch_fanfare'):
 for name in ('library', 'atlas', 'timeline', 'changelog', 'store'):
     assert (assets/f'home/{name}.webp').is_file()
 fish_code = (root/'app/src/main/java/com/hyrulecompanion/app/data/Store.kt').read_text()
-fish_list = re.findall(r'^    (?:COMMON|UNCOMMON|RARE)\(.*?listOf\((.*?)\)\)', fish_code, re.M)
-fish_names = {name for line in fish_list for name in re.findall(r'"([^"]+)"', line)}
-fish_assets = {p.stem for p in (assets/'fishing/fish').glob('*.webp')}
-assert len(fish_names) == 15 and fish_assets == {name.lower().replace(' ', '-') for name in fish_names}
+fish_lists = dict(re.findall(r'^    (COMMON|UNCOMMON|RARE|LEGENDARY)\(.*?listOf\((.*?)\)\)', fish_code, re.M))
+expected_counts = {'COMMON': 5, 'UNCOMMON': 5, 'RARE': 5, 'LEGENDARY': 3}
+assert fish_lists.keys() == expected_counts.keys(), 'Every fishing rarity must have a species list'
+fish_names = []
+for rarity, expected_count in expected_counts.items():
+    species = re.findall(r'"([^"]+)"', fish_lists[rarity])
+    assert len(species) == expected_count, f'{rarity} must contain {expected_count} fish species'
+    fish_names.extend(species)
+assert len(fish_names) == len(set(fish_names)), 'Fish species must be unique across rarities'
+fish_dir = assets / 'fishing/fish'
+assert (fish_dir / 'gold-badge.webp').is_file(), 'Missing golden fish profile badge'
+fish_assets = {p.stem for p in fish_dir.glob('*.webp')} - {'gold-badge'}
+expected_assets = {name.lower().replace(' ', '-') for name in fish_names}
+assert fish_assets == expected_assets, (
+    f'Fish image mismatch: missing {sorted(expected_assets - fish_assets)}, '
+    f'unexpected {sorted(fish_assets - expected_assets)}'
+)
 assert (assets/'fishing/hyrule-sea.webp').is_file()
 for dir in ['mdpi','hdpi','xhdpi','xxhdpi','xxxhdpi']:
     assert (root/f'app/src/main/res/mipmap-{dir}/ic_launcher.png').exists()
