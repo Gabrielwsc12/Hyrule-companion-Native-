@@ -5,6 +5,7 @@ plugins {
 }
 
 val previewApk = providers.gradleProperty("hcPreviewApk").orNull == "true"
+val previewRevision = providers.gradleProperty("hcPreviewRevision").orNull
 
 android {
     namespace = "com.hyrulecompanion.app"
@@ -14,8 +15,8 @@ android {
         applicationId = "com.hyrulecompanion.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 11811
-        versionName = "1.18.1.1"
+        versionCode = 11900
+        versionName = "1.19.0"
         manifestPlaceholders["hcAppLabel"] = "Hyrule Companion"
 
         // These are the public project URL + publishable key in the supplied web source.
@@ -25,7 +26,7 @@ android {
     }
     if (previewApk) {
         buildTypes.getByName("debug") {
-            applicationIdSuffix = ".preview.v${defaultConfig.versionCode}"
+            applicationIdSuffix = ".preview.v${defaultConfig.versionCode}" + (previewRevision?.let { ".$it" } ?: "")
             manifestPlaceholders["hcAppLabel"] = "Hyrule Companion Teste"
         }
     }

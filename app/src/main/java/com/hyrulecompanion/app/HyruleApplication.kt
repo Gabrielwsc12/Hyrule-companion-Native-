@@ -13,9 +13,17 @@ import coil.fetch.SourceResult
 import coil.memory.MemoryCache
 import coil.request.Options
 import com.hyrulecompanion.app.network.CommunityMediaCache
+import com.hyrulecompanion.app.data.JOURNEY_PREFERENCES
+import com.hyrulecompanion.app.ui.LANGUAGE_KEY
+import com.hyrulecompanion.app.ui.initTranslations
 import okio.Buffer
 
 class HyruleApplication : Application(), ImageLoaderFactory {
+    override fun onCreate() {
+        super.onCreate()
+        initTranslations(this, getSharedPreferences(JOURNEY_PREFERENCES, MODE_PRIVATE).getString(LANGUAGE_KEY, null))
+    }
+
     internal val communityMediaCache by lazy { CommunityMediaCache(this) }
 
     override fun newImageLoader(): ImageLoader = ImageLoader.Builder(this)

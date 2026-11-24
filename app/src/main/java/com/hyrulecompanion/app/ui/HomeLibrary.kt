@@ -56,7 +56,7 @@ fun CoverArt(game: Game, modifier: Modifier = Modifier, large: Boolean = false) 
     var visible by remember(request) { mutableStateOf(false) }
     Box(modifier.clip(RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
         if (!visible) Text(game.icon, style = MaterialTheme.typography.headlineMedium)
-        if (request != null) AsyncImage(request, "Capa de ${game.name}", Modifier.matchParentSize(),
+        if (request != null) AsyncImage(request, translate("Capa de ${game.name}"), Modifier.matchParentSize(),
             contentScale = ContentScale.Crop, onSuccess = { visible = true }, onError = { visible = false })
     }
 }
@@ -71,7 +71,7 @@ fun CoverArt(game: Game, modifier: Modifier = Modifier, large: Boolean = false) 
         ScreenTitle(userName?.let { "Bem-vindo de volta, $it!" } ?: "Bem-vindo de volta!", "", "▲")
         SmallHeading("Descubra Hyrule")
         SectionCarousel(onNavigate)
-        ParchmentCard(Modifier.fillMaxWidth().clickable(role = Role.Button, onClickLabel = "Abrir Store") {
+        ParchmentCard(Modifier.fillMaxWidth().clickable(role = Role.Button, onClickLabel = translate("Abrir Store")) {
             onNavigate("store")
         }) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -116,9 +116,9 @@ private data class SectionCard(val label: String, val detail: String, val target
 
 // Replace one of the three feature slots by request. The changelog stays in slot four.
 private val homeSections = listOf(
-    SectionCard("Biblioteca", "Jogos, guias e dungeons", "library", "library"),
+    SectionCard("Conquistas", "Sua jornada no RetroAchievements", "achievements", "achievements"),
     SectionCard("Atlas", "Mapas e pontos de interesse", "atlas", "atlas"),
-    SectionCard("Cronologia", "Explore as linhas do tempo", "timeline", "timeline")
+    SectionCard("Aquário de Hyrule", "Descubra os peixes que faltam", "aquarium", "aquarium")
 ).take(3) + SectionCard("Novidades da ${BuildConfig.VERSION_NAME}", "", "changelog", "changelog")
 
 @Composable
@@ -129,7 +129,7 @@ private fun SectionCarousel(onNavigate: (String) -> Unit) {
         val section = homeSections[page]
         Box(Modifier.fillMaxWidth().height(158.dp).clip(RoundedCornerShape(18.dp))
             .background(MaterialTheme.colorScheme.primaryContainer)
-            .clickable(role = Role.Button, onClickLabel = "Abrir ${section.label}") { onNavigate(section.target) }) {
+            .clickable(role = Role.Button, onClickLabel = translate("Abrir ${section.label}")) { onNavigate(section.target) }) {
             AsyncImage("file:///android_asset/home/${section.image}.webp", null,
                 Modifier.matchParentSize(), contentScale = ContentScale.Crop)
             if (section.target == "changelog") {
@@ -154,7 +154,7 @@ private fun SectionCarousel(onNavigate: (String) -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
         homeSections.forEachIndexed { page, section ->
             Box(Modifier.size(40.dp).clip(CircleShape)
-                .semantics { contentDescription = section.label }
+                .semantics { contentDescription = translate(section.label) }
                 .clickable { scope.launch { pager.animateScrollToPage(page) } }, contentAlignment = Alignment.Center) {
                 Box(Modifier.size(if (pager.currentPage == page) 10.dp else 7.dp).clip(CircleShape)
                     .background(if (pager.currentPage == page) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline))
@@ -170,7 +170,7 @@ private fun SectionCarousel(onNavigate: (String) -> Unit) {
     val types=listOf("Todos","Principal","Spin-off","Remake","Remaster","Edição","Coleção","DLC")
     var onlyCompleted by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     val filtered=vm.catalog.games.filter {
-        (!onlyCompleted || vm.repo.gameProgress(it.id).status in listOf("Concluído", "100%")) && (type=="Todos" || it.type==type) && "${it.name} ${it.platform} ${it.year} ${it.type}".contains(query,ignoreCase=true) }
+        (!onlyCompleted || vm.repo.gameProgress(it.id).status in listOf("Concluído", "100%")) && (type=="Todos" || it.type==type) && "${it.name} ${it.platform} ${it.year} ${translate(it.type)}".contains(query,ignoreCase=true) }
     LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
         item {ScreenTitle("Biblioteca","Catálogo de aventuras, remakes e spin-offs","▤")}
         item { OutlinedButton(onClick=onDungeons) { Text("Enciclopédia de Dungeons") } }
@@ -216,7 +216,7 @@ private fun GameCard(vm: HyruleViewModel, game: Game, favorite: Boolean, onGame:
             }
             IconButton(onClick = { vm.toggleGameFavorite(game.id) }) {
                 Icon(if (favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = if (favorite) "Remover ${game.name} dos favoritos" else "Salvar ${game.name} nos favoritos",
+                    contentDescription = translate(if (favorite) "Remover ${game.name} dos favoritos" else "Salvar ${game.name} nos favoritos"),
                     tint = if (favorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(19.dp))
             }
@@ -226,7 +226,7 @@ private fun GameCard(vm: HyruleViewModel, game: Game, favorite: Boolean, onGame:
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable fun GameDetailScreen(vm:HyruleViewModel,gameId:String,onBack:()->Unit,onAtlas:(String)->Unit,onReference:(String)->Unit) {
+@Composable fun GameDetailScreen(vm:HyruleViewModel,gameId:String,onBack:()->Unit,onAtlas:(String)->Unit,onReference:(String)->Unit,onPlayGuide:(()->Unit)? = null) {
     val revision=vm.revision
     val game=vm.catalog.game(gameId) ?: return
     val initial=vm.repo.gameProgress(gameId)
@@ -238,12 +238,20 @@ private fun GameCard(vm: HyruleViewModel, game: Game, favorite: Boolean, onGame:
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
         TextButton(onClick=onBack){Text("← Voltar")}
         CoverArt(game, Modifier.fillMaxWidth().height(188.dp), large = true)
-        ScreenTitle(game.name,"${game.year} • ${game.platform} • ${game.type}",game.icon)
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                ScreenTitle(game.name, "${game.year} • ${translate(game.platform)} • ${translate(game.type)}", game.icon)
+            }
+            if (onPlayGuide != null) FilledTonalIconButton(onClick = onPlayGuide,
+                modifier = Modifier.semantics { contentDescription = translate("Forma definitiva de jogar") }) {
+                NesController()
+            }
+        }
         ParchmentCard {
             Text(game.description)
             Text("Status atual: ${initial.status}",style=MaterialTheme.typography.labelLarge)
             ExposedDropdownMenuBox(expanded=statusExpanded,onExpandedChange={statusExpanded=!statusExpanded}) {
-                OutlinedTextField(value=status,onValueChange={},readOnly=true,label={Text("Status da aventura")},trailingIcon={ExposedDropdownMenuDefaults.TrailingIcon(statusExpanded)},modifier=Modifier.fillMaxWidth().menuAnchor())
+                OutlinedTextField(value=translate(status),onValueChange={},readOnly=true,label={Text("Status da aventura")},trailingIcon={ExposedDropdownMenuDefaults.TrailingIcon(statusExpanded)},modifier=Modifier.fillMaxWidth().menuAnchor())
                 ExposedDropdownMenu(expanded=statusExpanded,onDismissRequest={statusExpanded=false}){
                     com.hyrulecompanion.app.data.GAME_STATUSES.forEach { option -> DropdownMenuItem(text={Text(option)},onClick={status=option;statusExpanded=false}) }
                 }

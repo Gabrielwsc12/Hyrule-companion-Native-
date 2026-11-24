@@ -92,7 +92,7 @@ internal val gamePalettes = listOf("classic" to "Clássico", "ocarina" to "Ocari
 }
 @Composable fun ScreenTitle(title:String,subtitle:String="",icon:String="✦"){
     Column(Modifier.fillMaxWidth().padding(bottom=8.dp),verticalArrangement=Arrangement.spacedBy(6.dp)){
-        Text("$icon  $title",style=MaterialTheme.typography.headlineMedium,color=MaterialTheme.colorScheme.primary)
+        Text("$icon  ${translate(title)}",style=MaterialTheme.typography.headlineMedium,color=MaterialTheme.colorScheme.primary)
         if(subtitle.isNotBlank())Text(subtitle,style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)
         HorizontalDivider(color=MaterialTheme.colorScheme.outline.copy(alpha=.4f))
     }
@@ -136,7 +136,7 @@ internal fun TriforceBadge(vm: HyruleViewModel, gameId: String, animateNew: Bool
 
 @Composable
 internal fun TriforceEmblem(modifier: Modifier = Modifier) {
-    Canvas(modifier.size(22.dp).semantics { contentDescription = "Triforce conquistada" }) {
+    Canvas(modifier.size(22.dp).semantics { contentDescription = translate("Triforce conquistada") }) {
         val unit = size.width / 2
         val height = unit * .866f
         val y = (size.height - height * 2) / 2

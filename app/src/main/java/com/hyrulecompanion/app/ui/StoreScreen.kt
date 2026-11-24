@@ -33,13 +33,13 @@ import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.util.Locale
 
-internal fun rupees(value: Long): String = NumberFormat.getIntegerInstance(Locale("pt", "BR")).format(value)
+internal fun rupees(value: Long): String = NumberFormat.getIntegerInstance(Locale.forLanguageTag(if (activeLanguage() == "pt") "pt-BR" else activeLanguage())).format(value)
 
 internal fun Wallet.balanceLabel() = if (creator) "∞ Rúpias infinitas" else "${rupees(balance)} rúpias verdes"
 
 @Composable
 internal fun StoreScreen(store: StoreRepository, userId: String?, reduceMotion: Boolean,
-                         onBack: () -> Unit, onFish: () -> Unit, onSettings: () -> Unit) {
+                         onBack: () -> Unit, onFish: () -> Unit, onAquarium: () -> Unit, onSettings: () -> Unit) {
     val scope = rememberCoroutineScope()
     val wallet = store.wallet(userId)
     var busy by remember { mutableStateOf(false) }
@@ -70,9 +70,10 @@ internal fun StoreScreen(store: StoreRepository, userId: String?, reduceMotion: 
             SmallHeading("Rúpias")
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 RupeeIcon(Modifier.size(22.dp, 28.dp))
-                Text(wallet?.balanceLabel() ?: "Saldo indisponível")
+                Text(wallet?.balanceLabel() ?: "Saldo indisponível", Modifier.weight(1f))
+                FilledTonalIconButton(onClick = onAquarium) { AquariumIcon() }
             }
-            Button(onClick = onFish, enabled = !busy && wallet != null) { Text("Ganhar rúpias") }
+            Button(onClick = onFish, enabled = !busy && wallet != null) { Text("Pescar") }
         }
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         error?.let {
@@ -82,7 +83,7 @@ internal fun StoreScreen(store: StoreRepository, userId: String?, reduceMotion: 
         Cosmetic.entries.filter { item ->
             when (item) {
                 Cosmetic.CREATOR -> false
-                Cosmetic.CHEATER -> item in wallet?.owned.orEmpty()
+                Cosmetic.CHEATER, Cosmetic.FISH_BADGE, Cosmetic.RA_TROPHY -> item in wallet?.owned.orEmpty()
                 Cosmetic.BETA -> item in wallet?.owned.orEmpty() || (item.available && wallet?.betaAvailable != false)
                 else -> true
             }
@@ -142,6 +143,8 @@ private fun CosmeticPreview(item: Cosmetic, reduceMotion: Boolean) {
         Cosmetic.BETA -> ProfileBadge(item, reduceMotion)
         Cosmetic.CHEATER -> ProfileBadge(item, reduceMotion)
         Cosmetic.CREATOR -> ProfileBadge(item, reduceMotion)
+        Cosmetic.FLAME, Cosmetic.SHADOW -> StyledProfileName("Link", setOf(item), MaterialTheme.colorScheme.onSurface)
+        Cosmetic.FISH_BADGE, Cosmetic.RA_TROPHY -> UnlockBadge(item, reduceMotion)
         Cosmetic.THEME -> Canvas(Modifier.size(68.dp, 58.dp)) {
             listOf(Color(0xFF16483F), Color(0xFF63E4BC), Color(0xFFFFD294)).forEachIndexed { i, color ->
                 drawCircle(color, size.width * .20f, Offset(size.width * (.23f + i * .26f), size.height / 2))
@@ -181,7 +184,7 @@ internal fun ProfileBadge(item: Cosmetic, reduceMotion: Boolean) {
 
 @Composable
 internal fun HatCosmetic(modifier: Modifier) {
-    Canvas(modifier.semantics { contentDescription = "Gorro do herói" }) {
+    Canvas(modifier.semantics { contentDescription = translate("Gorro do herói") }) {
         val w = size.width
         val h = size.height
         val cap = Path().apply {
@@ -201,7 +204,7 @@ internal fun HatCosmetic(modifier: Modifier) {
 @Composable
 internal fun SwordCosmetic(reduceMotion: Boolean, modifier: Modifier, behindAvatar: Boolean = false) {
     val light = if (reduceMotion) .7f else cosmeticAnimation(.28f, .95f, 1050, RepeatMode.Reverse)
-    Canvas(modifier.semantics { contentDescription = "Master Sword" }) {
+    Canvas(modifier.semantics { contentDescription = translate("Master Sword") }) {
         val w = size.width
         val h = size.height
         val haloY = if (behindAvatar) .31f else .75f
@@ -219,7 +222,7 @@ internal fun SwordCosmetic(reduceMotion: Boolean, modifier: Modifier, behindAvat
 @Composable
 internal fun GoldenCosmetic(reduceMotion: Boolean, modifier: Modifier) {
     val angle = if (reduceMotion) 0f else cosmeticAnimation(0f, 360f, 2800, RepeatMode.Restart)
-    Canvas(modifier.semantics { contentDescription = "Emblema da rúpia dourada" }) {
+    Canvas(modifier.semantics { contentDescription = translate("Emblema da rúpia dourada") }) {
         val radians = Math.toRadians(angle.toDouble())
         val faceWidth = abs(cos(radians)).toFloat().coerceAtLeast(.035f)
         val depth = sin(radians).toFloat() * size.width * .22f

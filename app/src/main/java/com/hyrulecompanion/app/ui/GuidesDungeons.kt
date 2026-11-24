@@ -83,7 +83,7 @@ internal fun GameReferenceScreen(vm: HyruleViewModel, reference: String, onBack:
             }
         }
         if(guide.sections.isNotEmpty())item { SmallHeading("Informações adicionais") }
-        items(guide.sections){s->ParchmentCard {Spoiler("Revelar detalhes") { SmallHeading(s.title);s.items.forEach {Text("• $it")} } }}
+        items(guide.sections){s->ParchmentCard {Spoiler("Revelar detalhes") { SmallHeading(s.title);s.items.forEach {Text("• ${translate(it)}")} } }}
         if(guide.tip.isNotEmpty())item{ParchmentCard {SmallHeading("Dica do guia");Spoiler { Text(guide.tip) }}}
         item {ParchmentCard {
             SmallHeading("Minhas anotações")
@@ -114,9 +114,9 @@ internal fun GameReferenceScreen(vm: HyruleViewModel, reference: String, onBack:
             val checked=vm.repo.checked(K_DUNGEON_PROGRESS,d.id)
             ParchmentCard(Modifier.clickable{onOpen(d.id)}){
                 SmallHeading(d.name)
-                Text("${vm.catalog.game(d.gameId)?.name ?: d.gameId} • ${d.region}")
+                Text("${vm.catalog.game(d.gameId)?.name ?: d.gameId} • ${translate(d.region)}")
                 Spoiler("Revelar resumo") { Text(d.summary) }
-                Spoiler("Revelar chefe e item") { Text("${d.boss} · ${d.item}") }
+                Spoiler("Revelar chefe e item") { Text("${translate(d.boss)} · ${translate(d.item)}") }
                 val total=d.rooms.size+d.checklist.size
                 LinearProgressIndicator(progress={if(total==0)0f else checked.size.toFloat()/total},modifier=Modifier.fillMaxWidth())
                 Text("${checked.size} / $total concluídos",style=MaterialTheme.typography.labelSmall)

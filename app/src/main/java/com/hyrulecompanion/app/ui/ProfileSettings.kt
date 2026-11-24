@@ -36,6 +36,7 @@ import com.hyrulecompanion.app.HyruleViewModel
 import com.hyrulecompanion.app.MuralOptions
 import com.hyrulecompanion.app.data.*
 import coil.request.CachePolicy
+import coil.imageLoader
 import coil.request.ImageRequest
 import com.hyrulecompanion.app.ProfileImageData
 import java.security.MessageDigest
@@ -44,16 +45,28 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
+private val profileDigests = android.util.LruCache<String, ProfileImageData>(8)
+
+@Composable
+internal fun PreloadOwnBanner(banner: String?, reduceMotion: Boolean) {
+    val context = LocalContext.current
+    val request = rememberProfileImage(banner.orEmpty(), reduceMotion)
+    LaunchedEffect(request) {
+        if (request != null) context.imageLoader.execute(request.newBuilder().size(1024).build())
+    }
+}
+
 @Composable
 internal fun rememberProfileImage(value: String, reduceMotion: Boolean): ImageRequest? {
     val context = LocalContext.current
     val image = key(value) {
-        produceState<ProfileImageData?>(null) {
+        produceState<ProfileImageData?>(profileDigests.get(value)) {
             if (!value.startsWith("data:image/") || !value.contains(";base64,")) return@produceState
+            if (this.value != null) return@produceState
             this.value = withContext(Dispatchers.Default) {
                 val digest = MessageDigest.getInstance("SHA-256").digest(value.toByteArray())
                     .joinToString("") { "%02x".format(it) }
-                ProfileImageData(value, digest)
+                ProfileImageData(value, digest).also { profileDigests.put(value, it) }
             }
         }.value
     }
@@ -82,7 +95,7 @@ internal fun rememberProfileImage(value: String, reduceMotion: Boolean): ImageRe
 
 @Composable internal fun Avatar(value:String,reduceMotion:Boolean,modifier:Modifier=Modifier){
     val request = rememberProfileImage(value, reduceMotion)
-    if (request != null) coil.compose.AsyncImage(model = request, contentDescription = "Foto do aventureiro",
+    if (request != null) coil.compose.AsyncImage(model = request, contentDescription = translate("Foto do aventureiro"),
         contentScale = androidx.compose.ui.layout.ContentScale.Crop, modifier = modifier.clip(CircleShape))
     else Surface(modifier=modifier,shape=CircleShape,color=MaterialTheme.colorScheme.primaryContainer){Box(contentAlignment=Alignment.Center){Text("🗡️",style=MaterialTheme.typography.headlineMedium)}}
 }
@@ -220,6 +233,9 @@ internal fun rememberProfileImage(value: String, reduceMotion: Boolean): ImageRe
                 Text("Notas do criador")
             }
         }
+        item { ParchmentCard {
+            ChoiceSetting("Idioma", activeLanguage(), languageChoices, vm::changeLanguage)
+        } }
         item {ParchmentCard {
             SmallHeading("Aparência")
             ChoiceSetting("Tema do aplicativo", prefs.theme, listOf("system" to "Usar tema do aparelho", "light" to "Claro", "dark" to "Escuro")) {
@@ -366,8 +382,9 @@ internal fun rememberProfileImage(value: String, reduceMotion: Boolean): ImageRe
 
 private fun localTimestamp(value: String): String = runCatching {
     val local = java.time.OffsetDateTime.parse(value).atZoneSameInstant(java.time.ZoneId.systemDefault())
-    val format = if (local.toLocalDate() == LocalDate.now()) "'hoje às' HH:mm" else "dd/MM/yyyy 'às' HH:mm"
-    local.format(java.time.format.DateTimeFormatter.ofPattern(format))
+    val locale = java.util.Locale.forLanguageTag(if (activeLanguage() == "pt") "pt-BR" else activeLanguage())
+    java.time.format.DateTimeFormatter.ofLocalizedDateTime(java.time.format.FormatStyle.SHORT)
+        .withLocale(locale).format(local)
 }.getOrDefault(value)
 
 private fun syncStatus(timestamp: String) = if (timestamp.isBlank()) "Aguardando a primeira sincronização."

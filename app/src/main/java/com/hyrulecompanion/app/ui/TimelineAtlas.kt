@@ -171,12 +171,12 @@ private fun mapUrl(gameId: String): String? {
                 items(shown, key = { it.id }) { entry ->
                     FilterChip(selected = map.id == entry.id, onClick = { selectedMapId = entry.id },
                         modifier = Modifier.widthIn(max = 236.dp),
-                        label = { Text("${entry.symbol} ${entry.name}", maxLines = 2) })
+                        label = { Text("${entry.symbol} ${translate(entry.name)}", maxLines = 2) })
                 }
             }
         }
         item {ParchmentCard {
-            SmallHeading("${map.symbol} ${map.name}")
+            SmallHeading("${map.symbol} ${translate(map.name)}")
             Text(map.subtitle,style=MaterialTheme.typography.labelLarge)
             Text(map.description,style=MaterialTheme.typography.bodyMedium)
             StatusTag(map.branchLabel)
@@ -203,7 +203,7 @@ private fun mapUrl(gameId: String): String? {
                         androidx.browser.customtabs.CustomTabsIntent.Builder().setShowTitle(true).build()
                             .launchUrl(context, android.net.Uri.parse(source))
                     } catch (_: android.content.ActivityNotFoundException) {
-                        android.widget.Toast.makeText(context, "Instale um navegador para abrir a referência.", android.widget.Toast.LENGTH_LONG).show()
+                        android.widget.Toast.makeText(context, translate("Instale um navegador para abrir a referência."), android.widget.Toast.LENGTH_LONG).show()
                     }
                 }, modifier = Modifier.fillMaxWidth()) {
                     Text(if (schematic == null) "Abrir mapa de referência online" else "Abrir guia das fases")

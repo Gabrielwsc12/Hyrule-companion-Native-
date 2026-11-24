@@ -25,9 +25,17 @@ O **Hyrule Companion** é um guia de bolso para Android e um diário de jogo par
 
 Migração nativa do arquivo original `hyrule-companion-apk.zip`, **Web Edition 1.16.6**, sem WebView, Capacitor, HTML ou JavaScript em tempo de execução. Mantém o mesmo identificador de aplicativo (`com.hyrulecompanion.app`), o projeto Supabase e a estrutura **schema 13** de dados. A migração preserva o texto editorial original dos 62 jogos, 58 guias, 12 mapas, 5 dungeons e 5 ramificações da cronologia.
 
-## Novidades da 1.18.1.1
+## Novidades da 1.19.0
 
-- **Pesca.** A vibração da fisgada, dos puxões e da fuga usa a categoria de jogos do Android, com pulsos mais perceptíveis. Use **Testar vibração da pesca** em **Configurações → Durante o jogo** para sentir a fisgada.
+- **Conquistas.** Sincronização manual dos jogos principais de Zelda com o RetroAchievements. O quadro no perfil público mostra o total e o jogo da última conquista sincronizada.
+- **Aquário de Hyrule.** Acompanhe 18 espécies. Peixes lendários aparecem em 0,5% dos lançamentos e rendem de 250 a 500 rúpias.
+- **Aventuras.** Publique, comente, aplauda, filtre por pessoas que você segue ou abra o perfil do autor tocando no cabeçalho da publicação.
+- **Idiomas.** Português, inglês, espanhol, russo, chinês simplificado e japonês em Configurações.
+- **Forma definitiva de jogar.** A ficha dos jogos principais tem um atalho para recomendações de plataforma, emulador, traduções e mods com links dos responsáveis pelos projetos.
+- **Perfil.** O cabeçalho reaproveita o nome e o banner salvos. Chama e névoa contornam o nome, e você pode usar um efeito de cada vez.
+
+
+Artes de referência das novas espécies no Zelda Dungeon Wiki. [Hylian Loach](https://www.zeldadungeon.net/wiki/Hylian_Loach), [Ordon Catfish](https://www.zeldadungeon.net/wiki/Ordon_Catfish) e [Reekfish](https://www.zeldadungeon.net/wiki/Reekfish).
 
 ## Requisitos
 
@@ -59,6 +67,16 @@ No mesmo projeto Supabase, adicione `com.hyrulecompanion.app://auth/confirm` em 
 ## Ativar banners GIF e presença no Supabase
 
 Execute [COMMUNITY_PRESENCE_AND_BANNERS.sql](supabase/COMMUNITY_PRESENCE_AND_BANNERS.sql) uma vez no SQL Editor do mesmo projeto Supabase, depois das migrações de Comunidade e mídia de perfil. A presença pública exige conta, perfil visível e app em primeiro plano. O modo **Não perturbe** vale para todos os dispositivos da conta. Quando o app perde a conexão, o último sinal de presença expira em até 75 segundos.
+
+## Ativar as funções online da 1.19.0
+
+No Supabase existente, aplique primeiro os scripts das versões anteriores que ainda faltarem. Depois, execute `supabase/STORE_1_19.sql`, `supabase/RETRO_1_19.sql`, `supabase/ADVENTURES_1_19.sql` e `supabase/POLISH_1_19.sql` nessa ordem. As novas funções também podem ser avaliadas em um projeto de teste que já tenha a mesma estrutura.
+
+Implante a função `retro-sync` a partir da pasta do projeto com `supabase functions deploy retro-sync --project-ref SEU_PROJECT_REF`. Ela usa as variáveis padrão do Supabase, valida a sessão do Hyrule Companion e confirma o vínculo com um código temporário no campo User motto do RetroAchievements. A chave do RetroAchievements é fornecida no momento da sincronização e o banco guarda somente o resumo de progresso. O perfil precisa estar público para que outros usuários vejam esse resumo ou para que o dono publique e comente em Aventuras.
+
+Se já ativou a 1.19.0 inicial, reaplique o `RETRO_1_19.sql` desta revisão e execute `POLISH_1_19.sql`. Em seguida, atualize a função existente `retro-sync` usando o `supabase/functions/retro-sync/index.ts` do pacote e sincronize novamente pelo app para preencher o jogo da última conquista.
+
+O Aquário importa as capturas creditadas que ainda estão no histórico do servidor. A coleção é registrada a cada nova captura.
 
 ## Ativar a Comunidade no Supabase
 

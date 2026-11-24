@@ -245,7 +245,7 @@ internal fun FishingScreen(store: StoreRepository, userId: String?, reduceMotion
 private fun CatchDialog(catch: CatchAttempt, reward: Int, dismiss: () -> Unit) {
     val context = LocalContext.current
     DisposableEffect(catch.id, context) {
-        val sound = if (catch.rarity == FishRarity.RARE) R.raw.item_catch_fanfare else R.raw.small_item_catch
+        val sound = if (catch.rarity == FishRarity.RARE || catch.rarity == FishRarity.LEGENDARY) R.raw.item_catch_fanfare else R.raw.small_item_catch
         val player = runCatching { MediaPlayer.create(context, sound) }.getOrNull()
         runCatching { player?.start() }
         onDispose { player?.release() }
@@ -267,7 +267,7 @@ private fun CatchDialog(catch: CatchAttempt, reward: Int, dismiss: () -> Unit) {
 }
 
 @Composable
-private fun FishIcon(species: String, modifier: Modifier) {
+internal fun FishIcon(species: String, modifier: Modifier) {
     if (species.isBlank()) return
     val filename = species.lowercase().replace(' ', '-')
     AsyncImage("file:///android_asset/fishing/fish/$filename.webp", contentDescription = species,
@@ -279,7 +279,7 @@ private fun FishingWater(phase: FishingPhase, reduceMotion: Boolean, modifier: M
     var wobble by remember { mutableFloatStateOf(0f) }
     LaunchedEffect(phase, reduceMotion) {
         wobble = 0f
-        if (phase != FishingPhase.BITE || reduceMotion) return@LaunchedEffect
+        if (phase !in listOf(FishingPhase.BITE, FishingPhase.REELING) || reduceMotion) return@LaunchedEffect
         val start = withFrameNanos { it }
         while (true) wobble = withFrameNanos { sin((it - start) / 1e9 * 6 * PI).toFloat() }
     }
@@ -289,15 +289,16 @@ private fun FishingWater(phase: FishingPhase, reduceMotion: Boolean, modifier: M
         Canvas(Modifier.matchParentSize()) {
             val w = size.width
             val h = size.height
+            val tip = Offset(w * (.48f + wobble * .019f), h * (.38f + wobble * .038f))
             val rod = Path().apply {
                 moveTo(w * .025f, h * .98f)
-                quadraticTo(w * .22f, h * .44f, w * .48f, h * .38f)
+                quadraticTo(w * .22f, h * (.44f + wobble * .026f), tip.x, tip.y)
             }
             drawPath(rod, Color(0xFF231710), style = androidx.compose.ui.graphics.drawscope.Stroke(7.dp.toPx()))
             drawPath(rod, Color(0xFFC28E53), style = androidx.compose.ui.graphics.drawscope.Stroke(3.dp.toPx()))
             if (phase in listOf(FishingPhase.WAITING, FishingPhase.BITE, FishingPhase.REELING)) {
                 val bob = Offset(w * (.62f + wobble * .035f), h * (.62f + wobble * .024f))
-                drawLine(Color(0xFFE4DAB7), Offset(w*.48f,h*.38f), bob, 1.dp.toPx())
+                drawLine(Color(0xFFE4DAB7), tip, bob, 1.dp.toPx())
                 drawOval(Color(0xFF7DEBCD).copy(alpha = .8f), bob - Offset(w*.08f,h*.019f),
                     Size(w*.16f,h*.038f), style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx()))
                 drawCircle(Color(0xFFF26451), 8.dp.toPx(), bob)

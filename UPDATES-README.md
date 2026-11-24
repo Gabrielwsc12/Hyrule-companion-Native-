@@ -49,9 +49,9 @@ Adicione os segredos no GitHub (**Settings > Secrets and variables > Actions**):
 
 Antes de gerar cada APK:
 
-1. Atualize `versionCode` (inteiro **estritamente maior** que o anterior) e `versionName` no arquivo `app/build.gradle.kts`. A edição atual usa `1.18.1.1` (`11811`).
+1. Atualize `versionCode` (inteiro **estritamente maior** que o anterior) e `versionName` no arquivo `app/build.gradle.kts`. A edição atual usa `1.19.0` (`11900`).
 2. Commit/push do código.
-3. Crie uma tag **exatamente igual a `v` + versionName** e faça push. Para esta versão, use `git tag v1.18.1.1 && git push origin v1.18.1.1`.
+3. Crie uma tag **exatamente igual a `v` + versionName** e faça push. Para esta versão, use `git tag v1.19.0 && git push origin v1.19.0`.
 4. A GitHub Action **`Release Hyrule Companion APK and announce update`** compila e assina o APK, cria GitHub Release pública e publica a versão em `hc_app_releases` (somente se os segredos e a tabela já tiverem sido configurados).
 5. Usuários que têm o verificador instalado verão o aviso quando abrirem o app ou receberão a notificação em segundo plano, se habilitada.
 
@@ -65,8 +65,8 @@ Usuários de edições sem o verificador podem instalar manualmente um APK ofici
 insert into public.hc_app_releases
 (version_code, version_name, notes, download_url, mandatory, active)
 values
-(11811, '1.18.1.1', 'Correção da vibração na pesca.',
- 'https://SEU-HOST-HTTPS/HyruleCompanion-1.18.1.1.apk', false, true)
+(11900, '1.19.0', 'Conquistas, Aquário de Hyrule, Aventuras e suporte a inglês.',
+ 'https://SEU-HOST-HTTPS/HyruleCompanion-1.19.0.apk', false, true)
 on conflict (version_code) do update set
  version_name = excluded.version_name,
  notes = excluded.notes,
@@ -79,7 +79,7 @@ on conflict (version_code) do update set
 
 ## Como testar sem anunciar uma atualização falsa a todos
 
-- Em um projeto de teste com o SQL aplicado, instale um APK oficial com código inferior a `11811` e anuncie o APK da `1.18.1.1` assinado pela mesma chave.
+- Em um projeto de teste com o SQL aplicado, instale um APK oficial com código inferior a `11900` e anuncie o APK da `1.19.0` assinado pela mesma chave.
 - Insira esse release com URL pública HTTPS na tabela. Abra o app `11607`. O diálogo deve surgir.
 - Teste **Lembrar depois**, a busca manual nas Configurações, o botão para o download e a permissão para notificação em segundo plano.
 - Instale `11608` por cima e confira que a jornada local permanece intacta. **Nunca** assine a atualização com outro certificado.

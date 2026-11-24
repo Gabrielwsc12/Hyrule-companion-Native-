@@ -71,14 +71,16 @@ internal fun ProfileHeader(
                     if (online) Box(Modifier.align(Alignment.BottomEnd).size(16.dp)
                         .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape)
                         .background(Color(0xFF38BC6E), CircleShape)
-                        .semantics { contentDescription = "Online" })
+                        .semantics { contentDescription = translate("Online") })
                 }
                 if (Cosmetic.GOLD in equipped) GoldenCosmetic(reduceMotion, Modifier.size(24.dp, 40.dp))
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                        Text(name, Modifier.weight(1f, fill = false), style = MaterialTheme.typography.titleLarge,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, maxLines = 2,
-                            color = if (image == null) MaterialTheme.colorScheme.onPrimaryContainer else Color.White)
+                        StyledProfileName(name, equipped,
+                            color = if (image == null) MaterialTheme.colorScheme.onPrimaryContainer else Color.White,
+                            modifier = Modifier.weight(1f, fill = false))
+                        if (Cosmetic.FISH_BADGE in equipped) UnlockBadge(Cosmetic.FISH_BADGE, reduceMotion)
+                        if (Cosmetic.RA_TROPHY in equipped) UnlockBadge(Cosmetic.RA_TROPHY, reduceMotion)
                         if (Cosmetic.CREATOR in equipped) ProfileBadge(Cosmetic.CREATOR, reduceMotion)
                     }
                     if (Cosmetic.BETA in equipped || Cosmetic.CHEATER in equipped) {
@@ -98,15 +100,16 @@ internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String?, loca
                                       reduceMotion: Boolean) {
     val scope = rememberCoroutineScope()
     val resolver = LocalContext.current.contentResolver
-    var profile by remember { mutableStateOf<CommunityProfile?>(null) }
+    val known = if (vm.ownProfileOwner == userId) vm.ownProfile else null
+    var profile by remember(userId) { mutableStateOf(known?.first) }
     var avatar by remember { mutableStateOf("") }
-    var publishedAvatar by remember { mutableStateOf<String?>(null) }
+    var publishedAvatar by remember(userId) { mutableStateOf(known?.second?.avatar) }
     var avatarEdited by remember { mutableStateOf(false) }
-    var publishedBanner by remember { mutableStateOf<String?>(null) }
+    var publishedBanner by remember(userId) { mutableStateOf(known?.second?.banner) }
     var banner by remember { mutableStateOf<String?>(null) }
     var publishPhoto by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf(false) }
-    var loaded by remember { mutableStateOf(userId == null) }
+    var loaded by remember(userId) { mutableStateOf(userId == null || known?.first != null) }
     var loading by remember { mutableStateOf(false) }
     var loadFailed by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
@@ -146,9 +149,8 @@ internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String?, loca
         loadFailed = false
         scope.launch {
             try {
-                val (own, images) = vm.communityRequest(userId) { account ->
-                    communityProfileWithMedia(account, userId)
-                }
+                vm.loadOwnProfile(userId, online = true)
+                val (own, images) = vm.ownProfile ?: (null to CommunityMedia())
                 profile = own
                 publishedBanner = images.banner
                 publishedAvatar = images.avatar
@@ -201,10 +203,25 @@ internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String?, loca
     }
 
     val equipped = vm.store.wallet(userId)?.profileCosmetics.orEmpty()
-    LaunchedEffect(userId) { loadProfile() }
-    ProfileHeader(profile?.let { "@${it.handle}" } ?: "Herói de Hyrule", localAvatar, publishedBanner, reduceMotion, online = userId != null && vm.presenceHidden == false, equipped = equipped) {
+    LaunchedEffect(known) {
+        known?.let { (own, images) ->
+            profile = own
+            publishedAvatar = images.avatar
+            publishedBanner = images.banner
+            if (own != null) loaded = true
+        }
+    }
+    val handle = known?.first?.handle ?: profile?.handle ?: userId?.let { vm.repo.raw("hc-last-handle-$it") }
+    val name = when {
+        !handle.isNullOrBlank() -> "@$handle"
+        userId == null -> translate("Herói de Hyrule")
+        else -> ""
+    }
+    ProfileHeader(name, localAvatar.ifBlank { known?.second?.avatar.orEmpty() },
+        if (known != null) known.second.banner else publishedBanner, reduceMotion,
+        online = userId != null && vm.presenceHidden == false, equipped = equipped) {
         FilledTonalIconButton(onClick = { editProfile(); loadProfile() }, enabled = !busy,
-            modifier = Modifier.semantics { contentDescription = "Editar perfil" }) {
+            modifier = Modifier.semantics { contentDescription = translate("Editar perfil") }) {
             Text("🪶")
         }
     }
@@ -214,7 +231,7 @@ internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String?, loca
         TextButton(enabled = !busy, onClick = {
             action {
                 val updated = published.copy(journey = sharedGameStatuses(vm))
-                vm.communityRequest(userId) { saveCommunityProfile(it, updated) }
+                vm.updateOwnProfile(userId, updated)
                 profile = updated
                 vm.notifyMessage("Jornada compartilhada atualizada.")
             }
@@ -231,7 +248,7 @@ internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String?, loca
     if (editing && userId == null) AlertDialog(onDismissRequest = { if (!busy) editing = false },
         title = { Text("Editar perfil") }, text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                ProfileHeader("Herói de Hyrule", avatar, null, reduceMotion, equipped = equipped)
+                ProfileHeader(translate("Herói de Hyrule"), avatar, null, reduceMotion, equipped = equipped)
                 photoControls()
                 Text("Entre na sua conta para configurar nome, banner e visibilidade.")
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
@@ -280,7 +297,7 @@ internal fun ProfileCommunitySettings(vm: HyruleViewModel, userId: String?, loca
         action {
             val photo = if (!avatarEdited) publishedAvatar ?: avatar else avatar
             val shared = CommunityMedia(if (publishPhoto) photo.ifBlank { null } else null, banner)
-            vm.communityRequest(userId) { account -> saveCommunityProfile(account, updated, shared) }
+            vm.updateOwnProfile(userId, updated, shared)
             if (avatarEdited) vm.savePreferences(vm.repo.preferences().copy(avatar = avatar))
             profile = updated
             publishedBanner = shared.banner

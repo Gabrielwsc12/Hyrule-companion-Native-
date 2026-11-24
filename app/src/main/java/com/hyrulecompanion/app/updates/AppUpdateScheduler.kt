@@ -1,5 +1,6 @@
 package com.hyrulecompanion.app.updates
 
+import com.hyrulecompanion.app.ui.translate
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -75,7 +76,7 @@ object AppUpdateScheduler {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             notificationManager.createNotificationChannel(
-                NotificationChannel(CHANNEL, "Atualizações do Hyrule Companion", NotificationManager.IMPORTANCE_DEFAULT)
+                NotificationChannel(CHANNEL, translate("Atualizações do Hyrule Companion"), NotificationManager.IMPORTANCE_DEFAULT)
             )
         }
         val intent = Intent(context, MainActivity::class.java).apply {
@@ -86,9 +87,9 @@ object AppUpdateScheduler {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val notification = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_hyrule)
-            .setContentTitle("Hyrule Companion ${release.versionName} disponível")
-            .setContentText("Uma nova jornada espera por você. Toque para atualizar.")
-            .setStyle(NotificationCompat.BigTextStyle().bigText("Nova versão ${release.versionName} disponível. Abra o aplicativo para ver as novidades e atualizar."))
+            .setContentTitle(translate("Hyrule Companion ${release.versionName} disponível"))
+            .setContentText(translate("Uma nova jornada espera por você. Toque para atualizar."))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(translate("Nova versão ${release.versionName} disponível. Abra o aplicativo para ver as novidades e atualizar.")))
             .setContentIntent(pending)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)

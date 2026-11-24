@@ -12,7 +12,12 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.hyrulecompanion.app.data.*
 import com.hyrulecompanion.app.network.AuthSession
+import com.hyrulecompanion.app.network.CachedMedia
 import com.hyrulecompanion.app.network.CloudData
+import com.hyrulecompanion.app.network.CommunityProfile
+import com.hyrulecompanion.app.network.CommunityMedia
+import com.hyrulecompanion.app.ui.LANGUAGE_KEY
+import com.hyrulecompanion.app.ui.selectLanguage
 import com.hyrulecompanion.app.network.SupabaseClient
 import com.hyrulecompanion.app.updates.AppRelease
 import com.hyrulecompanion.app.updates.AppUpdatePreferences
@@ -35,7 +40,13 @@ data class MuralOptions(val name: String = "Herói de Hyrule", val theme: String
 class HyruleViewModel(application: Application) : AndroidViewModel(application) {
     val catalog = Catalog(application)
     val repo = JourneyRepository(application,catalog)
-    private val supabase = SupabaseClient((application as HyruleApplication).communityMediaCache)
+    private val mediaCache = (application as HyruleApplication).communityMediaCache
+    private val supabase = SupabaseClient(mediaCache)
+    private val ownProfileLock = Mutex()
+    internal var ownProfile by mutableStateOf<Pair<CommunityProfile?, CommunityMedia>?>(null)
+        private set
+    internal var ownProfileOwner by mutableStateOf<String?>(null)
+        private set
     private val appUpdates = AppUpdateRepository()
     internal val store = StoreRepository(this)
     private val updatePreferences = AppUpdatePreferences(application)
@@ -76,6 +87,46 @@ class HyruleViewModel(application: Application) : AndroidViewModel(application) 
     init {
         if (session != null) message = "Conta conectada. Sincronize para comparar sua jornada com a nuvem."
     }
+    internal fun changeLanguage(code: String) {
+        repo.storeRaw(LANGUAGE_KEY, code)
+        selectLanguage(code)
+    }
+
+    internal suspend fun loadOwnProfile(userId: String, online: Boolean) = ownProfileLock.withLock {
+        if (session?.userId != userId) return@withLock
+        if (ownProfileOwner != userId) {
+            val saved = repo.raw("hc-own-profile-$userId")?.let {
+                runCatching { CommunityProfile.fromJson(JSONObject(it)) }.getOrNull()
+            }
+            val media = withContext(Dispatchers.IO) {
+                (mediaCache.get("own-local:$userId") ?: mediaCache.get("$userId:$userId"))?.images
+            }
+            if (session?.userId != userId) return@withLock
+            ownProfile = saved to (media ?: CommunityMedia())
+            ownProfileOwner = userId
+        }
+        if (online) {
+            val (profile, media) = communityRequest(userId) { communityProfileWithMedia(it, userId) }
+            cacheOwnProfile(userId, profile, media)
+        }
+    }
+
+    internal suspend fun updateOwnProfile(userId: String, profile: CommunityProfile, media: CommunityMedia? = null) =
+        ownProfileLock.withLock {
+            communityRequest(userId) { saveCommunityProfile(it, profile, media) }
+            cacheOwnProfile(userId, profile, media ?: ownProfile?.second ?: CommunityMedia())
+        }
+
+    private suspend fun cacheOwnProfile(userId: String, profile: CommunityProfile?, media: CommunityMedia) {
+        if (session?.userId != userId) return
+        ownProfile = profile to media
+        ownProfileOwner = userId
+        repo.storeRaw("hc-last-handle-$userId", profile?.handle.orEmpty())
+        if (profile == null) repo.erase("hc-own-profile-$userId")
+        else repo.storeRaw("hc-own-profile-$userId", profile.toJson(userId).toString())
+        withContext(Dispatchers.IO) { mediaCache.put("own-local:$userId", CachedMedia("local", media)) }
+    }
+
     private fun loadSession(): AuthSession? = runCatching { JSONObject(repo.raw(K_SESSION) ?: "{}") }.getOrNull()?.let { AuthSession.fromJson(it) }
     fun notifyChange(sync: Boolean = true) {
         revision++
@@ -370,6 +421,8 @@ class HyruleViewModel(application: Application) : AndroidViewModel(application) 
         val prev=session
         syncJob?.cancel()
         session=null;repo.erase(K_SESSION)
+        ownProfile = null
+        ownProfileOwner = null
         recordSync("")
         message="Conta desconectada. Modo visitante disponível."
         if (prev != null) viewModelScope.launch {

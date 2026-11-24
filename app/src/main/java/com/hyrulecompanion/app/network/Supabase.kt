@@ -111,6 +111,13 @@ class SupabaseClient internal constructor(private val profileMedia: CommunityMed
         request("POST","/rest/v1/hc_user_data?on_conflict=user_id",JSONObject().put("user_id",session.userId).put("payload",payload).put("updated_at",now),bearer=session.accessToken,prefer="resolution=merge-duplicates,return=minimal")
         return now
     }
+    internal suspend fun featureRpc(session: AuthSession, function: String, parameters: JSONObject = JSONObject()): String =
+        request("POST", "/rest/v1/rpc/hc_$function", parameters, session.accessToken)
+
+    internal suspend fun retroSync(session: AuthSession, handle: String, key: String): JSONObject = JSONObject(
+        request("POST", "/functions/v1/retro-sync", JSONObject().put("handle", handle).put("key", key), session.accessToken)
+    )
+
     private suspend fun storeRpc(session: AuthSession, action: String, args: JSONObject = JSONObject()): String =
         request("POST", "/rest/v1/rpc/hc_store_$action", args, session.accessToken)
 
@@ -126,7 +133,7 @@ class SupabaseClient internal constructor(private val profileMedia: CommunityMed
     }
 
     internal suspend fun storeCast(session: AuthSession, id: String): CatchAttempt {
-        val json = JSONObject(storeRpc(session, "cast", JSONObject().put("p_cast", id)))
+        val json = JSONObject(storeRpc(session, "cast_v119", JSONObject().put("p_cast", id)))
         return CatchAttempt(id, FishRarity.valueOf(json.getString("rarity")),
             json.getString("species"), json.getLong("wait_ms"))
     }
@@ -157,6 +164,14 @@ class SupabaseClient internal constructor(private val profileMedia: CommunityMed
             "$path&handle=not.like.$prefix&or=($related)&order=handle&limit=${18 - first.size}",
             bearer = session.accessToken)))
         return (first + extra.sortedBy { !it.handle.contains(handle) }).distinctBy { it.userId }
+    }
+
+    internal suspend fun adventureAuthor(session: AuthSession, handle: String): CommunityAuthor? {
+        if (!handle.matches(Regex("[a-z0-9_]{1,24}"))) return null
+        val row = JSONArray(request("GET",
+            "/rest/v1/hc_community_profiles?select=user_id,avatar_image&handle=eq.$handle&limit=1",
+            bearer = session.accessToken)).optJSONObject(0) ?: return null
+        return CommunityAuthor(row.getString("user_id"), row.optString("avatar_image", "").orEmpty())
     }
 
     private fun people(rows: JSONArray): List<CommunityPerson> = List(rows.length()) { i ->
@@ -322,3 +337,5 @@ data class CommunityMedia(val avatar: String? = null, val banner: String? = null
 internal const val EMAIL_CONFIRMATION_REDIRECT = "${BuildConfig.APPLICATION_ID}://auth/confirm"
 private class SupabaseError(val code: String, message: String) : IOException(message)
 internal class AccountAlreadyExists : IOException("Opa, você já está conectado com Hyrule. Por favor faça log in")
+
+internal data class CommunityAuthor(val userId: String, val avatar: String)

@@ -1,5 +1,6 @@
 package com.hyrulecompanion.app
 
+import com.hyrulecompanion.app.ui.translate
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
@@ -46,11 +47,11 @@ object MuralRenderer {
         }
         fun txt(value: String,x: Float,y: Float,size: Float,color: Int,bold: Boolean=false) {
             paint.color=color;paint.style=Paint.Style.FILL;paint.textSize=size;paint.typeface=if(bold) android.graphics.Typeface.create("serif",android.graphics.Typeface.BOLD) else android.graphics.Typeface.create("sans-serif",android.graphics.Typeface.NORMAL)
-            canvas.drawText(value,x,y,paint)
+            canvas.drawText(translate(value),x,y,paint)
         }
         fun multiline(value:String,x:Float,y:Float,size:Float,color:Int,maxWidth:Float,maxLines:Int=3):Int {
             paint.textSize=size;paint.typeface=android.graphics.Typeface.DEFAULT
-            val words=value.split(' ')
+            val words=translate(value).split(' ')
             var line="";var row=0
             for(word in words){
                 val attempt=if(line.isBlank())word else "$line $word"

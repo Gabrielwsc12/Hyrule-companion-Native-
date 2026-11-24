@@ -145,7 +145,7 @@ internal fun InteractiveAtlas(
                             modifier = Modifier.heightIn(max = 280.dp)) {
                             pins.forEachIndexed { index, pin ->
                                 if (category == "Todos" || category == pin.category) {
-                                    DropdownMenuItem(text = { Text("${index + 1}. ${pin.name}") }, onClick = {
+                                    DropdownMenuItem(text = { Text("${index + 1}. ${translate(pin.name)}") }, onClick = {
                                         showPoints = false
                                         selected = pin
                                         scale = maxOf(2f, scale)
@@ -160,11 +160,11 @@ internal fun InteractiveAtlas(
                     }
                     Row(Modifier.align(Alignment.BottomEnd).padding(8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         FilledTonalIconButton(onClick = { setZoom(scale / 1.5f) }, enabled = scale > 1f,
-                            modifier = Modifier.semantics { contentDescription = "Diminuir zoom" }) { Text("−") }
+                            modifier = Modifier.semantics { contentDescription = translate("Diminuir zoom") }) { Text("−") }
                         FilledTonalIconButton(onClick = { setZoom(scale * 1.5f) }, enabled = scale < 6f,
-                            modifier = Modifier.semantics { contentDescription = "Aumentar zoom" }) { Text("+") }
+                            modifier = Modifier.semantics { contentDescription = translate("Aumentar zoom") }) { Text("+") }
                         FilledTonalIconButton(onClick = { setZoom(1f) },
-                            modifier = Modifier.semantics { contentDescription = "Restaurar zoom" }) { Text("↺") }
+                            modifier = Modifier.semantics { contentDescription = translate("Restaurar zoom") }) { Text("↺") }
                     }
                     selected?.let { pin ->
                         markerOffset(pin)?.let { (x, y) ->
@@ -187,7 +187,7 @@ private fun AtlasPinDetails(pin: AtlasPin, markerX: Dp, markerY: Dp, onClose: ()
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(pin.name, Modifier.weight(1f), style = MaterialTheme.typography.titleSmall)
                         IconButton(onClick = onClose, modifier = Modifier.semantics {
-                            contentDescription = "Fechar detalhes do ponto"
+                            contentDescription = translate("Fechar detalhes do ponto")
                         }) { Text("×") }
                     }
                     Column(Modifier.verticalScroll(key(pin) { rememberScrollState() })) {

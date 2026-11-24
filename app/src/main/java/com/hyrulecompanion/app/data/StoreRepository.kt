@@ -60,7 +60,8 @@ internal class StoreRepository(private val vm: HyruleViewModel) {
     suspend fun equip(userId: String?, item: Cosmetic, equipped: Boolean) = writes.withLock {
         if (userId == null) {
             check(item != Cosmetic.THEME && item in guest.owned) { "Compre o cosmético antes de equipá-lo." }
-            saveGuest(guest.copy(equipped = if (equipped) guest.equipped + item else guest.equipped - item))
+            val previous = if (equipped && item in nameEffects) guest.equipped - nameEffects else guest.equipped
+            saveGuest(guest.copy(equipped = if (equipped) previous + item else previous - item))
         } else {
             vm.communityRequest(userId) { storeEquip(it, item, equipped) }
             refreshCloud(userId)
@@ -102,7 +103,10 @@ internal class StoreRepository(private val vm: HyruleViewModel) {
         } else {
             lastGuestClaim?.takeIf { it.first == attempt.id }?.second ?: run {
                 val reward = attempt.rarity.reward.random()
-                saveGuest(guest.copy(balance = guest.balance + reward))
+                val caught = guest.fish + attempt.species
+                val completed = FishRarity.entries.all { caught.containsAll(it.species) }
+                saveGuest(guest.copy(balance = guest.balance + reward, fish = caught,
+                    owned = if (completed) guest.owned + Cosmetic.FISH_BADGE else guest.owned))
                 lastGuestClaim = attempt.id to reward
                 reward
             }

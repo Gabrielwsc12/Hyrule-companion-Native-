@@ -1,0 +1,701 @@
+{
+  "zelda1": {
+    "official": {
+      "title": "Switch ou Switch 2 · NES – Nintendo Classics",
+      "description": "Mantém a apresentação original e acrescenta pontos de salvamento. Requer assinatura do Nintendo Switch Online.",
+      "url": "https://www.nintendo.com/pt-br/online/nintendo-switch-online/classic-games/"
+    },
+    "emulation": {
+      "title": "Mesen",
+      "description": "NES / SNES — Permite reduzir a latência e usar filtros CRT, além de estados de salvamento.",
+      "url": "https://www.mesen.ca/"
+    },
+    "translation": {
+      "title": "Hyrule Legends",
+      "description": "Procure a entrada de NES na página dos tradutores. Confira a região e a revisão exigidas antes de aplicar o patch.",
+      "url": "https://zelda.com.br/traducoes/jogos"
+    },
+    "mods": [
+      {
+        "title": "The Legend of Zelda Redux",
+        "description": "Melhorias de interface, salvamento e controles para a edição de NES.",
+        "url": "https://github.com/ShadowOne333/The-Legend-of-Zelda-Redux/releases"
+      }
+    ]
+  },
+  "zelda2": {
+    "official": {
+      "title": "Switch ou Switch 2 · NES – Nintendo Classics",
+      "description": "Os pontos de salvamento facilitam retomar os trechos mais difíceis. Requer assinatura do Nintendo Switch Online.",
+      "url": "https://www.nintendo.com/pt-br/online/nintendo-switch-online/classic-games/"
+    },
+    "emulation": {
+      "title": "Mesen",
+      "description": "NES / SNES — Permite reduzir a latência e usar filtros CRT, além de estados de salvamento.",
+      "url": "https://www.mesen.ca/"
+    },
+    "translation": {
+      "title": "Made in Brasil · Hyrule Legends",
+      "description": "Procure a entrada de NES na página dos tradutores. Confira a região e a revisão exigidas antes de aplicar o patch.",
+      "url": "https://zelda.com.br/traducoes/jogos"
+    },
+    "mods": [
+      {
+        "title": "Zelda II Redux",
+        "description": "Melhorias de interface, gráficos e qualidade de vida para o original de NES.",
+        "url": "https://github.com/ShadowOne333/Zelda2-Redux"
+      }
+    ]
+  },
+  "alttp": {
+    "official": {
+      "title": "Switch ou Switch 2 · Super NES – Nintendo Classics",
+      "description": "Preserva o áudio e os gráficos do original de Super NES e oferece pontos de salvamento.",
+      "url": "https://www.nintendo.com/pt-br/online/nintendo-switch-online/classic-games/"
+    },
+    "emulation": {
+      "title": "Mesen",
+      "description": "NES / SNES — Permite reduzir a latência e usar filtros CRT, além de estados de salvamento.",
+      "url": "https://www.mesen.ca/"
+    },
+    "translation": {
+      "title": "Hexagon · GreenGoblin e Ziegfried",
+      "description": "Procure a entrada de Super NES na página dos tradutores. Confira a região e a revisão exigidas antes de aplicar o patch.",
+      "url": "https://zelda.com.br/traducoes/jogos"
+    },
+    "mods": [
+      {
+        "title": "A Link to the Past Redux",
+        "description": "Adiciona melhorias de qualidade de vida à versão de Super NES.",
+        "url": "https://github.com/ShadowOne333/A-Link-to-the-Past-Redux"
+      }
+    ]
+  },
+  "links-awakening": {
+    "official": {
+      "title": "Switch 2 · Link’s Awakening (remake)",
+      "description": "O remake troca os sprites por dioramas 3D. No Switch 2, a atualização gratuita melhora a imagem e acrescenta HDR.",
+      "url": "https://www.nintendo.com/pt-br/gaming-systems/switch-2/transfer-guide/games-with-free-updates/"
+    },
+    "emulation": {
+      "title": "mGBA",
+      "description": "Game Boy / Game Boy Color / Game Boy Advance — Preserva o ritmo original e permite usar estados de salvamento.",
+      "url": "https://mgba.io/downloads.html"
+    },
+    "translation": {
+      "title": "Central Brasileira de Traduções · Zero",
+      "description": "Procure a entrada de Game Boy Color na página dos tradutores. Confira a região e a revisão exigidas antes de aplicar o patch.",
+      "url": "https://zelda.com.br/traducoes/jogos"
+    },
+    "mods": []
+  },
+  "oot": {
+    "official": {
+      "title": "Nintendo Switch 2 · Ocarina of Time",
+      "description": "Escolha a reconstrução da Nintendo para a apresentação moderna. O original de Nintendo 64 continua sendo a edição adequada para a experiência clássica.",
+      "url": "https://www.nintendo.com/pt-br/store/products/the-legend-of-zelda-ocarina-of-time-switch-2/"
+    },
+    "emulation": {
+      "title": "Rosalie’s Mupen GUI",
+      "description": "Nintendo 64 — Permite usar o renderizador ParaLLEl-RDP para se aproximar da imagem do hardware original.",
+      "url": "https://github.com/Rosalie241/RMG"
+    },
+    "translation": {
+      "title": "Hyrule Legends",
+      "description": "Procure a entrada de Nintendo 64 na página dos tradutores. Confira a região e a revisão exigidas antes de aplicar o patch.",
+      "url": "https://zelda.com.br/traducoes/jogos"
+    },
+    "mods": [
+      {
+        "title": "Ship of Harkinian",
+        "description": "Port nativo do original para PC, com resolução e taxa de quadros ajustáveis. Requer uma cópia compatível.",
+        "url": "https://www.shipofharkinian.com/setup-guide"
+      },
+      {
+        "title": "Ocarina of Time 3D 4K",
+        "description": "Pacote de texturas para Nintendo 3DS. Confira a edição do jogo indicada pelo autor.",
+        "url": "https://www.henrikomagnifico.com/zelda-ocarina-of-time-3d-4k"
+      }
+    ]
+  },
+  "mm": {
+    "official": {
+      "title": "Nintendo 3DS · Majora’s Mask 3D",
+      "description": "O remake redesenha Termina, ganha ajustes de interface e facilita o uso da Ocarina e do diário dos Bombers. Confira o Project Restoration se preferir mecânicas do Nintendo 64.",
+      "url": "https://www.nintendo.com/us/explore/characters/zelda/history/"
+    },
+    "emulation": {
+      "title": "Azahar",
+      "description": "Nintendo 3DS — Permite aumentar a resolução interna e ajustar a disposição das telas.",
+      "url": "https://azahar-emu.org/"
+    },
+    "translation": {
+      "title": "Hyrule Legends",
+      "description": "Procure a entrada de Nintendo 64 na página dos tradutores. Confira a região e a revisão exigidas antes de aplicar o patch.",
+      "url": "https://zelda.com.br/traducoes/jogos"
+    },
+    "mods": [
+      {
+        "title": "Project Restoration",
+        "description": "Restaura mecânicas do Nintendo 64 e adiciona melhorias de qualidade de vida à edição de Nintendo 3DS.",
+        "url": "https://github.com/leoetlino/project-restoration"
+      },
+      {
+        "title": "2Ship2Harkinian",
+        "description": "Port nativo da edição de Nintendo 64 para PC, com opções de vídeo e melhorias de controle.",
+        "url": "https://github.com/2ship2harkinian/2ship2harkinian"
+      }
+    ]
+  },
+  "oracle-seasons": {
+    "official": {
+      "title": "Switch ou Switch 2 · Game Boy – Nintendo Classics",
+      "description": "A edição de Game Boy Color mantém a paleta original. Use a senha de conexão para continuar a história em Oracle of Ages.",
+      "url": "https://www.nintendo.com/pt-br/online/nintendo-switch-online/classic-games/"
+    },
+    "emulation": {
+      "title": "mGBA",
+      "description": "Game Boy / Game Boy Color / Game Boy Advance — Preserva o ritmo original e permite usar estados de salvamento.",
+      "url": "https://mgba.io/downloads.html"
+    },
+    "translation": {
+      "title": "Hyrule Legends",
+      "description": "Procure a entrada de Game Boy Color na página dos tradutores. Confira a região e a revisão exigidas antes de aplicar o patch.",
+      "url": "https://zelda.com.br/traducoes/jogos"
+    },
+    "mods": [
+      {
+        "title": "Oracle Randomizer Extras",
+        "description": "Varia a localização de itens e outras partes da aventura. O patch é diferente para cada jogo.",
+        "url": "https://github.com/jangler/oracles-randomizer-extras"
+      }
+    ]
+  },
+  "oracle-ages": {
+    "official": {
+      "title": "Switch ou Switch 2 · Game Boy – Nintendo Classics",
+      "description": "A edição de Game Boy Color mantém a paleta original. Aceita a senha de conexão de Oracle of Seasons.",
+      "url": "https://www.nintendo.com/pt-br/online/nintendo-switch-online/classic-games/"
+    },
+    "emulation": {
+      "title": "mGBA",
+      "description": "Game Boy / Game Boy Color / Game Boy Advance — Preserva o ritmo original e permite usar estados de salvamento.",
+      "url": "https://mgba.io/downloads.html"
+    },
+    "translation": {
+      "title": "Disco Voador Romhacking · Luccasdavid",
+      "description": "Procure a entrada de Game Boy Color na página dos tradutores. Confira a região e a revisão exigidas antes de aplicar o patch.",
+      "url": "https://zelda.com.br/traducoes/jogos"
+    },
+    "mods": [
+      {
+        "title": "Oracle Randomizer Extras",
+        "description": "Varia a localização de itens e outras partes da aventura. O patch é diferente para cada jogo.",
+        "url": "https://github.com/jangler/oracles-randomizer-extras"
+      }
+    ]
+  },
+  "four-swords": {
+    "official": {
+      "title": "Switch ou Switch 2 · Game Boy Advance – Nintendo Classics",
+      "description": "Escolha A Link to the Past & Four Swords para jogar a campanha em grupo. Requer Nintendo Switch Online + Pacote adicional.",
+      "url": "https://www.nintendo.com/pt-br/online/nintendo-switch-online/classic-games/"
+    },
+    "emulation": {
+      "title": "mGBA",
+      "description": "Game Boy / Game Boy Color / Game Boy Advance — Preserva o ritmo original e permite usar estados de salvamento.",
+      "url": "https://mgba.io/downloads.html"
+    },
+    "translation": {
+      "title": "Hyrule Legends e FUT",
+      "description": "Procure a entrada de Game Boy Advance na página dos tradutores. Confira a região e a revisão exigidas antes de aplicar o patch.",
+      "url": "https://zelda.com.br/traducoes/jogos"
+    },
+    "mods": []
+  },
+  "ww": {
+    "official": {
+      "title": "Wii U · The Wind Waker HD",
+      "description": "O remaster redesenha a iluminação, melhora a resolução e inclui a Vela Veloz. O original de GameCube também está no Nintendo Classics para Switch 2.",
+      "url": "https://www.nintendo.com/pt-pt/Jogos/Jogos-para-a-Wii-U/The-Legend-of-Zelda-The-Wind-Waker-HD-765386.html"
+    },
+    "emulation": {
+      "title": "Cemu",
+      "description": "Wii U — Permite ajustar a resolução e mapear as funções do GamePad.",
+      "url": "https://cemu.info/"
+    },
+    "translation": {
+      "title": "Trans-Center · Lucjedi",
+      "description": "Procure a entrada de GameCube na página dos tradutores. Confira a região e a revisão exigidas antes de aplicar o patch.",
+      "url": "https://zelda.com.br/traducoes/jogos"
+    },
+    "mods": [
+      {
+        "title": "Cemu Graphic Packs · The Wind Waker HD",
+        "description": "Use o pacote oficial da comunidade para ajustar a resolução da versão de Wii U.",
+        "url": "https://cemu-project.github.io/cemu_graphic_packs/"
+      },
+      {
+        "title": "Wind Waker 4K",
+        "description": "Pacote de texturas para GameCube. Confira a edição do jogo indicada pelo autor.",
+        "url": "https://www.henrikomagnifico.com/wind-waker-4k"
+      }
+    ]
+  },
+  "four-swords-adventures": {
+    "official": {
+      "title": "Nintendo GameCube",
+      "description": "O hardware original oferece a experiência com a conexão de Game Boy Advance para o modo multijogador local.",
+      "url": "https://www.nintendo.com/en-gb/Games/Nintendo-GameCube/The-Legend-of-Zelda-Four-Swords-Adventures-269028.html"
+    },
+    "emulation": {
+      "title": "Dolphin",
+      "description": "GameCube / Wii — Permite aumentar a resolução interna e adaptar o controle.",
+      "url": "https://dolphin-emu.org/"
+    },
+    "translation": null,
+    "mods": []
+  },
+  "minish-cap": {
+    "official": {
+      "title": "Switch ou Switch 2 · Game Boy Advance – Nintendo Classics",
+      "description": "Mantém a apresentação do Game Boy Advance e acrescenta pontos de salvamento. Requer Nintendo Switch Online + Pacote adicional.",
+      "url": "https://www.nintendo.com/pt-br/online/nintendo-switch-online/classic-games/"
+    },
+    "emulation": {
+      "title": "mGBA",
+      "description": "Game Boy / Game Boy Color / Game Boy Advance — Preserva o ritmo original e permite usar estados de salvamento.",
+      "url": "https://mgba.io/downloads.html"
+    },
+    "translation": {
+      "title": "Hyrule Legends, Monkey’s Traduções, Projeto BR e Trans-Center",
+      "description": "Procure a entrada de Game Boy Advance na página dos tradutores. Confira a região e a revisão exigidas antes de aplicar o patch.",
+      "url": "https://zelda.com.br/traducoes/jogos"
+    },
+    "mods": [
+      {
+        "title": "The Minish Cap Randomizer",
+        "description": "Embaralha itens para novas partidas. Requer a edição europeia de Game Boy Advance.",
+        "url": "https://github.com/minishmaker/randomizer"
+      }
+    ]
+  },
+  "tp": {
+    "official": {
+      "title": "Wii U · Twilight Princess HD",
+      "description": "A remasterização melhora a nitidez e mantém o layout de Hyrule da edição de GameCube. O controle tradicional é uma boa opção para quem prefere botões.",
+      "url": "https://www.nintendo.com/en-gb/News/2016/January/The-Legend-of-Zelda-Twilight-Princess-HD-Hyrule-Warriors-Legends-and-New-Nintendo-3DS-XL-Hyrule-Edition-provide-a-Triforce-of-releases-to-start-2016-1080447.html"
+    },
+    "emulation": {
+      "title": "Cemu",
+      "description": "Wii U — Permite ajustar a resolução e mapear as funções do GamePad.",
+      "url": "https://cemu.info/"
+    },
+    "translation": {
+      "title": "Hyrule Legends",
+      "description": "Procure a entrada de GameCube na página dos tradutores. Confira a região e a revisão exigidas antes de aplicar o patch.",
+      "url": "https://zelda.com.br/traducoes/jogos"
+    },
+    "mods": [
+      {
+        "title": "Twilight Princess 4K",
+        "description": "Pacote de texturas para GameCube / Wii. Confira a edição do jogo indicada pelo autor.",
+        "url": "https://www.henrikomagnifico.com/zelda-twilight-princess-4k"
+      }
+    ]
+  },
+  "phantom-hourglass": {
+    "official": {
+      "title": "Nintendo DS ou Nintendo 3DS · cartucho de DS",
+      "description": "Jogue no modo de compatibilidade do 3DS ou no DS para manter as duas telas, os controles com caneta e o microfone. O DS original preserva a apresentação nativa.",
+      "url": "https://www.nintendo.com/us/explore/characters/zelda/history/"
+    },
+    "emulation": {
+      "title": "melonDS",
+      "description": "Nintendo DS — Permite reorganizar as telas e preservar os comandos por toque e microfone.",
+      "url": "https://github.com/melonDS-emu/melonDS"
+    },
+    "translation": {
+      "title": "Hyrule Legends",
+      "description": "Procure a entrada de Nintendo DS na página dos tradutores. Confira a região e a revisão exigidas antes de aplicar o patch.",
+      "url": "https://zelda.com.br/traducoes/jogos"
+    },
+    "mods": [
+      {
+        "title": "Phantom Hourglass D-Pad Patch",
+        "description": "Acrescenta controles direcionais a ações selecionadas. Confira as versões suportadas pelo autor.",
+        "url": "https://github.com/StraDaMa/Legend-of-Zelda-Phantom-Hourglass-D-Pad-Patch"
+      }
+    ]
+  },
+  "spirit-tracks": {
+    "official": {
+      "title": "Nintendo DS ou Nintendo 3DS · cartucho de DS",
+      "description": "A experiência original usa as duas telas e o microfone nas melodias. O DS original preserva a apresentação nativa.",
+      "url": "https://www.nintendo.com/us/explore/characters/zelda/history/"
+    },
+    "emulation": {
+      "title": "melonDS",
+      "description": "Nintendo DS — Permite reorganizar as telas e preservar os comandos por toque e microfone.",
+      "url": "https://github.com/melonDS-emu/melonDS"
+    },
+    "translation": {
+      "title": "Hyrule Legends",
+      "description": "Procure a entrada de Nintendo DS na página dos tradutores. Confira a região e a revisão exigidas antes de aplicar o patch.",
+      "url": "https://zelda.com.br/traducoes/jogos"
+    },
+    "mods": [
+      {
+        "title": "Spirit Tracks D-Pad Patch",
+        "description": "Adiciona controles por botões para ações essenciais. Algumas interações ainda usam a tela de toque.",
+        "url": "https://github.com/StraDaMa/Legend-of-Zelda-Spirit-Tracks-D-Pad-Patch"
+      }
+    ]
+  },
+  "ss": {
+    "official": {
+      "title": "Switch ou Switch 2 · Skyward Sword HD",
+      "description": "A remasterização oferece 60 quadros por segundo no Switch, opção de controles por botões e melhorias nas mensagens da Fi.",
+      "url": "https://www.nintendo.com/pt-br/store/products/the-legend-of-zelda-skyward-sword-hd-switch/"
+    },
+    "emulation": {
+      "title": "Dolphin",
+      "description": "GameCube / Wii — Permite aumentar a resolução interna e adaptar o controle.",
+      "url": "https://dolphin-emu.org/"
+    },
+    "translation": null,
+    "mods": [
+      {
+        "title": "Skyward Sword 4K",
+        "description": "Pacote de texturas para Wii. Confira a edição do jogo indicada pelo autor.",
+        "url": "https://www.henrikomagnifico.com/zelda-skyward-sword-4k"
+      }
+    ]
+  },
+  "alb-w": {
+    "official": {
+      "title": "Nintendo 3DS · cartucho original",
+      "description": "Dois planos de tela e o efeito 3D estereoscópico ajudam a perceber a profundidade e a passagem de Link para as paredes.",
+      "url": "https://www.nintendo.com/en-gb/Games/Nintendo-3DS-games/The-Legend-of-Zelda-A-Link-Between-Worlds-765381.html"
+    },
+    "emulation": {
+      "title": "Azahar",
+      "description": "Nintendo 3DS — Permite aumentar a resolução interna e ajustar a disposição das telas.",
+      "url": "https://azahar-emu.org/"
+    },
+    "translation": {
+      "title": "JumpManClub Brasil",
+      "description": "Tradução de textos em português do Brasil para a edição Nintendo 3DS. Consulte a publicação da equipe para os requisitos.",
+      "url": "https://www.jumpmanclubbrasil.com.br/year/2019"
+    },
+    "mods": [
+      {
+        "title": "A Link Between Worlds 4K",
+        "description": "Pacote de texturas para Nintendo 3DS. Confira a edição do jogo indicada pelo autor.",
+        "url": "https://www.henrikomagnifico.com/zelda-a-link-between-worlds-4k"
+      }
+    ]
+  },
+  "tri-force-heroes": {
+    "official": {
+      "title": "Nintendo 3DS · cartucho original",
+      "description": "A campanha funciona solo ou em grupo de três. Para cooperação, priorize o multijogador local com três consoles.",
+      "url": "https://www.nintendo.com/en-gb/Games/Nintendo-3DS-games/The-Legend-of-Zelda-Tri-Force-Heroes-1026135.html"
+    },
+    "emulation": {
+      "title": "Azahar",
+      "description": "Nintendo 3DS — Permite aumentar a resolução interna e ajustar a disposição das telas.",
+      "url": "https://azahar-emu.org/"
+    },
+    "translation": null,
+    "mods": []
+  },
+  "botw": {
+    "official": {
+      "title": "Nintendo Switch 2 Edition",
+      "description": "Resolução e desempenho melhorados, HDR, carregamentos mais rápidos e suporte ao Zelda Notes. No PC, Cemu é a recomendação para a edição de Wii U.",
+      "url": "https://www.nintendo.com/pt-br/store/products/the-legend-of-zelda-breath-of-the-wild-nintendo-switch-2-edition-switch-2/"
+    },
+    "emulation": {
+      "title": "Cemu",
+      "description": "Wii U — Permite ajustar a resolução e mapear as funções do GamePad.",
+      "url": "https://cemu.info/"
+    },
+    "translation": {
+      "title": "Português do Brasil · Nintendo",
+      "description": "O jogo atualizado no Nintendo Switch oferece localização oficial em português do Brasil. Esta recomendação não se aplica à edição de Wii U.",
+      "url": "https://www.nintendo.com/pt-br/store/products/the-legend-of-zelda-breath-of-the-wild-nintendo-switch-2-edition-switch-2/"
+    },
+    "mods": [
+      {
+        "title": "Cemu Graphic Packs · FPS++",
+        "description": "Permite ajustar a taxa de quadros na edição de Wii U. Escolha configurações adequadas ao seu computador.",
+        "url": "https://cemu-project.github.io/cemu_graphic_packs/"
+      }
+    ]
+  },
+  "totk": {
+    "official": {
+      "title": "Nintendo Switch 2 Edition",
+      "description": "A edição aprimorada tem resolução e taxa de quadros maiores, carregamentos mais rápidos e Zelda Notes.",
+      "url": "https://www.nintendo.com/pt-br/store/products/the-legend-of-zelda-tears-of-the-kingdom-nintendo-switch-2-edition-switch-2/"
+    },
+    "emulation": {
+      "title": "Eden",
+      "description": "Nintendo Switch — Use a edição original do Switch. O desempenho depende do aparelho e da versão do emulador.",
+      "url": "https://git.eden-emu.dev/eden-emu/eden"
+    },
+    "translation": {
+      "title": "Português do Brasil · Nintendo",
+      "description": "O jogo atualizado no Nintendo Switch oferece localização oficial em português do Brasil.",
+      "url": "https://pt-americas-support.nintendo.com/app/answers/detail/a_id/61944/p/1076/c/120"
+    },
+    "mods": [
+      {
+        "title": "TOTK Optimizer",
+        "description": "Reúne opções de resolução, taxa de quadros e ajustes gráficos para a versão de Switch. Confira as versões suportadas.",
+        "url": "https://github.com/MaxLastBreath/nx-optimizer"
+      }
+    ]
+  },
+  "echoes": {
+    "official": {
+      "title": "Nintendo Switch 2 · atualização gratuita",
+      "description": "A Nintendo melhora a qualidade de imagem e acrescenta HDR. Esta é a edição recomendada para jogar em uma tela moderna.",
+      "url": "https://www.nintendo.com/pt-br/gaming-systems/switch-2/transfer-guide/games-with-free-updates/"
+    },
+    "emulation": {
+      "title": "Eden",
+      "description": "Nintendo Switch — Use a edição original do Switch. O desempenho depende do aparelho e da versão do emulador.",
+      "url": "https://git.eden-emu.dev/eden-emu/eden"
+    },
+    "translation": {
+      "title": "Português do Brasil · Nintendo",
+      "description": "Português do Brasil está disponível no jogo original de Nintendo Switch.",
+      "url": "https://www.nintendo.com/us/store/products/70010000084618/"
+    },
+    "mods": [
+      {
+        "title": "Stabilize FPS MOD",
+        "description": "Opções para estabilizar o desempenho na edição de Switch indicada pelo autor. O resultado depende do aparelho.",
+        "url": "https://gamebanana.com/mods/545054"
+      }
+    ]
+  },
+  "oot-3d": {
+    "official": {
+      "title": "Nintendo 3DS · cartucho original",
+      "description": "Remake portátil com interface na tela de toque, mira por giroscópio e modo Master Quest.",
+      "url": "https://www.nintendo.com/us/explore/characters/zelda/history/"
+    },
+    "emulation": {
+      "title": "Azahar",
+      "description": "Nintendo 3DS — Permite aumentar a resolução interna e ajustar a disposição das telas.",
+      "url": "https://azahar-emu.org/"
+    },
+    "translation": null,
+    "mods": [
+      {
+        "title": "Ocarina of Time 3D 4K",
+        "description": "Pacote de texturas para Nintendo 3DS. Confira a edição do jogo indicada pelo autor.",
+        "url": "https://www.henrikomagnifico.com/zelda-ocarina-of-time-3d-4k"
+      }
+    ]
+  },
+  "links-awakening-remake": {
+    "official": {
+      "title": "Nintendo Switch 2 · atualização gratuita",
+      "description": "O remake tem visuais 3D e, no Switch 2, atualização de imagem e HDR.",
+      "url": "https://www.nintendo.com/pt-br/gaming-systems/switch-2/transfer-guide/games-with-free-updates/"
+    },
+    "emulation": {
+      "title": "Eden",
+      "description": "Nintendo Switch — Use a edição original do Switch. O desempenho depende do aparelho e da versão do emulador.",
+      "url": "https://git.eden-emu.dev/eden-emu/eden"
+    },
+    "translation": {
+      "title": "Hyrule Legends",
+      "description": "Procure a entrada de Nintendo Switch na página dos tradutores. Confira a região e a revisão exigidas antes de aplicar o patch.",
+      "url": "https://zelda.com.br/traducoes/jogos"
+    },
+    "mods": []
+  },
+  "links-awakening-dx": {
+    "official": {
+      "title": "Game Boy Color · edição DX",
+      "description": "A edição em cores inclui a Masmorra das Cores. A coletânea Game Boy – Nintendo Classics oferece acesso no Switch e no Switch 2.",
+      "url": "https://www.nintendo.com/pt-br/online/nintendo-switch-online/classic-games/"
+    },
+    "emulation": {
+      "title": "mGBA",
+      "description": "Game Boy / Game Boy Color / Game Boy Advance — Preserva o ritmo original e permite usar estados de salvamento.",
+      "url": "https://mgba.io/downloads.html"
+    },
+    "translation": {
+      "title": "Hyrule Legends",
+      "description": "Procure a entrada de Game Boy Color na página dos tradutores. Confira a região e a revisão exigidas antes de aplicar o patch.",
+      "url": "https://zelda.com.br/traducoes/jogos"
+    },
+    "mods": []
+  },
+  "mm-3d": {
+    "official": {
+      "title": "Nintendo 3DS · Majora’s Mask 3D",
+      "description": "O remake redesenha Termina, ganha ajustes de interface e facilita o uso da Ocarina e do diário dos Bombers. Confira o Project Restoration se preferir mecânicas do Nintendo 64.",
+      "url": "https://www.nintendo.com/us/explore/characters/zelda/history/"
+    },
+    "emulation": {
+      "title": "Azahar",
+      "description": "Nintendo 3DS — Permite aumentar a resolução interna e ajustar a disposição das telas.",
+      "url": "https://azahar-emu.org/"
+    },
+    "translation": null,
+    "mods": [
+      {
+        "title": "Project Restoration",
+        "description": "Restaura mecânicas do Nintendo 64 e adiciona melhorias de qualidade de vida à edição de Nintendo 3DS.",
+        "url": "https://github.com/leoetlino/project-restoration"
+      },
+      {
+        "title": "2Ship2Harkinian",
+        "description": "Port nativo da edição de Nintendo 64 para PC, com opções de vídeo e melhorias de controle.",
+        "url": "https://github.com/2ship2harkinian/2ship2harkinian"
+      }
+    ]
+  },
+  "wind-waker-hd": {
+    "official": {
+      "title": "Wii U · The Wind Waker HD",
+      "description": "O remaster redesenha a iluminação, melhora a resolução e inclui a Vela Veloz. O original de GameCube também está no Nintendo Classics para Switch 2.",
+      "url": "https://www.nintendo.com/pt-pt/Jogos/Jogos-para-a-Wii-U/The-Legend-of-Zelda-The-Wind-Waker-HD-765386.html"
+    },
+    "emulation": {
+      "title": "Cemu",
+      "description": "Wii U — Permite ajustar a resolução e mapear as funções do GamePad.",
+      "url": "https://cemu.info/"
+    },
+    "translation": {
+      "title": "Trans-Center · Lucjedi",
+      "description": "Procure a entrada de GameCube na página dos tradutores. Confira a região e a revisão exigidas antes de aplicar o patch.",
+      "url": "https://zelda.com.br/traducoes/jogos"
+    },
+    "mods": [
+      {
+        "title": "Cemu Graphic Packs · The Wind Waker HD",
+        "description": "Use o pacote oficial da comunidade para ajustar a resolução da versão de Wii U.",
+        "url": "https://cemu-project.github.io/cemu_graphic_packs/"
+      },
+      {
+        "title": "Wind Waker 4K",
+        "description": "Pacote de texturas para GameCube. Confira a edição do jogo indicada pelo autor.",
+        "url": "https://www.henrikomagnifico.com/wind-waker-4k"
+      }
+    ]
+  },
+  "twilight-princess-hd": {
+    "official": {
+      "title": "Wii U · Twilight Princess HD",
+      "description": "A remasterização melhora a nitidez e mantém o layout de Hyrule da edição de GameCube. O controle tradicional é uma boa opção para quem prefere botões.",
+      "url": "https://www.nintendo.com/en-gb/News/2016/January/The-Legend-of-Zelda-Twilight-Princess-HD-Hyrule-Warriors-Legends-and-New-Nintendo-3DS-XL-Hyrule-Edition-provide-a-Triforce-of-releases-to-start-2016-1080447.html"
+    },
+    "emulation": {
+      "title": "Cemu",
+      "description": "Wii U — Permite ajustar a resolução e mapear as funções do GamePad.",
+      "url": "https://cemu.info/"
+    },
+    "translation": {
+      "title": "Hyrule Legends",
+      "description": "Procure a entrada de GameCube na página dos tradutores. Confira a região e a revisão exigidas antes de aplicar o patch.",
+      "url": "https://zelda.com.br/traducoes/jogos"
+    },
+    "mods": [
+      {
+        "title": "Twilight Princess 4K",
+        "description": "Pacote de texturas para GameCube / Wii. Confira a edição do jogo indicada pelo autor.",
+        "url": "https://www.henrikomagnifico.com/zelda-twilight-princess-4k"
+      }
+    ]
+  },
+  "botw-switch2": {
+    "official": {
+      "title": "Nintendo Switch 2 Edition",
+      "description": "Resolução e desempenho melhorados, HDR, carregamentos mais rápidos e suporte ao Zelda Notes. No PC, Cemu é a recomendação para a edição de Wii U.",
+      "url": "https://www.nintendo.com/pt-br/store/products/the-legend-of-zelda-breath-of-the-wild-nintendo-switch-2-edition-switch-2/"
+    },
+    "emulation": {
+      "title": "Cemu",
+      "description": "Wii U — Permite ajustar a resolução e mapear as funções do GamePad.",
+      "url": "https://cemu.info/"
+    },
+    "translation": {
+      "title": "Português do Brasil · Nintendo",
+      "description": "O jogo atualizado no Nintendo Switch oferece localização oficial em português do Brasil. Esta recomendação não se aplica à edição de Wii U.",
+      "url": "https://www.nintendo.com/pt-br/store/products/the-legend-of-zelda-breath-of-the-wild-nintendo-switch-2-edition-switch-2/"
+    },
+    "mods": [
+      {
+        "title": "Cemu Graphic Packs · FPS++",
+        "description": "Permite ajustar a taxa de quadros na edição de Wii U. Escolha configurações adequadas ao seu computador.",
+        "url": "https://cemu-project.github.io/cemu_graphic_packs/"
+      }
+    ]
+  },
+  "totk-switch2": {
+    "official": {
+      "title": "Nintendo Switch 2 Edition",
+      "description": "A edição aprimorada tem resolução e taxa de quadros maiores, carregamentos mais rápidos e Zelda Notes.",
+      "url": "https://www.nintendo.com/pt-br/store/products/the-legend-of-zelda-tears-of-the-kingdom-nintendo-switch-2-edition-switch-2/"
+    },
+    "emulation": {
+      "title": "Eden",
+      "description": "Nintendo Switch — Use a edição original do Switch. O desempenho depende do aparelho e da versão do emulador.",
+      "url": "https://git.eden-emu.dev/eden-emu/eden"
+    },
+    "translation": {
+      "title": "Português do Brasil · Nintendo",
+      "description": "O jogo atualizado no Nintendo Switch oferece localização oficial em português do Brasil.",
+      "url": "https://pt-americas-support.nintendo.com/app/answers/detail/a_id/61944/p/1076/c/120"
+    },
+    "mods": [
+      {
+        "title": "TOTK Optimizer",
+        "description": "Reúne opções de resolução, taxa de quadros e ajustes gráficos para a versão de Switch. Confira as versões suportadas.",
+        "url": "https://github.com/MaxLastBreath/nx-optimizer"
+      }
+    ]
+  },
+  "oot-switch2": {
+    "official": {
+      "title": "Nintendo Switch 2 · Ocarina of Time",
+      "description": "Escolha a reconstrução da Nintendo para a apresentação moderna. O original de Nintendo 64 continua sendo a edição adequada para a experiência clássica.",
+      "url": "https://www.nintendo.com/pt-br/store/products/the-legend-of-zelda-ocarina-of-time-switch-2/"
+    },
+    "emulation": null,
+    "translation": {
+      "title": "Português do Brasil · Nintendo",
+      "description": "O remake de Nintendo Switch 2 oferece textos e dublagem em português do Brasil.",
+      "url": "https://www.nintendo.com/pt-br/store/products/the-legend-of-zelda-ocarina-of-time-switch-2/"
+    },
+    "mods": []
+  },
+  "skyward-sword-hd": {
+    "official": {
+      "title": "Switch ou Switch 2 · Skyward Sword HD",
+      "description": "A remasterização oferece 60 quadros por segundo no Switch, opção de controles por botões e melhorias nas mensagens da Fi.",
+      "url": "https://www.nintendo.com/pt-br/store/products/the-legend-of-zelda-skyward-sword-hd-switch/"
+    },
+    "emulation": {
+      "title": "Dolphin",
+      "description": "GameCube / Wii — Permite aumentar a resolução interna e adaptar o controle.",
+      "url": "https://dolphin-emu.org/"
+    },
+    "translation": null,
+    "mods": [
+      {
+        "title": "Skyward Sword 4K",
+        "description": "Pacote de texturas para Wii. Confira a edição do jogo indicada pelo autor.",
+        "url": "https://www.henrikomagnifico.com/zelda-skyward-sword-4k"
+      }
+    ]
+  }
+}

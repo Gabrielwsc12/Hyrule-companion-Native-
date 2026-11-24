@@ -7,6 +7,7 @@ internal class FishMotion(rarity: FishRarity, private val random: Random = Rando
         FishRarity.COMMON -> Behavior(0.15f..0.19f, 2.6f..4.3f, 0f)
         FishRarity.UNCOMMON -> Behavior(0.27f..0.40f, 0.85f..1.55f, .65f)
         FishRarity.RARE -> Behavior(0.43f..0.63f, 0.42f..0.88f, .79f)
+        FishRarity.LEGENDARY -> Behavior(0.69f..0.83f, 0.23f..0.43f, .90f)
     }
 
     var position = START_POSITION

@@ -10,6 +10,8 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
+internal const val JOURNEY_PREFERENCES = "hyrule-local-data-v13"
+
 const val K_PROGRESS = "hc-progress"
 const val K_GUIDE_PROGRESS = "hc-guide-progress"
 const val K_GUIDE_COMPLETION = "hc-guide-completion"
@@ -34,7 +36,7 @@ data class Preferences(val theme: String = "system", val avatar: String = "", va
 
 class JourneyRepository(private val context: Context, val catalog: Catalog) {
     // Only app-private storage; legacy localStorage uses the same literal keys, but is a separate origin.
-    private val prefs = context.getSharedPreferences("hyrule-local-data-v13", Context.MODE_PRIVATE)
+    private val prefs = context.getSharedPreferences(JOURNEY_PREFERENCES, Context.MODE_PRIVATE)
     fun raw(key: String): String? = prefs.getString(key, null)
     fun storeRaw(key: String, value: String) { prefs.edit().putString(key,value).apply() }
     fun erase(key: String) { prefs.edit().remove(key).apply() }

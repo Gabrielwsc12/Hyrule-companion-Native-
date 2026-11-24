@@ -81,6 +81,7 @@ private val tabs=listOf(
         if (tabs.any { it.id == screen }) vm.repo.storeRaw("last-section", screen)
     }
     var gameId by rememberSaveable { mutableStateOf<String?>(null) }
+    var openPlayGuide by rememberSaveable { mutableStateOf(false) }
     var contentEntry by rememberSaveable { mutableStateOf<String?>(null) }
     var dungeonIndex by rememberSaveable { mutableStateOf(false) }
     var intro by remember { mutableStateOf(!prefs.introSkip && !prefs.reduceMotion) }
@@ -98,22 +99,16 @@ private val tabs=listOf(
     val userId = account?.userId
     var showController by remember(userId) { mutableStateOf(false) }
     val wallet = vm.store.wallet(userId)
-    val handleKey = userId?.let { "hc-last-handle-$it" }
-    var userName by remember(handleKey) {
-        mutableStateOf(handleKey?.let(vm.repo::raw)?.takeIf { it.isNotBlank() })
-    }
-    LaunchedEffect(userId, screen, online) {
-        if (userId != null && handleKey != null && online && screen == "home") {
-            try {
-                userName = vm.communityRequest(userId) { communityProfile(it) }?.handle
-                vm.repo.storeRaw(handleKey, userName.orEmpty())
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (_: Exception) {
-                // Keep the last known handle during a connection failure.
-            }
+    val ownProfile = if (vm.ownProfileOwner == userId) vm.ownProfile else null
+    val userName = ownProfile?.first?.handle ?: userId?.let { vm.repo.raw("hc-last-handle-$it") }?.takeIf { it.isNotBlank() }
+    LaunchedEffect(userId, online) {
+        if (userId != null) {
+            try { vm.loadOwnProfile(userId, online) }
+            catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { /* Keep the verified local profile available. */ }
         }
     }
+    PreloadOwnBanner(ownProfile?.second?.banner, prefs.reduceMotion)
     LaunchedEffect(userId, online, lifecycleOwner) {
         if (userId != null && online) lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             try {
@@ -133,6 +128,7 @@ private val tabs=listOf(
         }
     }
     val appContext = LocalContext.current
+    val playGuides = remember(appContext) { PlayGuides(appContext) }
     val version = com.hyrulecompanion.app.BuildConfig.VERSION_CODE
     var showChanges by rememberSaveable { mutableStateOf(vm.repo.raw("last-seen-release") != version.toString()) }
     val changeNotes = remember(appContext) {
@@ -146,7 +142,10 @@ private val tabs=listOf(
     var invite by remember { mutableStateOf(!welcomePrefs.getBoolean("seen", false) && vm.session == null) }
     var openMural by rememberSaveable { mutableStateOf(false) }
     var openAccount by rememberSaveable { mutableStateOf(false) }
+    val adventureState = androidx.compose.runtime.saveable.rememberSaveableStateHolder()
+    var adventureAuthor by rememberSaveable { mutableStateOf<String?>(null) }
     var atlasGame by rememberSaveable { mutableStateOf("oot") }
+    var aquariumBack by rememberSaveable { mutableStateOf("home") }
     var settingsBack by rememberSaveable { mutableStateOf("profile") }
     fun closeInvite() {
         invite = false
@@ -161,13 +160,17 @@ private val tabs=listOf(
         if (!intro) vm.checkForUpdates()
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
-    BackHandler(contentEntry != null || dungeonIndex || gameId!=null || screen in listOf("settings", "community", "store", "fishing", "favorites")) {
+    BackHandler(contentEntry != null || dungeonIndex || gameId!=null || screen in listOf("settings", "community", "store", "fishing", "favorites", "aquarium", "achievements", "adventures", "adventure-profile")) {
         when {
             contentEntry != null -> contentEntry = null
             dungeonIndex -> dungeonIndex = false
-            gameId != null -> { gameId = null; screen = previous }
+            openPlayGuide && gameId != null -> openPlayGuide = false
+            gameId != null -> { openPlayGuide = false; gameId = null; screen = previous }
             screen == "fishing" -> screen = "store"
-            screen == "store" -> screen = "home"
+            screen == "store" || screen == "achievements" -> screen = "home"
+            screen == "aquarium" -> screen = aquariumBack
+            screen == "adventure-profile" -> { adventureAuthor = null; screen = "adventures" }
+            screen == "adventures" -> screen = "community"
             screen == "settings" -> screen = settingsBack
             else -> screen = "profile"
         }
@@ -187,10 +190,10 @@ private val tabs=listOf(
                 topBar={
                     Column {
                         TopAppBar(title={ AppBarTitle { showController = true } },actions={
-                            IconButton(onClick={contentEntry=null;dungeonIndex=false;gameId=null;screen="community"}) {
-                                Icon(Icons.Default.Group,contentDescription="Comunidade")
+                            IconButton(onClick={contentEntry=null;dungeonIndex=false;openPlayGuide=false;gameId=null;screen="community"}) {
+                                Icon(Icons.Default.Group,contentDescription=translate("Comunidade"))
                             }
-                            IconButton(onClick={contentEntry=null;dungeonIndex=false;gameId=null;settingsBack="profile";screen="settings"}) { Icon(Icons.Default.Settings,contentDescription="Configurações") }
+                            IconButton(onClick={contentEntry=null;dungeonIndex=false;openPlayGuide=false;gameId=null;settingsBack="profile";screen="settings"}) { Icon(Icons.Default.Settings,contentDescription=translate("Configurações")) }
                         },colors=TopAppBarDefaults.topAppBarColors(containerColor=MaterialTheme.colorScheme.primaryContainer))
                         Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant).padding(horizontal=16.dp,vertical=4.dp),verticalAlignment=Alignment.CenterVertically) {
                             Text(if(online)"● Online" else "● Offline",color=if(online)Color(0xFF4E976C) else Color(0xFFBA723B),style=MaterialTheme.typography.labelSmall)
@@ -201,7 +204,7 @@ private val tabs=listOf(
                 },
                 bottomBar={
                     if(tabs.any { it.id == screen } && gameId==null && !dungeonIndex) NavigationBar(containerColor=MaterialTheme.colorScheme.primaryContainer,tonalElevation=7.dp) {
-                        tabs.forEach { tab -> NavigationBarItem(selected=screen==tab.id,onClick={openAccount=false;openMural=false;screen=tab.id},icon={Icon(tab.icon,contentDescription=tab.title)},label={Text(tab.title,maxLines=1,style=MaterialTheme.typography.labelSmall)},alwaysShowLabel=false) }
+                        tabs.forEach { tab -> NavigationBarItem(selected=screen==tab.id,onClick={openAccount=false;openMural=false;screen=tab.id},icon={Icon(tab.icon,contentDescription=translate(tab.title))},label={Text(tab.title,maxLines=1,style=MaterialTheme.typography.labelSmall)},alwaysShowLabel=false) }
                     }
                 }
             ){ inner ->
@@ -209,7 +212,7 @@ private val tabs=listOf(
                     if(vm.message.isNotBlank()) Surface(Modifier.fillMaxWidth().clickable{vm.clearMessage()},color=MaterialTheme.colorScheme.secondaryContainer) {
                         Row(Modifier.padding(horizontal=14.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically) {
                             Text(vm.message,Modifier.weight(1f),style=MaterialTheme.typography.bodySmall)
-                            IconButton(onClick=vm::clearMessage,modifier=Modifier.size(28.dp)) { Icon(Icons.Default.Close,contentDescription="Fechar",modifier=Modifier.size(16.dp)) }
+                            IconButton(onClick=vm::clearMessage,modifier=Modifier.size(28.dp)) { Icon(Icons.Default.Close,contentDescription=translate("Fechar"),modifier=Modifier.size(16.dp)) }
                         }
                     }
                     when {
@@ -221,25 +224,45 @@ private val tabs=listOf(
                         dungeonIndex -> CompositionLocalProvider(LocalSpoilerProtection provides prefs.hideSpoilers) {
                             DungeonIndex(vm,onBack={dungeonIndex=false},onOpen={contentEntry="dungeon:$it"})
                         }
+                        openPlayGuide && gameId != null -> {
+                            val game = vm.catalog.game(gameId!!)
+                            val guide = playGuides[gameId!!]
+                            if (game != null && guide != null) PlayGuideScreen(game, guide, onBack={openPlayGuide=false})
+                        }
                         gameId!=null -> GameDetailScreen(vm,gameId!!,onBack={gameId=null;screen=previous},
-                            onAtlas={id->atlasGame=id;gameId=null;screen="atlas"},onReference={contentEntry=it})
+                            onAtlas={id->atlasGame=id;gameId=null;screen="atlas"},onReference={contentEntry=it},
+                            onPlayGuide=if (gameId!! in playGuides) ({ openPlayGuide=true }) else null)
                         screen=="home" -> HomeScreen(vm,userName,onNavigate={target ->
                             if (target == "changelog") showChanges = true
-                            else { openAccount=false; openMural=target=="mural"; screen=if(openMural) "profile" else target }
+                            else {
+                                if (target == "aquarium") aquariumBack = "home"
+                                openAccount=false; openMural=target=="mural"; screen=if(openMural) "profile" else target
+                            }
                         },onGame={previous="home";gameId=it})
                         screen=="store" -> key(userId) {
                             StoreScreen(vm.store, userId, prefs.reduceMotion, onBack={screen="home"}, onFish={screen="fishing"},
-                                onSettings={settingsBack="store";screen="settings"})
+                                onAquarium={aquariumBack="store";screen="aquarium"}, onSettings={settingsBack="store";screen="settings"})
                         }
                         screen=="fishing" -> key(userId) {
                             FishingScreen(vm.store, userId, prefs.reduceMotion, prefs.fishingHaptics, onBack={screen="store"})
                         }
+                        screen=="aquarium" -> key(userId) { AquariumScreen(vm.store, userId, onBack={screen=aquariumBack}) }
+                        screen=="achievements" -> AchievementsScreen(vm, onBack={screen="home"},
+                            onAccount={openAccount=true;screen="profile"})
+                        screen=="adventures" && userId != null -> adventureState.SaveableStateProvider(userId) {
+                            AdventuresScreen(vm, userId, onBack={screen="community"},
+                                onAuthor={adventureAuthor=it;screen="adventure-profile"})
+                        }
+                        screen=="adventure-profile" -> CommunityScreen(vm,
+                            onBack={adventureAuthor=null;screen="adventures"},
+                            onAccount={openAccount=true;screen="profile"}, onAdventures={screen="adventures"},
+                            authorHandle=adventureAuthor)
                         screen=="timeline" -> TimelineScreen(vm,onGame={previous="timeline";gameId=it})
                         screen=="atlas" -> AtlasScreen(vm,atlasGame,onGame={previous="atlas";gameId=it})
                         screen=="library" -> LibraryScreen(vm,onGame={previous="library";gameId=it},onDungeons={dungeonIndex=true})
                         screen=="profile" -> ProfileScreen(vm,openAccount=openAccount,openMural=openMural,onGame={previous="profile";gameId=it},onFavorites={screen="favorites"})
                         screen=="favorites" -> FavoriteGamesScreen(vm, onBack={screen="profile"}, onGame={previous="favorites";gameId=it})
-                        screen=="community" -> CommunityScreen(vm,onBack={screen="profile"},onAccount={openAccount=true;screen="profile"})
+                        screen=="community" -> CommunityScreen(vm,onBack={screen="profile"},onAccount={openAccount=true;screen="profile"},onAdventures={screen="adventures"})
                         screen=="settings" -> SettingsScreen(vm,onBack={screen=settingsBack}, backLabel=if(settingsBack=="store") "Store" else "perfil")
                     }
                 }

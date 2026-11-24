@@ -1,2 +1,9 @@
-• Corrigimos a vibração da fisgada, dos puxões e da fuga do peixe.
-• Em Configurações → Durante o jogo, toque em Testar vibração da pesca para sentir a fisgada.
+• Sincronize seu progresso em jogos de Zelda com o RetroAchievements e exiba o resumo no perfil público.
+• Abra o Aquário de Hyrule para acompanhar a coleção e encontrar os peixes que ainda faltam. A pesca agora tem espécies lendárias e a vara acompanha os puxões do peixe.
+• Publique imagens, curiosidades e dicas em Aventuras. Aplauda, comente e filtre as publicações de quem você segue.
+• Escolha entre português, inglês, espanhol, russo, chinês simplificado e japonês em Configurações → Idioma.
+• Personalize seu nome com os efeitos de chama e escuridão na Store.
+• Toque na foto ou no nome no cabeçalho de uma Aventura para abrir o perfil do autor.
+• O mural de conquistas mostra o total e o jogo da última conquista sincronizada.
+• Na ficha dos jogos principais, abra Forma definitiva de jogar pelo ícone de controle para ver recomendações de plataformas, emuladores, traduções e mods.
+• O perfil reaproveita o nome e o banner salvos para abrir mais rápido.

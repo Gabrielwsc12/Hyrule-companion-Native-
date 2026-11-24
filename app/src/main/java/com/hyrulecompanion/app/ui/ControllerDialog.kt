@@ -85,7 +85,7 @@ internal fun ControllerDialog(store: StoreRepository, userId: String?, onDismiss
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("O que é isso?", Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
                     IconButton(onClick = onDismiss, enabled = !claiming) {
-                        Icon(Icons.Default.Close, contentDescription = "Fechar")
+                        Icon(Icons.Default.Close, contentDescription = translate("Fechar"))
                     }
                 }
                 RetroController(enabled = !claiming, onKey = ::input)

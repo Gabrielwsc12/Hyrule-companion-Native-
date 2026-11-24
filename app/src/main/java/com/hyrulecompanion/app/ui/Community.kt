@@ -35,7 +35,7 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 
 @Composable
-fun CommunityScreen(vm: HyruleViewModel, onBack: () -> Unit, onAccount: () -> Unit) {
+fun CommunityScreen(vm: HyruleViewModel, onBack: () -> Unit, onAccount: () -> Unit, onAdventures: () -> Unit, authorHandle: String? = null) {
     val session = vm.session
     if (session == null) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -46,11 +46,11 @@ fun CommunityScreen(vm: HyruleViewModel, onBack: () -> Unit, onAccount: () -> Un
         }
         return
     }
-    key(session.userId) { SignedInCommunity(vm, session.userId, onBack) }
+    key(session.userId) { SignedInCommunity(vm, session.userId, onBack, onAdventures, authorHandle) }
 }
 
 @Composable
-private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () -> Unit) {
+private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () -> Unit, onAdventures: () -> Unit, authorHandle: String?) {
     val scope = rememberCoroutineScope()
     var own by remember { mutableStateOf<CommunityProfile?>(null) }
     var following by remember { mutableStateOf<List<CommunityPerson>>(emptyList()) }
@@ -58,6 +58,14 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
     var selected by remember { mutableStateOf<CommunityProfile?>(null) }
     var profileOnline by remember { mutableStateOf(false) }
     val selectedId = selected?.userId
+    var achievements by remember(selectedId) { mutableStateOf<RetroSummary?>(null) }
+    LaunchedEffect(userId, selectedId) {
+        if (selectedId != null) {
+            try { achievements = readRetro(vm, userId, selectedId) }
+            catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { achievements = null }
+        }
+    }
     var equipped by remember(selectedId) { mutableStateOf<Set<Cosmetic>>(emptySet()) }
     LaunchedEffect(userId, selectedId) {
         if (selectedId != null) {
@@ -147,7 +155,7 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
         enabled = true
     }
 
-    fun open(profileId: String) = runAction {
+    suspend fun openProfile(profileId: String) {
         vm.communityRequest(userId) { account ->
             val (latest, images) = communityProfileWithMedia(account, profileId)
             if (latest != null) {
@@ -166,15 +174,38 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
         }
     }
 
-    LaunchedEffect(Unit) { refresh() }
-    BackHandler(selected != null) { selected = null }
+    fun open(profileId: String) = runAction { openProfile(profileId) }
+
+    LaunchedEffect(authorHandle) {
+        if (authorHandle == null) refresh() else runAction {
+            val author = vm.communityRequest(userId) { adventureAuthor(it, authorHandle) }
+            if (author == null) {
+                error = "Esse perfil não está disponível."
+            } else {
+                own = vm.communityRequest(userId) { communityProfile(it) }
+                openProfile(author.userId)
+            }
+        }
+    }
+    BackHandler(selected != null && authorHandle == null) { selected = null }
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            TextButton(onClick = { if (selected != null) selected = null else onBack() }) {
-                Text(if (selected != null) "Voltar à comunidade" else "Voltar ao perfil")
+            TextButton(onClick = { if (selected != null && authorHandle == null) selected = null else onBack() }) {
+                Text(if (authorHandle != null) "Voltar às Aventuras" else if (selected != null) "Voltar à comunidade" else "Voltar ao perfil")
             }
-            if (selected == null) ScreenTitle("Comunidade", "", "♜")
+            if (selected == null && authorHandle == null) {
+                ScreenTitle("Comunidade", "", "♜")
+                ParchmentCard(Modifier.fillMaxWidth().clickable(onClick = onAdventures)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            SmallHeading("Aventuras")
+                            Text("Compartilhe imagens, curiosidades e dicas com a Comunidade.")
+                        }
+                        Icon(Icons.Default.ChevronRight, null)
+                    }
+                }
+            }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }
@@ -199,6 +230,7 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
                     }
                 }
             }
+            achievements?.let { summary -> item { RetroSummaryCard(summary, compact = true) } }
             if (profile.shareJourney) {
                 val games = vm.catalog.games.filter { profile.journey[it.id] in listOf("Em andamento", "Concluído", "100%") }
                 item { SmallHeading("Jornada compartilhada") }
@@ -265,7 +297,7 @@ private fun SignedInCommunity(vm: HyruleViewModel, userId: String, onBack: () ->
                         keyboardActions = KeyboardActions(onSearch = { submitSearch() }),
                         trailingIcon = {
                             IconButton(enabled = validSearch, onClick = ::submitSearch) {
-                                Icon(Icons.Default.Search, "Buscar usuário")
+                                Icon(Icons.Default.Search, translate("Buscar usuário"))
                             }
                         })
                     if (searchError) Text("Não foi possível buscar. Toque na lupa para tentar de novo.",
